@@ -1,5 +1,21 @@
 # YouTube Short: लेपाक्षी का हवा में लटका खंभा (~40 s, Hindi)
 
+**✅ Final video:** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/8ed40546-651b-47dd-b063-68e0470ce270.mp4
+**Specs:** 1080×1920, 24 fps, H.264 + AAC, 40.0 s, −14 LUFS, Hindi captions burned in, "हवा में लटका खंभा!" banner for 0–4.3 s
+
+**Production notes**
+- The narration came out at 39.2 s untouched, so its natural pauses were kept (no tightening this time).
+- **Background music (new):** an original tanpura-style drone in C#, synthesised with sox, so it's copyright-free and safe from Content ID.
+  - Plucks: Pa–Sa'–Sa'–Sa every 3.6 s, like a classical tanpura, with a soft sustained Sa–Pa–Sa' pad underneath.
+  - Effects: reverb, 2.5 s fade in and out.
+  - Level: about 18 dB under the voice, and it dips a little more when the narrator speaks.
+- Clip timing:
+  - Clip 1 is slowed 4.6% (0–10.5 s)
+  - Clip 2 is trimmed (10.5–18.74 s)
+  - Clip 3 is trimmed (18.74–27.84 s)
+  - Clip 4 is slowed 15% and holds its last frame (27.84–40.0 s)
+- Cost ≈ 182 credits.
+
 **Format:** 9:16 · ~40 s · faceless narrator (same ElevenLabs "Gideon" Hindi voice as the Tanot and Stambheshwar Shorts) · burned-in Hindi captions
 **Place:** Veerabhadra Temple, Lepakshi, Sri Sathya Sai district (formerly Anantapur), Andhra Pradesh. Vijayanagara era, 16th century.
 
