@@ -1,5 +1,18 @@
 # YouTube Short: स्तंभेश्वर महादेव, वो मंदिर जो रोज़ समुद्र में डूब जाता है (~40 s, Hindi)
 
+**✅ Final video:** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/8524656b-4b90-4340-98ed-3d1ae1ff4ee6.mp4
+**Specs:** 1080×1920, 24 fps, H.264 + AAC, 40.7 s, −14 LUFS, Hindi captions burned in, "रोज़ 2 बार गायब!" banner for 0–4.3 s
+
+**Production notes**
+- The raw ElevenLabs take ran 46 s. Pauses between sentences were tightened to ~0.3 s, giving 40.3 s without speeding up the voice.
+- The clips were time-fitted to each narration section:
+  - Clip 1 is slowed 9% (0–10.96 s)
+  - Clip 2 is slowed 7% (10.96–21.70 s)
+  - Clip 3 is trimmed (21.70–29.10 s)
+  - Clip 4 is slowed 10% and holds its last frame (29.10–40.70 s)
+- The first attempt at clip 3 (a deity riding a peacock) failed generation. It was replaced with a symbolic version: a glowing peacock, a golden spear and a Shivling on the shore at dawn, with no figure shown.
+- Cost ≈ 181 credits.
+
 **Format:** 9:16 · ~40 s · faceless narrator (same ElevenLabs "Gideon" Hindi voice as the Tanot Short) · burned-in Hindi captions
 **Place:** Stambheshwar Mahadev, Kavi Kamboi village, Jambusar taluka, Bharuch district, Gujarat, where the Mahi river meets the Gulf of Khambhat
 
