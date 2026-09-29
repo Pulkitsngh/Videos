@@ -1,5 +1,30 @@
 # YouTube Short: रूपकुंड, कंकालों वाली झील (~50 s, Hindi)
 
+**✅ Final video:** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/db19ca4c-a70e-440c-aa9a-df29c876fcb9.mp4
+**Specs:** 720×1280, 24 fps, H.264 + AAC, 52.8 s, −14 LUFS
+
+**Production notes (option C):**
+- **Video:** 5 × Seedance 2.0 fast-mode clips, 720p.
+- **Voice:** ElevenLabs "Gideon".
+  - Pauses tightened to 0.4 s: 59.8 s became 53.5 s.
+  - A duplicated TTS phrase ("किनारे पर दिखते ही") was cut at 20 s, giving 52.1 s.
+- **Edit:**
+  - Clips 1–4 are trimmed to their sections.
+  - Clip 5 (DNA) is slowed 15%.
+  - The ending reuses clip 3 **played in reverse**, so the ice closes back over the bones, matching the final line and looping into the hook.
+- **Overlays:**
+  - Top title "कंकालों वाली झील!"
+  - Red stamp "DNA रिपोर्ट: विदेशी?"
+  - Location card "रूपकुंड · चमोली, उत्तराखंड / 5,029 मी. / 16,500 फ़ीट"
+  - Dates card "~800 ई. vs ~1800 ई."
+  - Hindi captions
+- **Like + Subscribe buttons:**
+  - White LIKE pill with a thumbs-up, red SUBSCRIBE pill with a bell.
+  - Bottom centre, 68 px above the bottom edge.
+  - Fades in at 8.4 s (after the hook) and stays to the end.
+- **Music:** original tanpura drone raised to F# (brighter than the Lepakshi track), about 10 dB under the voice instead of 18 dB, ducking slightly under speech.
+- **Cost:** ≈ 127 credits.
+
 **Channel:** World Unscripted · **Format:** 9:16, about 50 s (under 60 s, so still a Short) · faceless narrator (same ElevenLabs "Gideon" Hindi voice as the temple Shorts) · burned-in Hindi captions · soft background drone
 
 **Location (shown on screen and in the description):**
