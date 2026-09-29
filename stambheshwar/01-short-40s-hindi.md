@@ -68,34 +68,47 @@ Add to every prompt: *"cinematic documentary realism, warm golden and teal tones
 
 ## Short package
 
-**Title options** (#1 recommended)
+**Title options** (#1 recommended; all under 70 characters so they don't get cut off on mobile)
 
 ```
-ये मंदिर रोज़ 2 बार समुद्र में डूब जाता है! 😱 स्तंभेश्वर महादेव #shorts
+ये मंदिर रोज़ 2 बार समुद्र में डूब जाता है! 😱🌊 #shorts
 ```
 ```
-दर्शन का समय पुजारी नहीं, समुद्र तय करता है 🌊 स्तंभेश्वर महादेव #shorts
+दर्शन का समय पुजारी नहीं, समुद्र तय करता है! 🔱 स्तंभेश्वर महादेव #shorts
 ```
 ```
-भारत का गायब होने वाला शिव मंदिर 🔱 हर हर महादेव #shorts
+भारत का वो शिव मंदिर जो रोज़ गायब हो जाता है 😳 #shorts
+```
+```
+समुद्र खुद करता है महादेव का जलाभिषेक 🌊🔱 #shorts
 ```
 
 **Description**
 
 ```
-गुजरात के कवि-कम्बोई गाँव में माही नदी और खंभात की खाड़ी के संगम पर बना स्तंभेश्वर महादेव मंदिर रोज़ दो बार समुद्र में डूब जाता है — और ज्वार उतरते ही फिर प्रकट हो जाता है! 🌊🔱
+ये मंदिर रोज़ दो बार समुद्र में डूब जाता है… और फिर लौट आता है! 😱🌊
 
-मान्यता है कि भगवान कार्तिकेय ने ताड़कासुर वध के बाद यहाँ शिवलिंग स्थापित किया था। यहाँ दर्शन ज्वार-भाटे की समय-सारिणी देखकर ही होते हैं।
+गुजरात के कवि-कम्बोई गाँव में, जहाँ माही नदी खंभात की खाड़ी (अरब सागर) से मिलती है, वहाँ है स्तंभेश्वर महादेव मंदिर। ज्वार आते ही लहरें पूरे मंदिर को निगल लेती हैं — शिवलिंग तक पानी में छिप जाता है। और जब पानी उतरता है, तो लगता है जैसे समुद्र खुद महादेव का जलाभिषेक करके लौटा हो। 🔱
 
-विज्ञान कहे ज्वार-भाटा, आस्था कहे समुद्र का जलाभिषेक — आप क्या मानते हैं? 👇
+📜 मान्यता है कि ताड़कासुर वध के बाद भगवान कार्तिकेय ने प्रायश्चित के लिए यहाँ शिवलिंग स्थापित किया था।
+🕰️ यहाँ दर्शन का समय पुजारी नहीं, समुद्र तय करता है — भक्त ज्वार-भाटे का समय देखकर ही दर्शन करने जाते हैं।
 
-📍 स्तंभेश्वर महादेव, कवि-कम्बोई, जंबूसर (भरूच), गुजरात
-⚠️ दृश्य AI द्वारा बनाए गए प्रतीकात्मक चित्रण हैं।
+विज्ञान कहे ज्वार-भाटा, आस्था कहे अभिषेक — आप क्या मानते हैं? कमेंट में बताइए 👇
 
-#Stambheshwar #StambheshwarMahadev #Gujarat #HarHarMahadev #MysteriousIndia #Shiv #shorts
+📍 स्तंभेश्वर महादेव मंदिर, कवि-कम्बोई, जंबूसर, भरूच (गुजरात) — वडोदरा से लगभग 75–80 किमी
+🔔 ऐसे ही रहस्यमयी मंदिरों की कहानियों के लिए सब्सक्राइब करें!
+
+⚠️ इस वीडियो के दृश्य AI द्वारा बनाए गए प्रतीकात्मक चित्रण हैं। पौराणिक कथा मान्यताओं पर आधारित है।
+
+#StambheshwarMahadev #HarHarMahadev #shorts #Stambheshwar #Gujarat #KaviKamboi #DisappearingTemple #MysteriousIndia #ShivMandir #Mahadev #Bholenath #IndianTemples #Sanatan #रहस्य
 ```
 
-**Tags:** `stambheshwar mahadev, stambheshwar temple, disappearing temple, kavi kamboi, temple under sea, gujarat temple, स्तंभेश्वर महादेव, गायब होने वाला मंदिर, shiv mandir, mysterious temples of india, har har mahadev, shorts`
+**Hashtags:**
+- The first 3 show above the title, so they lead the list: `#StambheshwarMahadev #HarHarMahadev #shorts`
+- The rest go at the end of the description (already included above): `#Stambheshwar #Gujarat #KaviKamboi #DisappearingTemple #MysteriousIndia #ShivMandir #Mahadev #Bholenath #IndianTemples #Sanatan #रहस्य`
+- 14 hashtags in total. YouTube ignores all hashtags on a video that has more than 15.
+
+**Tags:** `stambheshwar mahadev, stambheshwar temple, stambheshwar mahadev gujarat, disappearing temple, disappearing temple india, temple under sea, sea temple gujarat, kavi kamboi, kavi kamboi temple, jambusar temple, bharuch temple, स्तंभेश्वर महादेव, गायब होने वाला मंदिर, समुद्र में डूबा मंदिर, shiv mandir, mysterious temples of india, har har mahadev, kartikeya shivling, shorts`
 
 **Pinned comment:**
 
@@ -104,7 +117,14 @@ Add to every prompt: *"cinematic documentary realism, warm golden and teal tones
 अगला रहस्यमयी मंदिर कौन-सा हो? कमेंट करें!
 ```
 
-**Cover / thumbnail idea (9:16):** the temple spire half-swallowed by a crashing wave at sunset, with **"रोज़ 2 बार गायब!"** in big yellow text.
+**Cover thumbnails (9:16, 1080×1920, ready to upload):**
+
+| Cover | Image | Headline | File | Clean 4K |
+|---|---|---|---|---|
+| **A** (recommended) | Huge wave swallowing the temple, only the spire and flag above water, sunset | स्तंभेश्वर महादेव · **रोज़ 2 बार गायब!** | [A.jpg](https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/1102d4f2-f87e-48df-bea3-cbea57da137b.jpg) | [4K](https://d8j0ntlcm91z4.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/hf_20260929_075227_d331bec5-31c0-40e6-b1e2-e3760d50ea26.png) |
+| **B** | Half-underwater view: temple above, glowing Shivling below the surface | स्तंभेश्वर महादेव · **समुद्र करता है जलाभिषेक!** | [B.jpg](https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/16d07e32-0862-4c62-a8db-15916e65ccb1.jpg) | [4K](https://d8j0ntlcm91z4.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/hf_20260929_075227_8365d08d-85bd-41ed-a36e-d775a8bf3588.png) |
+
+Set the cover in the YouTube mobile app: Shorts → Edit → Cover → Add from gallery. Cover A matches the video's opening hook. Cover B works well as the thumbnail if you later post a long-form version.
 
 **Upload settings:** same as the Tanot Short (Altered content: Yes · Not for kids · Hindi · Education · location: Kavi Kamboi, Gujarat).
 
@@ -115,3 +135,4 @@ Add to every prompt: *"cinematic documentary realism, warm golden and teal tones
 - Location and the twice-daily submergence at high tide: ✔ widely documented. It's a real tidal effect in the Gulf of Khambhat.
 - The Kartikeya / Tarakasura origin comes from the Skanda Purana tradition. It's presented as **"कहा जाता है"**, a belief, not a historical fact.
 - Visitors are commonly given tide timings. Phrase this as common practice, not an official rule.
+- "वडोदरा से लगभग 75–80 किमी" in the description is an approximate road distance. Adjust it or remove the line if you prefer.
