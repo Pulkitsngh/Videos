@@ -70,19 +70,19 @@ Add to every prompt: *"cinematic documentary realism, warm golden and stone-ambe
 
 ## Short package
 
-**Title options** (#1 recommended)
+**Title options** (#1 recommended; all under 70 characters so they don't get cut off on mobile)
 
 ```
-500 साल से हवा में लटका है ये खंभा! 😱 लेपाक्षी मंदिर #shorts
+500 साल से हवा में लटका है ये खंभा! 😱 लेपाक्षी #shorts
 ```
 ```
 इस मंदिर का खंभा ज़मीन को छूता ही नहीं! 🤯 #shorts
 ```
 ```
-अंग्रेज़ भी नहीं समझ पाए इस खंभे का राज़ 😳 लेपाक्षी #shorts
+अंग्रेज़ भी नहीं समझ पाए इस खंभे का राज़ 😳 #shorts
 ```
 ```
-खंभे के नीचे से कपड़ा निकालो, किस्मत खुलेगी? 🙏 लेपाक्षी #shorts
+खंभे के नीचे से कपड़ा निकालो, किस्मत खुलेगी? 🙏 #shorts
 ```
 
 **Description**
@@ -119,7 +119,14 @@ Add to every prompt: *"cinematic documentary realism, warm golden and stone-ambe
 कमाल की इंजीनियरिंग या चमत्कार — आपका जवाब?
 ```
 
-**Cover idea (9:16):** a floor-level shot of the carved pillar with a bright beam of light through the gap and a red cloth mid-slide, with **"हवा में लटका खंभा!"** in big yellow text.
+**Cover thumbnails (9:16, 1080×1920, ready to upload):**
+
+| Cover | Image | Headline | File | Clean 4K |
+|---|---|---|---|---|
+| **A** (recommended) | Floor-level shot of the carved pillar, golden light beaming through the gap, red cloth mid-slide | लेपाक्षी मंदिर · **हवा में लटका खंभा!** | [A.jpg](https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/7fc208ec-3dd0-458b-9a0a-3b1954ccee3d.jpg) | [4K](https://d8j0ntlcm91z4.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/hf_20260929_091954_2996e619-dff8-4884-9ad2-ef4fd1955e0c.png) |
+| **B** | One glowing pillar floating above the floor, scanned by cyan blueprint lines, other pillars in shadow | लेपाक्षी मंदिर · **500 साल का रहस्य!** | [B.jpg](https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/0e223b6d-e6ef-44ad-8dd7-c2440b47c2d1.jpg) | [4K](https://d8j0ntlcm91z4.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/hf_20260929_091954_4485618b-a4ea-42dc-b907-016c8518d61d.png) |
+
+Set the cover in the YouTube mobile app: Shorts → Edit → Cover → Add from gallery. Cover A matches the video's opening hook.
 
 **Upload settings:** same as the previous Shorts (Altered content: Yes · Not for kids · Hindi · Education · location: Lepakshi, Andhra Pradesh).
 
