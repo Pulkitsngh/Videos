@@ -1,0 +1,129 @@
+// =====================================================================
+// Navjyoti Vermicompost – Power BI model
+// Paste each block with Modeling → New table / New column / New measure.
+// Tables come from the SharePoint lists with the same names.
+// =====================================================================
+
+// ---------- Tables ----------
+Calendar =
+ADDCOLUMNS (
+    CALENDAR ( DATE ( 2025, 1, 1 ), DATE ( 2030, 12, 31 ) ),
+    "Month", FORMAT ( [Date], "MMM yy" ),
+    "MonthStart", DATE ( YEAR ( [Date] ), MONTH ( [Date] ), 1 ),
+    "Year", YEAR ( [Date] )
+)
+// Sort Calendar[Month] by Calendar[MonthStart]
+
+// ---------- Calculated columns ----------
+
+// Beds
+Beds[NetYieldKg] =
+CALCULATE (
+    SUM ( Harvest[NetKg] ),
+    FILTER ( ALL ( Harvest ), Harvest[Batch] = Beds[Batch] && Harvest[BedNo] = Beds[BedNo] )
+)
+
+Beds[BedNum] = IFERROR ( VALUE ( SUBSTITUTE ( UPPER ( Beds[BedNo] ), "BED-", "" ) ), BLANK () )
+
+Beds[BedBlock] =
+VAR s = INT ( ( Beds[BedNum] - 1 ) / 10 ) * 10 + 1
+RETURN IF ( ISBLANK ( Beds[BedNum] ), BLANK (), "BED-" & FORMAT ( s, "00" ) & "–" & FORMAT ( s + 9, "00" ) )
+
+Beds[LiveStatus] =
+SWITCH (
+    TRUE (),
+    Beds[NetYieldKg] > 0 || Beds[Status] = "Harvested", "Harvested",
+    NOT ISBLANK ( Beds[ExpectedHarvest] ) && Beds[ExpectedHarvest] < TODAY (), "Overdue",
+    ISBLANK ( Beds[Status] ), "Active",
+    Beds[Status]
+)
+
+Beds[DaysFillToHarvest] =
+VAR h = CALCULATE ( MAX ( Harvest[HarvestDate] ),
+    FILTER ( ALL ( Harvest ), Harvest[Batch] = Beds[Batch] && Harvest[BedNo] = Beds[BedNo] ) )
+RETURN IF ( ISBLANK ( h ) || ISBLANK ( Beds[FillDate] ), BLANK (), DATEDIFF ( Beds[FillDate], h, DAY ) )
+
+// StockLedger – running closing balance per batch in entry order
+StockLedger[ClosingKg] =
+CALCULATE (
+    SUM ( StockLedger[InKg] ) - SUM ( StockLedger[OutKg] ) - SUM ( StockLedger[LossKg] ),
+    FILTER (
+        ALL ( StockLedger ),
+        StockLedger[Batch] = EARLIER ( StockLedger[Batch] )
+            && StockLedger[EntryNo] <= EARLIER ( StockLedger[EntryNo] )
+    )
+)
+
+// PreCompost
+PreCompost[PeakTempC] = MAX ( MAX ( PreCompost[Turn1TempC], PreCompost[Turn2TempC] ), PreCompost[Turn3TempC] )
+
+// QualityControl – FCO check for finished (FG) and export (EX) material.
+// Limits: FCO vermicompost spec (P as P2O5, K as K2O). Change here if your export buyer's spec differs.
+QualityControl[FCOCheck] =
+VAR fin = QualityControl[Product] IN { "FG", "EX" }
+VAR m = QualityControl[Moisture]
+VAR flags =
+    IF ( NOT ISBLANK ( m ) && ( m < 15 || m > 25 ), "Moisture " )
+        & IF ( NOT ISBLANK ( QualityControl[pH] ) && ( QualityControl[pH] < 6.5 || QualityControl[pH] > 7.5 ), "pH " )
+        & IF ( NOT ISBLANK ( QualityControl[EC] ) && QualityControl[EC] > 4, "EC " )
+        & IF ( NOT ISBLANK ( QualityControl[OrganicCarbon] ) && QualityControl[OrganicCarbon] < 18, "OrganicCarbon " )
+        & IF ( NOT ISBLANK ( QualityControl[Nitrogen] ) && QualityControl[Nitrogen] < 1, "Nitrogen " )
+        & IF ( NOT ISBLANK ( QualityControl[Phosphorus] ) && QualityControl[Phosphorus] < 0.8, "Phosphorus " )
+        & IF ( NOT ISBLANK ( QualityControl[Potassium] ) && QualityControl[Potassium] < 0.8, "Potassium " )
+        & IF ( NOT ISBLANK ( QualityControl[CNRatio] ) && QualityControl[CNRatio] > 20, "C:N " )
+RETURN
+    IF ( NOT fin, "Trial (not checked)", IF ( flags = "", "Within FCO", "Outside: " & TRIM ( flags ) ) )
+
+// ---------- Measures (create a blank table called _Measures to hold them) ----------
+RM Received t = DIVIDE ( SUM ( RawMaterial[QtyKg] ), 1000 )
+RM Cost = SUMX ( RawMaterial, RawMaterial[QtyKg] * RawMaterial[RatePerKg] )
+RM Transport = SUM ( RawMaterial[TransportCost] )
+RM Trucks = COUNTROWS ( RawMaterial )
+RM Avg Moisture % = AVERAGE ( RawMaterial[MoisturePct] )
+RM Unpaid = CALCULATE ( COUNTROWS ( RawMaterial ), RawMaterial[PaymentStatus] <> "Paid" )
+
+PreCompost MT = SUM ( PreCompost[WeightMT] )
+
+Beds Filled = COUNTROWS ( Beds )
+Beds Harvested = CALCULATE ( COUNTROWS ( Beds ), Beds[LiveStatus] = "Harvested" )
+Beds Overdue = CALCULATE ( COUNTROWS ( Beds ), Beds[LiveStatus] = "Overdue" )
+Dung Filled t = SUM ( Beds[DungT] )
+
+Raw Harvest kg = SUM ( Harvest[RawKg] )
+Net Yield kg = SUM ( Harvest[NetKg] )
+Recovery % = DIVIDE ( [Net Yield kg], CALCULATE ( SUM ( Harvest[RawKg] ), NOT ISBLANK ( Harvest[NetKg] ) ) )
+Conversion % = DIVIDE ( [Net Yield kg], [Dung Filled t] * 1000 )
+Harvest Missing Net = CALCULATE ( COUNTROWS ( Harvest ), ISBLANK ( Harvest[NetKg] ) )
+Avg Net per Bed kg = AVERAGE ( Harvest[NetKg] )
+
+Sold kg = SUM ( Sales[QtyKg] )
+Revenue = SUMX ( Sales, Sales[QtyKg] * Sales[PricePerKg] )
+Avg Price per kg = DIVIDE ( [Revenue], [Sold kg] )
+Invoices = COUNTROWS ( Sales )
+Low Price Sales = CALCULATE ( COUNTROWS ( Sales ), Sales[PricePerKg] < 1 )
+
+Stock On Hand kg = SUM ( StockLedger[InKg] ) - SUM ( StockLedger[OutKg] ) - SUM ( StockLedger[LossKg] )
+Harvested minus Sold kg = [Net Yield kg] - [Sold kg]
+
+Expenses = SUM ( Expenses[Amount] )
+Expense per kg = DIVIDE ( [Expenses], [Net Yield kg] )
+Revenue minus Expenses = [Revenue] - [Expenses]
+
+QC Reports = COUNTROWS ( QualityControl )
+QC Outside FCO = CALCULATE ( COUNTROWS ( QualityControl ), LEFT ( QualityControl[FCOCheck], 7 ) = "Outside" )
+QC Avg pH = AVERAGE ( QualityControl[pH] )
+QC Avg EC = AVERAGE ( QualityControl[EC] )
+QC Avg Moisture = AVERAGE ( QualityControl[Moisture] )
+QC Avg Organic Carbon = AVERAGE ( QualityControl[OrganicCarbon] )
+QC Avg Organic Matter = AVERAGE ( QualityControl[OrganicMatter] )
+QC Avg CN = AVERAGE ( QualityControl[CNRatio] )
+QC Avg N = AVERAGE ( QualityControl[Nitrogen] )
+QC Avg P = AVERAGE ( QualityControl[Phosphorus] )
+QC Avg K = AVERAGE ( QualityControl[Potassium] )
+QC Avg Ash = AVERAGE ( QualityControl[Ash] )
+// Put QualityControl[Product] (RM / FG / EX) on the legend to compare trial, finished and export material.
+
+Days Since Watering =
+VAR last = CALCULATE ( MAX ( DailyLog[LogDate] ), DailyLog[Activity] = "Watering" )
+RETURN IF ( ISBLANK ( last ), BLANK (), DATEDIFF ( last, TODAY (), DAY ) )
+Log Entries = COUNTROWS ( DailyLog )
