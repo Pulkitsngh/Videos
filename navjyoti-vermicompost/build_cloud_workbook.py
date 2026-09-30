@@ -155,6 +155,9 @@ def fco_formula(t):
 def build(src, out, batch):
     data = convert(src, batch)
     data["logs"] = []
+    # B5 is in process: add it to Batches so it can be selected
+    data["batches"].append({"code": "B5", "name": "Batch 5", "site": "Akola", "start": "", "status": "In beds",
+                            "notes": "In process – add dates and records as they happen"})
     wb = Workbook()
     wb.remove(wb.active)
     ws_readme = wb.create_sheet("How to use")
@@ -239,7 +242,6 @@ def build(src, out, batch):
         last = ws.cell(1, len(cols)).column_letter
         tab = Table(displayName=tname, ref=f"A1:{last}{nrows + 1}")
         tab.tableStyleInfo = TableStyleInfo(name="TableStyleLight9", showRowStripes=True)
-        tab._initialise_columns()
         ws.add_table(tab)
         # formula columns are pre-filled below the table, so a row typed under the table
         # already calculates when Excel extends the table over it
@@ -259,7 +261,7 @@ def build(src, out, batch):
         for ci, (h, _, kind, extra) in enumerate(cols, 1):
             if extra and not kind.startswith("calc") and extra in list_ranges:
                 L = ws.cell(1, ci).column_letter
-                dv = DataValidation(type="list", formula1=f"=L_{extra}", allow_blank=True,
+                dv = DataValidation(type="list", formula1=f"L_{extra}", allow_blank=True,
                                     showErrorMessage=extra not in ("Supplier", "Customer"),
                                     errorTitle="Pick from the list", error="Choose a value from the drop-down. Add new options on the Lists sheet.")
                 dv.add(f"{L}2:{L}5000")
@@ -289,14 +291,7 @@ def build(src, out, batch):
             L = ws.cell(1, hdr.index("PaymentStatus") + 1).column_letter
             ws.conditional_formatting.add(f"{L}2:{L}5000", FormulaRule(formula=[f'AND({L}2<>"",{L}2<>"Paid")'], fill=WARN_FILL))
 
-    # B5 is in process: add it to Batches so it can be selected
-    wsb = sheets["Batches"]
-    wsb.append(["B5", "Batch 5", "Akola", None, "In beds", "In process – add dates and records as they happen"])
-    for c in wsb[3]:
-        c.font = F()
-    wsb.tables["Batches"].ref = "A1:F3"
-    wsb["D2"].number_format = wsb["D3"].number_format = DATE_FMT
-    wsb.column_dimensions["F"].width = 50
+    sheets["Batches"].column_dimensions["F"].width = 50
 
     # ---------- Dashboard ----------
     ws = ws_dash
@@ -316,7 +311,7 @@ def build(src, out, batch):
     ws["C5"].border = Border(left=Side(style="medium", color="D9A400"), right=Side(style="medium", color="D9A400"),
                              top=Side(style="medium", color="D9A400"), bottom=Side(style="medium", color="D9A400"))
     ws["C5"].alignment = Alignment(horizontal="center")
-    dv = DataValidation(type="list", formula1="=L_BatchPick", allow_blank=False)
+    dv = DataValidation(type="list", formula1="L_BatchPick", allow_blank=False)
     dv.add("C5")
     ws.add_data_validation(dv)
     ws["D5"] = '=IF(C5="All","All batches combined",IFERROR(INDEX(Batches[BatchName],MATCH(C5,Batches[BatchCode],0))&"  ·  "&INDEX(Batches[Stage],MATCH(C5,Batches[BatchCode],0)),""))'
@@ -650,10 +645,10 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
         ws[a].fill = FILL(colr)
     ws["F5"] = "← colour = bar colour in charts"
     ws["F5"].font = F(color=MUTED, italic=True, size=9)
-    dv = DataValidation(type="list", formula1="=L_Batch", allow_blank=True)
+    dv = DataValidation(type="list", formula1="L_Batch", allow_blank=True)
     dv.add("C5:E5")
     ws.add_data_validation(dv)
-    dv2 = DataValidation(type="list", formula1="=L_BatchPick", allow_blank=False)
+    dv2 = DataValidation(type="list", formula1="L_BatchPick", allow_blank=False)
     dv2.add("C7")
     ws.add_data_validation(dv2)
 
