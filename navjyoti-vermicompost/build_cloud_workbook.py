@@ -802,16 +802,15 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
     ws.cell(row + 1, 2, "Batch chosen in C7 (All = every batch). FCO limits apply to FG, EX and EXFG (finished material); "
                         "RM and EXRM are trials. Red = outside the limit.").font = F(color=MUTED, italic=True)
     hr = row + 2
-    heads = ["Parameter", *[p[1] for p in PRODUCTS], "FCO min", "FCO max"]
+    heads = ["Parameter", *[p[0] for p in PRODUCTS], "FCO min", "FCO max"]  # same names as the QualityControl sheet
     for j, h in enumerate(heads):
         c = ws.cell(hr, 2 + j, h)
         c.font = F(bold=True, color="FFFFFF")
         c.fill = FILL([INK, *[p[2] for p in PRODUCTS], "5B6B62", "5B6B62"][j])
         c.alignment = Alignment(horizontal="left" if j == 0 else "right", wrap_text=True, vertical="center")
     ws.row_dimensions[hr].height = 30
-    params = [("Moisture", "Moisture %"), ("OrganicCarbon", "Organic carbon %"), ("OrganicMatter", "Organic matter %"), ("Ash", "Ash %"), ("CNRatio", "C:N ratio"),
-              ("pH", "pH"), ("EC", "EC dS/m"), ("Nitrogen", "Nitrogen %"), ("Phosphorus", "Phosphorus %"), ("Potassium", "Potassium %"),
-              ("Calcium", "Calcium"), ("Manganese", "Manganese"), ("Iron", "Iron"), ("Manganese2", "Manganese (2nd)"), ("Zinc", "Zinc"), ("Copper", "Copper")]
+    params = [(c, c) for c in ("pH", "EC", "Moisture", "OrganicCarbon", "OrganicMatter", "CNRatio", "Nitrogen", "Phosphorus",
+                               "Potassium", "Ash", "Calcium", "Manganese", "Iron", "Manganese2", "Zinc", "Copper")]  # QualityControl order
     crit = 'IF($C$7="All","*",$C$7)'
     fco_idx = {c: i for i, (c, *_) in enumerate(FCO)}
     np_ = len(PRODUCTS)
@@ -842,19 +841,21 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
             ws.conditional_formatting.add(f"{L}{hr + 1}:{L}{qend}", FormulaRule(
                 formula=[f'AND(ISNUMBER({L}{hr + 1}),OR(AND(ISNUMBER(${Lmin}{hr + 1}),{L}{hr + 1}<${Lmin}{hr + 1}),AND(ISNUMBER(${Lmax}{hr + 1}),{L}{hr + 1}>${Lmax}{hr + 1})))'],
                 fill=BAD_FILL, font=F(bold=True, color="B3261E")))
-    for L in "GHI":
-        ws.column_dimensions[L].width = 13
-    for title, a, b, anchor in (("Moisture, carbon, ash, C:N", hr + 1, hr + 5, start + 1), ("pH, EC, N, P, K", hr + 6, hr + 10, start + 18)):
+    for L in "CDEFGHI":
+        ws.column_dimensions[L].width = 15
+    for title, a, b, anchor in (("pH, EC", hr + 1, hr + 2, start + 1),
+                                ("Moisture, OrganicCarbon, OrganicMatter, CNRatio", hr + 3, hr + 6, start + 18),
+                                ("Nitrogen, Phosphorus, Potassium", hr + 7, hr + 9, start + 35)):
         ws.cell(anchor, 11, title).font = F(bold=True, color=INK)
         ch = BarChart()
         ch.type = "col"
         for j, (p, lab, colr) in enumerate(PRODUCTS):
-            ch.series.append(Series(Reference(ws, min_col=3 + j, min_row=a, max_row=b), title=lab))
+            ch.series.append(Series(Reference(ws, min_col=3 + j, min_row=a, max_row=b), title=p))
         ch.set_categories(Reference(ws, min_col=2, min_row=a, max_row=b))
         style_chart(ch, np_, colors=[p[2] for p in PRODUCTS])
         ch.height, ch.width = 7.5, 17
         ws.add_chart(ch, f"K{anchor + 1}")
-    row = max(rr + 3, start + 34)
+    row = max(rr + 3, start + 52)
 
     # index with links
     ws["B9"] = "Jump to  ▸"
