@@ -11,7 +11,11 @@ import sys
 
 from openpyxl import Workbook
 from openpyxl.chart import BarChart, Reference, Series
+from openpyxl.chart.axis import ChartLines
 from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.chart.text import RichText
+from openpyxl.drawing.line import LineProperties
+from openpyxl.drawing.text import CharacterProperties, Paragraph, ParagraphProperties, RichTextProperties
 from openpyxl.comments import Comment
 from openpyxl.formatting.rule import CellIsRule, FormulaRule
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -297,100 +301,213 @@ def build(src, out, batch):
     # ---------- Dashboard ----------
     ws = ws_dash
     ws.sheet_view.showGridLines = False
-    for L, w in zip("ABCDEFGHIJKL", (2, 34, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16)):
-        ws.column_dimensions[L].width = w
-    ws["B1"] = "Navjyoti · Vermicompost production dashboard"
-    ws["B1"].font = F(bold=True, size=18, color=INK)
-    ws["B2"] = "Live from the register sheets. Pick a batch in C4 (or All). Everything on this sheet is a formula — do not type over it."
-    ws["B2"].font = F(color=MUTED, italic=True)
-    ws["B4"] = "Selected batch"
-    ws["B4"].font = F(bold=True)
-    ws["C4"] = "All"
-    ws["C4"].fill = FILL("FFF3B0")
-    ws["C4"].font = F(bold=True, size=12)
-    ws["C4"].border = BOX
+    ws.column_dimensions["A"].width = 2
+    ws.column_dimensions["B"].width = 34
+    for L in "CDEFGHIJKL":
+        ws.column_dimensions[L].width = 15
+    banner(ws, 1, 2, 12, "Navjyoti · Vermicompost Production Dashboard",
+           "Live from the register sheets · pick a batch in C5 (or All) · every figure here is a formula")
+    ws["B5"] = "Selected batch  ▸"
+    ws["B5"].font = F(bold=True, size=11, color=INK)
+    ws["B5"].alignment = Alignment(horizontal="right")
+    ws["C5"] = "All"
+    ws["C5"].fill = FILL("FFF3B0")
+    ws["C5"].font = F(bold=True, size=12, color=INK)
+    ws["C5"].border = Border(left=Side(style="medium", color="D9A400"), right=Side(style="medium", color="D9A400"),
+                             top=Side(style="medium", color="D9A400"), bottom=Side(style="medium", color="D9A400"))
+    ws["C5"].alignment = Alignment(horizontal="center")
     dv = DataValidation(type="list", formula1="=L_BatchPick", allow_blank=False)
-    dv.add("C4")
+    dv.add("C5")
     ws.add_data_validation(dv)
-    ws["D4"] = '=IF(C4="All","All batches combined",IFERROR(INDEX(Batches[BatchName],MATCH(C4,Batches[BatchCode],0))&" · "&INDEX(Batches[Stage],MATCH(C4,Batches[BatchCode],0)),""))'
-    ws["D4"].font = F(color=MUTED)
-    ws["H4"] = "Today"
-    ws["I4"] = "=TODAY()"
-    ws["I4"].number_format = DATE_FMT
-    wb.defined_names["SelBatch"] = DefinedName("SelBatch", attr_text='Dashboard!$C$4')
+    ws["D5"] = '=IF(C5="All","All batches combined",IFERROR(INDEX(Batches[BatchName],MATCH(C5,Batches[BatchCode],0))&"  ·  "&INDEX(Batches[Stage],MATCH(C5,Batches[BatchCode],0)),""))'
+    ws["D5"].font = F(color=MUTED, italic=True)
+    ws["J5"] = "Today"
+    ws["J5"].font = F(color=MUTED)
+    ws["J5"].alignment = Alignment(horizontal="right")
+    ws["K5"] = "=TODAY()"
+    ws["K5"].number_format = "dd mmm yyyy"
+    ws["K5"].font = F(bold=True)
+    wb.defined_names["SelBatch"] = DefinedName("SelBatch", attr_text='Dashboard!$C$5')
     K = 'IF(SelBatch="All","*",SelBatch)'  # SUMIFS criterion: * matches every batch
-    wb.defined_names["BatchCrit"] = DefinedName("BatchCrit", attr_text='IF(Dashboard!$C$4="All","*",Dashboard!$C$4)')
 
-    def section(row, title):
-        ws.cell(row, 2, title).font = F(bold=True, size=12, color=SOIL)
-        ws.cell(row, 2).border = Border(bottom=Side(style="medium", color=SOIL))
-
-    section(6, "KEY FIGURES")
+    # detailed figures (B:C) — the tiles above read from these cells
+    R = 18
     kpis = [
-        ("Raw material received (t)", f"=SUMIFS(RawMaterial[QtyKg],RawMaterial[Batch],{K})/1000", "#,##0.0"),
-        ("Raw material cost", f"=SUMIFS(RawMaterial[Amount],RawMaterial[Batch],{K})", INR_FMT),
-        ("Pre-compost decomposed (MT)", f"=SUMIFS(PreCompost[WeightMT],PreCompost[Batch],{K})", "#,##0.0"),
-        ("Beds filled", f'=COUNTIFS(Beds[Batch],{K},Beds[BedNo],"<>")', "#,##0"),
-        ("Beds harvested", f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],"Harvested")', "#,##0"),
-        ("Dung / compost filled in beds (t)", f"=SUMIFS(Beds[DungT],Beds[Batch],{K})", "#,##0.0"),
-        ("Raw harvest (kg)", f"=SUMIFS(Harvest[RawKg],Harvest[Batch],{K})", KG_FMT),
-        ("Net yield after sieving (kg)", f"=SUMIFS(Harvest[NetKg],Harvest[Batch],{K})", KG_FMT),
-        ("Conversion (net ÷ dung filled)", "=IFERROR(C15/(C13*1000),\"\")", PCT_FMT),
-        ("Sold (kg)", f"=SUMIFS(Sales[QtyKg],Sales[Batch],{K})", KG_FMT),
-        ("Revenue", f"=SUMIFS(Sales[Revenue],Sales[Batch],{K})", INR_FMT),
-        ("Average price (₹/kg)", "=IFERROR(C18/C17,\"\")", "₹#,##0.00"),
-        ("Stock on hand (kg, stock ledger)", f"=SUMIFS(StockLedger[InKg],StockLedger[Batch],{K})-SUMIFS(StockLedger[OutKg],StockLedger[Batch],{K})-SUMIFS(StockLedger[LossKg],StockLedger[Batch],{K})", KG_FMT),
-        ("Harvested − sold (kg)", "=C15-C17", KG_FMT),
-        ("Expenses", f"=SUMIFS(Expenses[Amount],Expenses[Batch],{K})", INR_FMT),
-        ("Expense per kg produced (₹)", "=IFERROR(C22/C15,\"\")", "₹#,##0.00"),
-        ("Revenue − expenses", "=C18-C22", '₹#,##0;[Red]-₹#,##0'),
+        ("rm", "Raw material received (t)", f"=SUMIFS(RawMaterial[QtyKg],RawMaterial[Batch],{K})/1000", "#,##0.0"),
+        ("rmcost", "Raw material cost", f"=SUMIFS(RawMaterial[Amount],RawMaterial[Batch],{K})", INR_FMT),
+        ("pc", "Pre-compost decomposed (MT)", f"=SUMIFS(PreCompost[WeightMT],PreCompost[Batch],{K})", "#,##0.0"),
+        ("beds", "Beds filled", f'=COUNTIFS(Beds[Batch],{K},Beds[BedNo],"<>")', "#,##0"),
+        ("harv", "Beds harvested", f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],"Harvested")', "#,##0"),
+        ("dung", "Dung / compost filled in beds (t)", f"=SUMIFS(Beds[DungT],Beds[Batch],{K})", "#,##0.0"),
+        ("raw", "Raw harvest (kg)", f"=SUMIFS(Harvest[RawKg],Harvest[Batch],{K})", KG_FMT),
+        ("net", "Net yield after sieving (kg)", f"=SUMIFS(Harvest[NetKg],Harvest[Batch],{K})", KG_FMT),
+        ("conv", "Conversion (net ÷ dung filled)", '=IFERROR(C{net}/(C{dung}*1000),"")', PCT_FMT),
+        ("sold", "Sold (kg)", f"=SUMIFS(Sales[QtyKg],Sales[Batch],{K})", KG_FMT),
+        ("rev", "Revenue", f"=SUMIFS(Sales[Revenue],Sales[Batch],{K})", INR_FMT),
+        ("price", "Average price (₹/kg)", '=IFERROR(C{rev}/C{sold},"")', "₹#,##0.00"),
+        ("stock", "Stock on hand (kg, stock ledger)", f"=SUMIFS(StockLedger[InKg],StockLedger[Batch],{K})-SUMIFS(StockLedger[OutKg],StockLedger[Batch],{K})-SUMIFS(StockLedger[LossKg],StockLedger[Batch],{K})", KG_FMT),
+        ("hs", "Harvested − sold (kg)", "=C{net}-C{sold}", KG_FMT),
+        ("exp", "Expenses", f"=SUMIFS(Expenses[Amount],Expenses[Batch],{K})", INR_FMT),
+        ("cpk", "Expense per kg produced (₹)", '=IFERROR(C{exp}/C{net},"")', "₹#,##0.00"),
+        ("margin", "Revenue − expenses", "=C{rev}-C{exp}", '₹#,##0;[Red]-₹#,##0'),
     ]
-    for i, (label, f, fmt) in enumerate(kpis):
-        r = 8 + i
-        ws.cell(r, 2, label).font = F()
-        c = ws.cell(r, 3, f)
-        c.font = F(bold=True, size=11)
+    at = {k: R + i for i, (k, *_) in enumerate(kpis)}
+    subhead(ws, R - 2, 2, 3, "DETAILED FIGURES", GREEN)
+    for i, (k, label, f, fmt) in enumerate(kpis):
+        r = R + i
+        band = FILL("F4F7F3") if i % 2 else FILL("FFFFFF")
+        a = ws.cell(r, 2, label)
+        c = ws.cell(r, 3, f.format(**at))
+        a.font, c.font = F(color=INK), F(bold=True, size=11, color=INK)
         c.number_format = fmt
-        for cc in (ws.cell(r, 2), c):
-            cc.border = Border(bottom=THIN)
-
-    ws.cell(6, 5, "NEEDS ATTENTION").font = F(bold=True, size=12, color=SOIL)
-    ws.cell(6, 5).border = Border(bottom=Side(style="medium", color=SOIL))
-    ws.merge_cells("E7:H7")
-    ws["E7"] = "Count for the selected batch · status"
-    ws["E7"].font = F(color=MUTED, italic=True)
-    alerts = [
-        ("Beds past expected harvest", f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],"Overdue")'),
-        ("Harvest entries without net weight", f'=COUNTIFS(Harvest[Batch],{K},Harvest[BedNo],"<>",Harvest[NetKg],"")'),
-        ("Raw material payments not settled", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[PaymentStatus],"<>Paid")'),
-        ("Raw material lots without lab acceptance", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[LabResult],"<>Accepted")'),
-        ("FG / EX lab reports outside FCO", f'=COUNTIFS(QualityControl[Batch],{K},QualityControl[FCOCheck],"Outside*")'),
-        ("Sales priced under ₹1 per kg", f'=COUNTIFS(Sales[Batch],{K},Sales[QtyKg],">0",Sales[PricePerKg],"<1")'),
-        ("Days since watering was logged", '=IF(' + LASTWATER + '=0,"none logged",TODAY()-' + LASTWATER + ')'),
-    ]
-    for i, (label, f) in enumerate(alerts):
-        r = 8 + i
-        ws.merge_cells(start_row=r, start_column=5, end_row=r, end_column=7)
-        ws.cell(r, 5, label).font = F()
-        c = ws.cell(r, 8, f)
-        c.font = F(bold=True)
         c.alignment = Alignment(horizontal="right")
-        s = ws.cell(r, 9, f'=IF(H{r}="none logged","Log watering",IF(H{r}>{3 if i == 6 else 0},"Check","OK"))')
+        for cc in (a, c):
+            cc.fill, cc.border = band, Border(bottom=THIN)
+
+    # KPI tiles: (label, value cell, format, sub-line formula, accent, tint)
+    tiles = [
+        ("RAW MATERIAL IN", f"=C{at['rm']}", '#,##0.0" t"', f'=TEXT(C{at["rmcost"]},"₹#,##0")&" cost"', "2A78D6", "E6F0FB"),
+        ("NET YIELD", f"=C{at['net']}", '#,##0" kg"', f'=IF(C{at["conv"]}="","",TEXT(C{at["conv"]},"0.0%")&" of dung filled")', GREEN, "E3F1E8"),
+        ("BEDS HARVESTED", f'=C{at["harv"]}&" / "&C{at["beds"]}', "General", f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],"Overdue")&" overdue"', "7A4FB5", "EFE9F8"),
+        ("SOLD", f"=C{at['sold']}", '#,##0" kg"', f'=IF(C{at["price"]}="","no sales yet","avg ₹"&TEXT(C{at["price"]},"0.00")&" / kg")', "EB6834", "FDEDE5"),
+        ("REVENUE", f"=C{at['rev']}", INR_FMT, f'=TEXT(C{at["exp"]},"₹#,##0")&" expenses"', "138A60", "E1F4EC"),
+        ("STOCK ON HAND", f"=C{at['stock']}", '#,##0" kg"', f'=TEXT(C{at["hs"]},"#,##0")&" kg harvested − sold"', "B7791F", "FCF2DD"),
+    ]
+    tile_cols = [(2, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]
+    for (label, val, fmt, sub, accent, tint), (c1, c2) in zip(tiles, tile_cols):
+        for r in (7, 8, 9, 10):
+            for cc in range(c1, c2 + 1):
+                ws.cell(r, cc).fill = FILL(tint)
+            if c2 > c1:
+                ws.merge_cells(start_row=r, start_column=c1, end_row=r, end_column=c2)
+        for cc in range(c1, c2 + 1):
+            ws.cell(7, cc).border = Border(top=Side(style="thick", color=accent))
+        ws.cell(7, c1, label).font = F(bold=True, size=9, color=accent)
+        v = ws.cell(8, c1, val)
+        v.font = F(bold=True, size=18, color=INK)
+        v.number_format = fmt
+        s = ws.cell(9, c1, sub)
+        s.font = F(size=9, color=MUTED)
+        for r in (7, 8, 9):
+            ws.cell(r, c1).alignment = Alignment(horizontal="left", vertical="center", indent=1)
+    ws.row_dimensions[8].height = 30
+    # second strip: finance
+    tiles2 = [
+        ("EXPENSES", f"=C{at['exp']}", INR_FMT, "D14B3B", "FBE6E3"),
+        ("EXPENSE PER KG", f"=C{at['cpk']}", "₹#,##0.00", "D14B3B", "FBE6E3"),
+        ("REVENUE − EXPENSES", f"=C{at['margin']}", '₹#,##0;[Red]-₹#,##0', "138A60", "E1F4EC"),
+        ("PRE-COMPOST", f"=C{at['pc']}", '#,##0.0" MT"', "7A4FB5", "EFE9F8"),
+        ("DUNG IN BEDS", f"=C{at['dung']}", '#,##0.0" t"', GREEN, "E3F1E8"),
+        ("RAW HARVEST", f"=C{at['raw']}", '#,##0" kg"', "2A78D6", "E6F0FB"),
+    ]
+    for (label, val, fmt, accent, tint), (c1, c2) in zip(tiles2, tile_cols):
+        for r in (12, 13):
+            for cc in range(c1, c2 + 1):
+                ws.cell(r, cc).fill = FILL(tint)
+            if c2 > c1:
+                ws.merge_cells(start_row=r, start_column=c1, end_row=r, end_column=c2)
+        for cc in range(c1, c2 + 1):
+            ws.cell(12, cc).border = Border(top=Side(style="medium", color=accent))
+        ws.cell(12, c1, label).font = F(bold=True, size=9, color=accent)
+        v = ws.cell(13, c1, val)
+        v.font = F(bold=True, size=13, color=INK)
+        v.number_format = fmt
+        for r in (12, 13):
+            ws.cell(r, c1).alignment = Alignment(horizontal="left", vertical="center", indent=1)
+    ws.row_dimensions[13].height = 22
+
+    # needs attention (E:I)
+    subhead(ws, R - 2, 5, 9, "NEEDS ATTENTION", "D14B3B")
+    alerts = [
+        ("Beds past expected harvest", f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],"Overdue")', 0),
+        ("Harvest entries without net weight", f'=COUNTIFS(Harvest[Batch],{K},Harvest[BedNo],"<>",Harvest[NetKg],"")', 0),
+        ("Raw material payments not settled", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[PaymentStatus],"<>Paid")', 0),
+        ("Raw material lots without lab acceptance", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[LabResult],"<>Accepted")', 0),
+        ("FG / EX lab reports outside FCO", f'=COUNTIFS(QualityControl[Batch],{K},QualityControl[FCOCheck],"Outside*")', 0),
+        ("Sales priced under ₹1 per kg", f'=COUNTIFS(Sales[Batch],{K},Sales[QtyKg],">0",Sales[PricePerKg],"<1")', 0),
+        ("Days since watering was logged", '=IF(' + LASTWATER + '=0,"none logged",TODAY()-' + LASTWATER + ')', 3),
+    ]
+    for i, (label, f, limit) in enumerate(alerts):
+        r = R + i
+        ws.merge_cells(start_row=r, start_column=5, end_row=r, end_column=7)
+        ws.cell(r, 5, label).font = F(color=INK)
+        c = ws.cell(r, 8, f)
+        c.font = F(bold=True, color=INK)
+        c.alignment = Alignment(horizontal="right")
+        s = ws.cell(r, 9, f'=IF(H{r}="none logged","● Log it",IF(H{r}>{limit},"● Check","● OK"))')
         s.font = F(bold=True)
-        for cc in (ws.cell(r, 5), c, s):
-            cc.border = Border(bottom=THIN)
-    ws.conditional_formatting.add("I8:I14", CellIsRule(operator="equal", formula=['"OK"'], fill=OK_FILL, font=F(bold=True, color="1D7443")))
-    ws.conditional_formatting.add("I8:I14", CellIsRule(operator="notEqual", formula=['"OK"'], fill=WARN_FILL, font=F(bold=True, color="9A5B00")))
+        s.alignment = Alignment(horizontal="center")
+        for cc in range(5, 10):
+            ws.cell(r, cc).border = Border(bottom=THIN)
+    rng = f"I{R}:I{R + len(alerts) - 1}"
+    ws.conditional_formatting.add(rng, CellIsRule(operator="equal", formula=['"● OK"'], fill=OK_FILL, font=F(bold=True, color="1D7443")))
+    ws.conditional_formatting.add(rng, CellIsRule(operator="notEqual", formula=['"● OK"'], fill=WARN_FILL, font=F(bold=True, color="9A5B00")))
+
+    # chart data (bottom of sheet)
+    D = 82
+    subhead(ws, D - 2, 2, 12, "CHART DATA (calculated · feeds the charts above)", "9AA79F")
+    ws.cell(D - 1, 2, "Monthly chart starts from").font = F(color=INK)
+    ms = ws.cell(D - 1, 3, dt.date(2026, 4, 1))
+    ms.number_format, ms.fill, ms.border, ms.font = "mmm yyyy", FILL("FFF3B0"), BOX, F(bold=True)
+    hdr_row(ws, D, 2, ["Month", "Net yield (kg)", "Sold (kg)"])
+    for i in range(12):
+        r = D + 1 + i
+        ws.cell(r, 2, f"=EDATE($C${D - 1},{i})").number_format = "mmm yy"
+        ws.cell(r, 3, f'=SUMIFS(Harvest[NetKg],Harvest[Batch],{K},Harvest[HarvestDate],">="&B{r},Harvest[HarvestDate],"<"&EDATE(B{r},1))').number_format = KG_FMT
+        ws.cell(r, 4, f'=SUMIFS(Sales[QtyKg],Sales[Batch],{K},Sales[SaleDate],">="&B{r},Sales[SaleDate],"<"&EDATE(B{r},1))').number_format = KG_FMT
+    hdr_row(ws, D, 6, ["Expense category", "Amount (₹)"])
+    cats = LISTS["ExpenseCategory"]
+    for i, cat in enumerate(cats):
+        r = D + 1 + i
+        ws.cell(r, 6, cat)
+        ws.cell(r, 7, f"=SUMIFS(Expenses[Amount],Expenses[Batch],{K},Expenses[Category],F{r})").number_format = INR_FMT
+    hdr_row(ws, D, 9, ["Bed status", "Beds"])
+    stat = ["Harvested", "Active", "Inoculated", "Filled", "Ready to harvest", "Overdue"]
+    for i, st in enumerate(stat):
+        r = D + 1 + i
+        ws.cell(r, 9, st)
+        ws.cell(r, 10, f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],I{r})')
+    for row in ws.iter_rows(min_row=D + 1, max_row=D + 12, min_col=2, max_col=10):
+        for c in row:
+            c.font = F(color=INK)
+
+    # charts
+    subhead(ws, 37, 2, 12, "TRENDS", GREEN)
+    ch = BarChart()
+    ch.type = "col"
+    ch.add_data(Reference(ws, min_col=3, max_col=4, min_row=D, max_row=D + 12), titles_from_data=True)
+    ch.set_categories(Reference(ws, min_col=2, min_row=D + 1, max_row=D + 12))
+    style_chart(ch, 2, colors=[GREEN, "EB6834"])
+    ch.y_axis.numFmt = "#,##0"
+    ch.height, ch.width = 7.5, 15.5
+    ws.cell(38, 2, "Net yield vs sold per month (kg)").font = F(bold=True, color=INK)
+    ws.add_chart(ch, "B39")
+    ch2 = BarChart()
+    ch2.type = "bar"
+    ch2.add_data(Reference(ws, min_col=7, min_row=D, max_row=D + len(cats)), titles_from_data=True)
+    ch2.set_categories(Reference(ws, min_col=6, min_row=D + 1, max_row=D + len(cats)))
+    style_chart(ch2, 1, colors=["D14B3B"], reverse=True)
+    ch2.legend = None
+    ch2.y_axis.numFmt = "₹#,##0"
+    ch2.height, ch2.width = 7.5, 12
+    ws.cell(38, 6, "Where the money went (₹)").font = F(bold=True, color=INK)
+    ws.add_chart(ch2, "F39")
+    ch3 = BarChart()
+    ch3.type = "bar"
+    ch3.add_data(Reference(ws, min_col=10, min_row=D, max_row=D + len(stat)), titles_from_data=True)
+    ch3.set_categories(Reference(ws, min_col=9, min_row=D + 1, max_row=D + len(stat)))
+    style_chart(ch3, 1, colors=["7A4FB5"], reverse=True)
+    ch3.legend = None
+    ch3.height, ch3.width = 7.5, 8.2
+    ws.cell(38, 10, "Beds by status").font = F(bold=True, color=INK)
+    ws.add_chart(ch3, "J39")
 
     # batch comparison
-    r0 = 28
-    section(r0, "BATCH COMPARISON")
+    r0 = 56
+    subhead(ws, r0, 2, 11, "BATCH COMPARISON", "2A78D6")
     heads = ["Batch", "Stage", "Beds harvested / filled", "RM received (t)", "Net yield (kg)", "Conversion", "Sold (kg)", "Revenue", "Expenses", "Revenue − expenses"]
-    for j, h in enumerate(heads):
-        c = ws.cell(r0 + 1, 2 + j, h)
-        c.font = F(bold=True, color="FFFFFF")
-        c.fill = HDR_IN
-        c.alignment = Alignment(wrap_text=True, vertical="center")
+    hdr_row(ws, r0 + 1, 2, heads, fill="2A78D6")
+    ws.row_dimensions[r0 + 1].height = 30
     for i in range(10):
         r = r0 + 2 + i
         b = f"B{r}"
@@ -405,44 +522,15 @@ def build(src, out, batch):
                 f'=IF({b}="","",SUMIFS(Expenses[Amount],Expenses[Batch],{b}))',
                 f'=IF({b}="","",I{r}-J{r})']
         fmts = ["General", "General", "#,##0.0", KG_FMT, PCT_FMT, KG_FMT, INR_FMT, INR_FMT, '₹#,##0;[Red]-₹#,##0']
-        ws[b].font = F(bold=True)
+        band = FILL("EEF4FC") if i % 2 == 0 else FILL("FFFFFF")
+        ws[b].font = F(bold=True, color=INK)
+        ws[b].fill = band
         for j, (f, fm) in enumerate(zip(vals, fmts)):
             c = ws.cell(r, 3 + j, f)
-            c.font = F()
-            c.number_format = fm
-            c.border = Border(bottom=THIN)
-    ws.row_dimensions[r0 + 1].height = 30
+            c.font, c.number_format, c.fill, c.border = F(color=INK), fm, band, Border(bottom=THIN)
+    ws.freeze_panes = "A6"
 
-    # monthly produced vs sold
-    r1 = 42
-    section(r1, "MONTHLY NET YIELD VS SALES (selected batch)")
-    ws.cell(r1 + 1, 2, "Chart starts from month").font = F()
-    ws.cell(r1 + 1, 3, dt.date(2026, 4, 1)).number_format = "mmm yyyy"
-    ws.cell(r1 + 1, 3).fill = FILL("FFF3B0")
-    ws.cell(r1 + 1, 3).border = BOX
-    ws.cell(r1 + 1, 4, "← change to move the 12-month window").font = F(color=MUTED, italic=True)
-    for j, h in enumerate(["Month", "Net yield (kg)", "Sold (kg)"]):
-        c = ws.cell(r1 + 3, 2 + j, h)
-        c.font = F(bold=True, color="FFFFFF")
-        c.fill = HDR_IN
-    for i in range(12):
-        r = r1 + 4 + i
-        ws.cell(r, 2, f"=EDATE($C${r1 + 1},{i})").number_format = "mmm yy"
-        ws.cell(r, 3, f'=SUMIFS(Harvest[NetKg],Harvest[Batch],{K},Harvest[HarvestDate],">="&B{r},Harvest[HarvestDate],"<"&EDATE(B{r},1))').number_format = KG_FMT
-        ws.cell(r, 4, f'=SUMIFS(Sales[QtyKg],Sales[Batch],{K},Sales[SaleDate],">="&B{r},Sales[SaleDate],"<"&EDATE(B{r},1))').number_format = KG_FMT
-        for j in range(3):
-            ws.cell(r, 2 + j).font = F()
-    ch = BarChart()
-    ch.type = "col"
-    ch.title = "Net yield vs sold per month (kg)"
-    ch.add_data(Reference(ws, min_col=3, max_col=4, min_row=r1 + 3, max_row=r1 + 15), titles_from_data=True)
-    ch.set_categories(Reference(ws, min_col=2, min_row=r1 + 4, max_row=r1 + 15))
-    style_chart(ch, 2)
-    ch.height, ch.width = 8, 18
-    ws.add_chart(ch, f"F{r1 + 2}")
-    ws.freeze_panes = "A5"
-
-    build_reports(wb, ws_rep, list_ranges)
+    build_reports(wb, ws_rep, list_ranges, lists["Supplier"], lists["Customer"])
     build_readme(ws_readme)
     for w in wb.worksheets:
         w.sheet_properties.tabColor = {"How to use": SOIL, "Dashboard": GREEN, "Reports": GREEN, "Lists": "9AA79F"}.get(w.title, "C9D6CB")
@@ -483,74 +571,131 @@ def to_a1(wb, regs):
                 c.value = v
 
 
-def style_chart(ch, n):
+def style_chart(ch, n, colors=None, reverse=False):
+    colors = colors or SERIES
     for i, s in enumerate(ch.series[:n]):
-        s.graphicalProperties = GraphicalProperties(solidFill=SERIES[i % 3])
-        s.graphicalProperties.line.solidFill = SERIES[i % 3]
-    ch.legend.position = "b"
-    ch.gapWidth = 60
+        s.graphicalProperties = GraphicalProperties(solidFill=colors[i % len(colors)])
+        s.graphicalProperties.line.solidFill = colors[i % len(colors)]
+    if ch.legend is not None:
+        ch.legend.position = "b"
+    ch.gapWidth = 50
+    ch.overlap = -10 if n > 1 else 0
     ch.y_axis.delete = False
     ch.x_axis.delete = False
+    ch.y_axis.majorGridlines = ChartLines(spPr=GraphicalProperties(ln=LineProperties(solidFill="E3E8E4")))
+    ch.y_axis.spPr = GraphicalProperties(ln=LineProperties(noFill=True))
+    ch.x_axis.spPr = GraphicalProperties(ln=LineProperties(solidFill="9AA79F"))
+    ch.y_axis.txPr = axis_text()
+    ch.x_axis.txPr = axis_text()
+    if reverse:
+        # horizontal bars top-to-bottom in list order, value axis kept at the bottom
+        ch.x_axis.scaling.orientation = "maxMin"
+        ch.y_axis.crosses = "max"
 
 
-def build_reports(wb, ws, list_ranges):
+def axis_text(size=900, color="3E4A43"):
+    return RichText(bodyPr=RichTextProperties(), p=[Paragraph(pPr=ParagraphProperties(defRPr=CharacterProperties(sz=size, solidFill=color)), endParaRPr=CharacterProperties(sz=size))])
+
+
+def banner(ws, row, c1, c2, title, sub):
+    for r in (row, row + 1, row + 2):
+        for c in range(c1, c2 + 1):
+            ws.cell(r, c).fill = FILL(GREEN if r < row + 2 else "2E8A5F")
+    t = ws.cell(row, c1, title)
+    t.font = F(bold=True, size=20, color="FFFFFF")
+    t.alignment = Alignment(vertical="center", indent=1)
+    s = ws.cell(row + 2, c1, sub)
+    s.font = F(size=10, color="E3F1E8", italic=True)
+    s.alignment = Alignment(vertical="center", indent=1)
+    ws.row_dimensions[row].height = 26
+    ws.row_dimensions[row + 1].height = 8
+    ws.row_dimensions[row + 2].height = 18
+
+
+def subhead(ws, row, c1, c2, text, color):
+    for c in range(c1, c2 + 1):
+        ws.cell(row, c).border = Border(bottom=Side(style="medium", color=color))
+    ws.cell(row, c1, text).font = F(bold=True, size=11, color=color)
+
+
+def hdr_row(ws, row, c1, heads, fill=GREEN):
+    for j, h in enumerate(heads):
+        c = ws.cell(row, c1 + j, h)
+        c.font = F(bold=True, color="FFFFFF")
+        c.fill = FILL(fill)
+        c.alignment = Alignment(wrap_text=True, vertical="center", horizontal="left" if j == 0 else "center")
+
+
+def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
     ws.sheet_view.showGridLines = False
-    for L, w in zip("ABCDEFG", (2, 30, 15, 15, 15, 15, 3)):
+    for L, w in zip("ABCDEFGH", (2, 30, 15, 15, 15, 15, 3, 3)):
         ws.column_dimensions[L].width = w
-    ws["B1"] = "Reports · compare batches"
-    ws["B1"].font = F(bold=True, size=18, color=INK)
-    ws["B2"] = "Pick up to three batches in C4:E4 and the first month in C5. Click a report name below to jump to it. Every table and chart updates live."
-    ws["B2"].font = F(color=MUTED, italic=True)
-    ws["B4"], ws["B5"], ws["B6"] = "Compare batches", "Months start from", "Quality report batch"
-    for c in (ws["B4"], ws["B5"], ws["B6"]):
-        c.font = F(bold=True)
-    ws["C4"], ws["D4"], ws["E4"] = "B4", "B5", None
-    ws["C5"] = dt.date(2025, 12, 1)
-    ws["C5"].number_format = "mmm yyyy"
-    ws["C6"] = "All"
-    for a in ("C4", "D4", "E4", "C5", "C6"):
+    for L in "IJKLMNOP":
+        ws.column_dimensions[L].width = 11
+    banner(ws, 1, 2, 16, "Reports · Compare Batches",
+           "Pick up to three batches in C5:E5 · every table and chart updates live · click a report name to jump to it")
+    ws["B5"], ws["B6"], ws["B7"] = "Compare batches  ▸", "Months start from  ▸", "Quality report batch  ▸"
+    for c in (ws["B5"], ws["B6"], ws["B7"]):
+        c.font = F(bold=True, color=INK)
+    ws["C5"], ws["D5"], ws["E5"] = "B4", "B5", None
+    ws["C6"] = dt.date(2025, 12, 1)
+    ws["C6"].number_format = "mmm yyyy"
+    ws["C7"] = "All"
+    for a in ("C5", "D5", "E5", "C6", "C7"):
         ws[a].fill = FILL("FFF3B0")
         ws[a].border = BOX
-        ws[a].font = F(bold=True)
+        ws[a].font = F(bold=True, color=INK)
+        ws[a].alignment = Alignment(horizontal="center")
+    for a, colr in zip(("C4", "D4", "E4"), SERIES):
+        ws[a].fill = FILL(colr)
+    ws["F5"] = "← colour = bar colour in charts"
+    ws["F5"].font = F(color=MUTED, italic=True, size=9)
     dv = DataValidation(type="list", formula1="=L_Batch", allow_blank=True)
-    dv.add("C4:E4")
+    dv.add("C5:E5")
     ws.add_data_validation(dv)
     dv2 = DataValidation(type="list", formula1="=L_BatchPick", allow_blank=False)
-    dv2.add("C6")
+    dv2.add("C7")
     ws.add_data_validation(dv2)
 
     sections = []
-    row = 13
+    row = 14
 
     def table(title, short, cat_label, cats, fn, fmt, note=None, chart_title=None, total=None):
         """cats: list of (label or formula, criteria builder). fn(batch_cell, cat_row) -> formula"""
         nonlocal row
         start = row
-        ws.cell(row, 2, title).font = F(bold=True, size=13, color=SOIL)
-        ws.cell(row, 2).border = Border(bottom=Side(style="medium", color=SOIL))
+        for cc in range(2, 17):
+            ws.cell(row, cc).fill = FILL("E3F1E8")
+        ws.cell(row, 2, title).font = F(bold=True, size=12, color=GREEN)
+        ws.cell(row, 2).alignment = Alignment(vertical="center", indent=1)
+        ws.row_dimensions[row].height = 22
         sections.append((short, row))
         if note:
             ws.cell(row + 1, 2, note).font = F(color=MUTED, italic=True)
         hr = row + 2
-        heads = [cat_label, "=IF($C$4=\"\",\"(pick)\",$C$4)", "=IF($D$4=\"\",\"(none)\",$D$4)", "=IF($E$4=\"\",\"(none)\",$E$4)", "Total"]
+        heads = [cat_label, "=IF($C$5=\"\",\"(pick)\",$C$5)", "=IF($D$5=\"\",\"—\",$D$5)", "=IF($E$5=\"\",\"—\",$E$5)", "Total"]
         for j, h in enumerate(heads):
             c = ws.cell(hr, 2 + j, h)
             c.font = F(bold=True, color="FFFFFF")
-            c.fill = HDR_IN
+            c.fill = FILL([INK, *SERIES, INK][j])
+            c.alignment = Alignment(horizontal="left" if j == 0 else "right")
         for i, cat in enumerate(cats):
             r = hr + 1 + i
-            ws.cell(r, 2, cat).font = F()
+            ws.cell(r, 2, cat).font = F(color=INK)
+            ws.cell(r, 2).alignment = Alignment(horizontal="left")
             if isinstance(cat, str) and cat.startswith("=EDATE"):
                 ws.cell(r, 2).number_format = "mmm yy"
-            for j, bc in enumerate(("$C$4", "$D$4", "$E$4")):
+            for j, bc in enumerate(("$C$5", "$D$5", "$E$5")):
                 c = ws.cell(r, 3 + j, f'=IF({bc}="","",{fn(bc, r)})')
                 c.number_format = fmt
-                c.font = F()
+                c.font = F(color=INK)
             t = ws.cell(r, 6, f"=SUM(C{r}:E{r})")
             t.number_format = fmt
-            t.font = F(bold=True)
+            t.font = F(bold=True, color=INK)
+            band = FILL("F4F7F3") if i % 2 else FILL("FFFFFF")
             for j in range(5):
                 ws.cell(r, 2 + j).border = Border(bottom=THIN)
+                ws.cell(r, 2 + j).fill = band
         end = hr + len(cats)
         tr = end + 1
         ws.cell(tr, 2, total[0] if total else "Total").font = F(bold=True)
@@ -559,27 +704,27 @@ def build_reports(wb, ws, list_ranges):
             c = ws.cell(tr, 3 + j, total[1].format(L=L, a=hr + 1, b=hr + 2, c=hr + 3) if total else f"=SUM({L}{hr + 1}:{L}{end})")
             c.number_format = fmt
             c.font = F(bold=True)
-            c.fill = FILL("E8EEE7")
-        ws.cell(tr, 2).fill = FILL("E8EEE7")
+            c.fill = FILL("D5E8DC")
+            c.border = Border(top=Side(style="thin", color=GREEN))
+        ws.cell(tr, 2).fill = FILL("D5E8DC")
+        ws.cell(tr, 2).border = Border(top=Side(style="thin", color=GREEN))
         ch = BarChart()
         ch.type = "bar"
-        ch.title = chart_title or title
         ch.add_data(Reference(ws, min_col=3, max_col=5, min_row=hr, max_row=end), titles_from_data=True)
         ch.set_categories(Reference(ws, min_col=2, min_row=hr + 1, max_row=end))
         ch.y_axis.numFmt = "#,##0"
-        ch.x_axis.scaling.orientation = "maxMin"
-        style_chart(ch, 3)
-        ch.height = max(7, 0.55 * len(cats) + 3)
-        ch.width = 17
-        ws.add_chart(ch, f"H{start}")
-        row = max(tr + 3, start + int(ch.height * 2) + 3)
+        style_chart(ch, 3, reverse=True)
+        ch.height = max(6.5, 0.5 * len(cats) + 2.5)
+        ch.width = 16
+        ws.add_chart(ch, f"I{start + 1}")
+        row = max(tr + 3, start + int(ch.height * 2) + 4)
         return hr, end
 
-    months = [f"=EDATE($C$5,{i})" for i in range(12)]
+    months = [f"=EDATE($C$6,{i})" for i in range(12)]
     mrange = lambda tb, dc, r: f'{tb}[{dc}],">="&$B${r},{tb}[{dc}],"<"&EDATE($B${r},1)'
     sup = list_ranges["Supplier"]
     nsup = int(sup.split("$")[-1]) - 1
-    table("Raw material – quantity by supplier (kg)", "RM by supplier", "Supplier", [f"=IF(INDEX(L_Supplier,{i + 1})=\"\",\"\",INDEX(L_Supplier,{i + 1}))" for i in range(min(nsup, 10))],
+    table("Raw material – quantity by supplier (kg)", "RM by supplier", "Supplier", [f"=IF(INDEX(L_Supplier,{i + 1})=\"\",\"\",INDEX(L_Supplier,{i + 1}))" for i in range(min(nsup, len(lists_sup) + 3))],
           lambda b, r: f"SUMIFS(RawMaterial[QtyKg],RawMaterial[Batch],{b},RawMaterial[Supplier],$B${r})", KG_FMT,
           "Supplier names come from the Lists sheet. Add new suppliers there.")
     table("Raw material – quantity by purchase month (kg)", "RM by month", "Month", months,
@@ -591,7 +736,7 @@ def build_reports(wb, ws, list_ranges):
           lambda b, r: f'SUMIFS(Beds[NetYieldKg],Beds[Batch],{b},Beds[BedNum],">="&VALUE(MID($B${r},5,2)),Beds[BedNum],"<="&VALUE(MID($B${r},5,2))+9)', KG_FMT)
     table("Harvest – net yield by month (kg)", "Harvest by month", "Month", months,
           lambda b, r: f"SUMIFS(Harvest[NetKg],Harvest[Batch],{b},{mrange('Harvest', 'HarvestDate', r)})", KG_FMT)
-    table("Sales – quantity by customer (kg)", "Sales by customer", "Customer", [f"=IF(INDEX(L_Customer,{i + 1})=\"\",\"\",INDEX(L_Customer,{i + 1}))" for i in range(8)],
+    table("Sales – quantity by customer (kg)", "Sales by customer", "Customer", [f"=IF(INDEX(L_Customer,{i + 1})=\"\",\"\",INDEX(L_Customer,{i + 1}))" for i in range(len(lists_cus) + 3)],
           lambda b, r: f"SUMIFS(Sales[QtyKg],Sales[Batch],{b},Sales[Customer],$B${r})", KG_FMT, "Customer names come from the Lists sheet.")
     table("Sales – revenue by month (₹)", "Revenue by month", "Month", months,
           lambda b, r: f"SUMIFS(Sales[Revenue],Sales[Batch],{b},{mrange('Sales', 'SaleDate', r)})", INR_FMT)
@@ -605,23 +750,27 @@ def build_reports(wb, ws, list_ranges):
 
     # Quality: RM trial vs FG vs EX
     start = row
-    ws.cell(row, 2, "Quality – RM trial vs FG vs EX (average of lab reports)").font = F(bold=True, size=13, color=SOIL)
-    ws.cell(row, 2).border = Border(bottom=Side(style="medium", color=SOIL))
+    for cc in range(2, 17):
+        ws.cell(row, cc).fill = FILL("E3F1E8")
+    ws.cell(row, 2, "Quality – RM trial vs FG vs EX (average of lab reports)").font = F(bold=True, size=12, color=GREEN)
+    ws.cell(row, 2).alignment = Alignment(vertical="center", indent=1)
+    ws.row_dimensions[row].height = 22
     sections.append(("Quality RM / FG / EX", row))
-    ws.cell(row + 1, 2, "Batch chosen in C6 (All = every batch). FCO limits apply to FG and EX; cells in red fall outside them.").font = F(color=MUTED, italic=True)
+    ws.cell(row + 1, 2, "Batch chosen in C7 (All = every batch). FCO limits apply to FG and EX; cells in red fall outside them.").font = F(color=MUTED, italic=True)
     hr = row + 2
     for j, h in enumerate(["Parameter", "RM trial", "FG finished", "EX export", "FCO min", "FCO max"]):
         c = ws.cell(hr, 2 + j, h)
         c.font = F(bold=True, color="FFFFFF")
-        c.fill = HDR_IN
+        c.fill = FILL([INK, *SERIES, "5B6B62", "5B6B62"][j])
+        c.alignment = Alignment(horizontal="left" if j == 0 else "right")
     params = [("Moisture", "Moisture %"), ("OrganicCarbon", "Organic carbon %"), ("OrganicMatter", "Organic matter %"), ("Ash", "Ash %"), ("CNRatio", "C:N ratio"),
               ("pH", "pH"), ("EC", "EC dS/m"), ("Nitrogen", "Nitrogen %"), ("Phosphorus", "Phosphorus %"), ("Potassium", "Potassium %"),
               ("Calcium", "Calcium"), ("Manganese", "Manganese"), ("Iron", "Iron"), ("Manganese2", "Manganese (2nd)"), ("Zinc", "Zinc"), ("Copper", "Copper")]
-    crit = 'IF($C$6="All","*",$C$6)'
+    crit = 'IF($C$7="All","*",$C$7)'
     fco_idx = {c: i for i, (c, *_) in enumerate(FCO)}
     for i, (colname, label) in enumerate(params):
         r = hr + 1 + i
-        ws.cell(r, 2, label).font = F()
+        ws.cell(r, 2, label).font = F(color=INK)
         for j, p in enumerate(("RM", "FG", "EX")):
             c = ws.cell(r, 3 + j, f'=IFERROR(AVERAGEIFS(QualityControl[{colname}],QualityControl[Batch],{crit},QualityControl[Product],"{p}"),"")')
             c.number_format = "0.00"
@@ -632,6 +781,7 @@ def build_reports(wb, ws, list_ranges):
             ws.cell(r, 7, f'=IF(Lists!$T${k}="","",Lists!$T${k})').font = F(color=MUTED)
         for j in range(6):
             ws.cell(r, 2 + j).border = Border(bottom=THIN)
+            ws.cell(r, 2 + j).fill = FILL("F4F7F3") if i % 2 else FILL("FFFFFF")
     qend = hr + len(params)
     rr = qend + 1
     ws.cell(rr, 2, "Reports included").font = F(color=MUTED)
@@ -641,32 +791,32 @@ def build_reports(wb, ws, list_ranges):
     rng = f"D{hr + 1}:E{qend}"
     ws.conditional_formatting.add(rng, FormulaRule(formula=[f'AND(ISNUMBER(D{hr + 1}),OR(AND(ISNUMBER($F{hr + 1}),D{hr + 1}<$F{hr + 1}),AND(ISNUMBER($G{hr + 1}),D{hr + 1}>$G{hr + 1})))'],
                                                    fill=BAD_FILL, font=F(bold=True, color="B3261E")))
-    for title, a, b, anchor in (("Quality – moisture, carbon, ash, C:N", hr + 1, hr + 5, f"I{start}"), ("Quality – pH, EC, N, P, K", hr + 6, hr + 10, f"I{start + 17}")):
+    for title, a, b, anchor in (("Moisture, carbon, ash, C:N", hr + 1, hr + 5, start + 1), ("pH, EC, N, P, K", hr + 6, hr + 10, start + 18)):
+        ws.cell(anchor, 9, title).font = F(bold=True, color=INK)
         ch = BarChart()
         ch.type = "col"
-        ch.title = title
         for j in range(3):
             s = Series(Reference(ws, min_col=3 + j, min_row=a, max_row=b), title=["RM trial", "FG finished", "EX export"][j])
             ch.series.append(s)
         ch.set_categories(Reference(ws, min_col=2, min_row=a, max_row=b))
         style_chart(ch, 3)
-        ch.height, ch.width = 8, 16
-        ws.add_chart(ch, anchor)
+        ch.height, ch.width = 7.5, 16
+        ws.add_chart(ch, f"I{anchor + 1}")
     row = max(rr + 3, start + 34)
 
     # index with links
-    ws["B8"] = "Jump to:"
-    ws["B8"].font = F(bold=True)
+    ws["B9"] = "Jump to  ▸"
+    ws["B9"].font = F(bold=True, color=INK)
     col = 3
-    r = 8
+    r = 9
     for title, rr_ in sections:
         c = ws.cell(r, col, title)
         c.hyperlink = Hyperlink(ref=c.coordinate, location=f"Reports!B{rr_}", display=c.value)
-        c.font = F(color="1C5FB8", underline="single")
+        c.font = F(color="1C5FB8", underline="single", bold=True)
         col += 1
         if col > 6:
             col, r = 3, r + 1
-    ws.freeze_panes = "A7"
+    ws.freeze_panes = "A8"
 
 
 def build_readme(ws):
@@ -688,7 +838,7 @@ def build_readme(ws):
         ("•", "Always fill the Batch column (drop-down). Start Batch 5 records with B5."),
         ("•", "Use drop-downs where they appear. To add a new supplier, customer or category, type it on the Lists sheet."),
         ("•", "Dates: type as 14-02-2026 or pick from the date picker."),
-        ("•", "Dashboard: choose a batch (or All) in cell C4. Reports: choose up to three batches in C4:E4 to compare, and the quality batch in C6."),
+        ("•", "Dashboard: choose a batch (or All) in cell C5. Reports: choose up to three batches in C5:E5 to compare, and the quality batch in C7."),
         ("h2", "Colour legend"),
         ("green", "Green header = you type here."),
         ("grey", "Grey header = formula column. Do not type in it; it calculates by itself."),
