@@ -868,7 +868,7 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
         col += 1
         if col > 6:
             col, r = 3, r + 1
-    ws.freeze_panes = "A8"
+    ws.freeze_panes = f"A{TOP_ROW}"
     protect(ws)
 
 
@@ -884,10 +884,14 @@ def start_month(manual, first, first2):
             f'IF({first2}<100000,DATE(YEAR({first2}),MONTH({first2}),1),DATE(YEAR(TODAY()),MONTH(TODAY())-11,1))))')
 
 
+TOP_ROW = 8  # first row below the frozen banner/selectors on Reports
+
+
 def top_button(ws, row, col):
-    """A '▲ TOP' button on a section heading that jumps back to the top of the sheet."""
+    """A '▲ TOP' button on a section heading that scrolls back to the top of the sheet.
+    It targets the first row under the frozen panes: a link to a frozen cell (A1) would not scroll."""
     c = ws.cell(row, col, "▲ TOP")
-    c.hyperlink = Hyperlink(ref=c.coordinate, location=f"'{ws.title}'!A1", display="▲ TOP")
+    c.hyperlink = Hyperlink(ref=c.coordinate, location=f"'{ws.title}'!A{TOP_ROW}", display="▲ TOP")
     c.font = F(bold=True, color="FFFFFF", size=9)
     c.fill = FILL(GREEN)
     c.alignment = Alignment(horizontal="center", vertical="center")
