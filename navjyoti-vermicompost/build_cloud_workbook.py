@@ -18,7 +18,9 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.hyperlink import Hyperlink
-from openpyxl.worksheet.table import Table, TableFormula, TableStyleInfo
+import re
+
+from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from convert_register import convert
 
@@ -31,6 +33,7 @@ HDR_IN, HDR_CALC = FILL(GREEN), FILL("5B6B62")
 THIN = Side(style="thin", color="D3DDD4")
 BOX = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
 WARN_FILL, BAD_FILL, OK_FILL = FILL("FBECD2"), FILL("F9DEDB"), FILL("DCEFE2")
+PREFILL, LAST_ROW = 1500, 5000  # formula rows ready below each table / rows the reports read
 DATE_FMT, KG_FMT, INR_FMT, PCT_FMT = "dd-mm-yyyy", "#,##0", "₹#,##0", "0.0%"
 
 # Dropdown lists (Lists sheet). Batch codes come from the Batches table.
@@ -233,13 +236,18 @@ def build(src, out, batch):
         tab = Table(displayName=tname, ref=f"A1:{last}{nrows + 1}")
         tab.tableStyleInfo = TableStyleInfo(name="TableStyleLight9", showRowStripes=True)
         tab._initialise_columns()
-        for tc, (h, _, kind, extra) in zip(tab.tableColumns, cols):
-            if kind.startswith("calc"):
-                f = fco_formula(tname) if extra == "FCO" else extra
-                for hh, *_ in cols:
-                    f = f.replace("{" + hh + "}", this(tname, hh))
-                tc.calculatedColumnFormula = TableFormula(attr_text=f[1:])
         ws.add_table(tab)
+        # formula columns are pre-filled below the table, so a row typed under the table
+        # already calculates when Excel extends the table over it
+        for ri in range(nrows + 2, PREFILL + 1):
+            for ci, (h, _, kind, extra) in enumerate(cols, 1):
+                if kind.startswith("calc"):
+                    f = fco_formula(tname) if extra == "FCO" else extra
+                    for hh, *_ in cols:
+                        f = f.replace("{" + hh + "}", this(tname, hh))
+                    c = ws.cell(ri, ci, f)
+                    c.font = F()
+                    c.number_format = {"calc_inr": INR_FMT, "calc_kg": KG_FMT, "calc_pct": PCT_FMT, "calc_num": "0.#"}.get(kind, "General")
         ws.freeze_panes = "C2" if tname != "Batches" else "B2"
         ws.row_dimensions[1].height = 30
         calc_cols[tname] = [h for h, _, kind, _ in cols if kind.startswith("calc")]
@@ -358,7 +366,7 @@ def build(src, out, batch):
         ("Raw material lots without lab acceptance", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[LabResult],"<>Accepted")'),
         ("FG / EX lab reports outside FCO", f'=COUNTIFS(QualityControl[Batch],{K},QualityControl[FCOCheck],"Outside*")'),
         ("Sales priced under ₹1 per kg", f'=COUNTIFS(Sales[Batch],{K},Sales[QtyKg],">0",Sales[PricePerKg],"<1")'),
-        ("Days since watering was logged", f'=IF(_xlfn.MAXIFS(DailyLog[LogDate],DailyLog[Batch],{K},DailyLog[Activity],"Watering")=0,"none logged",TODAY()-_xlfn.MAXIFS(DailyLog[LogDate],DailyLog[Batch],{K},DailyLog[Activity],"Watering"))'),
+        ("Days since watering was logged", '=IF(' + LASTWATER + '=0,"none logged",TODAY()-' + LASTWATER + ')'),
     ]
     for i, (label, f) in enumerate(alerts):
         r = 8 + i
@@ -443,9 +451,36 @@ def build(src, out, batch):
         w.page_setup.paperSize = w.PAPERSIZE_A4
         w.sheet_properties.pageSetUpPr.fitToPage = True
         w.page_setup.fitToWidth, w.page_setup.fitToHeight = 1, 0
+    to_a1(wb, regs)
     wb.calculation.fullCalcOnLoad = True
     wb.active = 1
     wb.save(out)
+
+
+LASTWATER = ('SUMPRODUCT(MAX(DailyLog[LogDate]*(DailyLog[Activity]="Watering")'
+             '*(((SelBatch="All")+(DailyLog[Batch]=SelBatch))>0)))')
+
+
+def to_a1(wb, regs):
+    """Rewrite table references (Harvest[NetKg], Beds[[#This Row],[BedNo]]) as plain A1 ranges,
+    which every Excel version (2010 onwards, web, phone) reads without #REF!."""
+    cols = {}
+    for tname, (_, spec) in regs.items():
+        ws = wb[tname]
+        cols[tname] = {h: ws.cell(1, i + 1).column_letter for i, (h, *_) in enumerate(spec)}
+    this_re = re.compile(r"(\w+)\[\[#This Row\],\[([^\]]+)\]\]")
+    col_re = re.compile(r"(\w+)\[([A-Za-z0-9]+)\]")
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for c in row:
+                v = c.value
+                if not (isinstance(v, str) and v.startswith("=") and "[" in v):
+                    continue
+                v = this_re.sub(lambda m: f"{cols[m.group(1)][m.group(2)]}{c.row}", v)
+                v = col_re.sub(lambda m: f"{m.group(1)}!${cols[m.group(1)][m.group(2)]}$2:${cols[m.group(1)][m.group(2)]}${LAST_ROW}"
+                               if m.group(1) in cols else m.group(0), v)
+                assert "[" not in v.replace('"[', ''), v
+                c.value = v
 
 
 def style_chart(ch, n):
