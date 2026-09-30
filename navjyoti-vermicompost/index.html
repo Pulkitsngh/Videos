@@ -1,0 +1,871 @@
+<title>Navjyoti Vermicompost Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky header with batch switcher, scrollable register tabs, one working pane per register. */
+:root {
+  --bg: #f2f5f1; --surface: #ffffff; --surface-2: #e8eee7; --fg: #16201b; --muted: #58685f; --line: #d3ddd4;
+  --accent: #1c7148; --accent-fg: #ffffff; --soil: #6b4424;
+  --s1: #1e8a5a; --s2: #5b5bd6;
+  --good: #1d7443; --good-bg: #dcefe2; --warn: #9a5b00; --warn-bg: #fbecd2; --bad: #b3261e; --bad-bg: #f9dedb; --info-bg: #e3e6fa;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1512; --surface: #161e1a; --surface-2: #1e2823; --fg: #e2ebe5; --muted: #95a89c; --line: #2b3831;
+  --accent: #4dbf8a; --accent-fg: #07130d; --soil: #d19a6a;
+  --s1: #3ba877; --s2: #7575e6;
+  --good: #63cf90; --good-bg: #173524; --warn: #e8ad4a; --warn-bg: #3a2a0e; --bad: #f47d73; --bad-bg: #3d1a17; --info-bg: #23264a;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1512; --surface: #161e1a; --surface-2: #1e2823; --fg: #e2ebe5; --muted: #95a89c; --line: #2b3831;
+  --accent: #4dbf8a; --accent-fg: #07130d; --soil: #d19a6a;
+  --s1: #3ba877; --s2: #7575e6;
+  --good: #63cf90; --good-bg: #173524; --warn: #e8ad4a; --warn-bg: #3a2a0e; --bad: #f47d73; --bad-bg: #3d1a17; --info-bg: #23264a;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--f-body); }
+button, input, select, textarea { font: inherit; color: inherit }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em }
+.num, td.n, .mono { font-variant-numeric: tabular-nums }
+.mono { font-family: var(--f-mono); font-size: 12.5px }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line) }
+.top-row { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; padding: 12px 16px; max-width: 1320px; margin: 0 auto }
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0 }
+.brand h1 { font-size: 20px; color: var(--fg) }
+.brand span { color: var(--soil); font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; text-transform: uppercase }
+.top-tools { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.sync { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px }
+.sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted) }
+.sync.live i { background: var(--good) } .sync.off i { background: var(--bad) }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; padding: 0 16px; max-width: 1320px; margin: 0 auto; scrollbar-width: thin }
+nav.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 10px 9px; color: var(--muted); cursor: pointer; white-space: nowrap; font-weight: 500 }
+nav.tabs button:hover { color: var(--fg) }
+nav.tabs button[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent) }
+
+main { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 60px; display: grid; gap: 20px }
+.page-head { display: flex; align-items: end; gap: 12px 16px; flex-wrap: wrap }
+.page-head h2 { font-size: 24px }
+.page-head p { margin: 2px 0 0; color: var(--muted); max-width: 70ch }
+.page-head .tools { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 12px; border-radius: var(--r); cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap }
+.btn:hover { border-color: var(--muted) }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg) }
+.btn.primary:hover { filter: brightness(1.08) }
+.btn.danger { color: var(--bad); border-color: var(--bad) }
+.btn.small { padding: 4px 9px; font-size: 13px }
+select.sel, input.search { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 7px 10px }
+input.search { min-width: 0; width: 220px }
+
+.banner { padding: 12px 14px; border-radius: var(--r); background: var(--warn-bg); color: var(--fg); border: 1px solid var(--line) }
+.banner b { color: var(--warn) }
+
+/* KPI tiles */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px }
+@media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px } }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 2px; align-content: start }
+.kpi .l { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted) }
+.kpi .v { font-family: var(--f-display); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2 }
+.kpi .v small { font-size: 15px; font-weight: 600; color: var(--muted); margin-left: 3px }
+.kpi .s { font-size: 12.5px; color: var(--muted) }
+
+/* Process flow */
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.flow > div { padding: 12px 14px; position: relative; border-right: 1px solid var(--line); min-width: 0 }
+.flow > div:last-child { border-right: 0 }
+.flow .st { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--soil); font-weight: 600 }
+.flow .q { font-family: var(--f-display); font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums }
+.flow .d { font-size: 12px; color: var(--muted) }
+@media (max-width: 760px) { .flow { grid-template-columns: 1fr 1fr } .flow > div { border-bottom: 1px solid var(--line) } }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 900px) { .grid2 { grid-template-columns: minmax(0, 1fr) } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; min-width: 0; display: grid; gap: 12px; align-content: start }
+.panel h3 { font-size: 16px }
+.panel .sub { color: var(--muted); font-size: 12.5px; margin-top: -8px }
+
+.alerts { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none }
+.alerts li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 9px 10px; border-radius: 6px; background: var(--surface-2) }
+.alerts li.warn { background: var(--warn-bg) } .alerts li.bad { background: var(--bad-bg) } .alerts li.ok { background: var(--good-bg) }
+.alerts .ic { font-weight: 700; font-family: var(--f-mono); width: 18px; text-align: center }
+.alerts li.warn .ic { color: var(--warn) } .alerts li.bad .ic { color: var(--bad) } .alerts li.ok .ic { color: var(--good) }
+.alerts b { display: block; font-weight: 600 }
+.alerts span { color: var(--muted); font-size: 12.5px }
+
+/* Tables */
+.tbl-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r) }
+table { border-collapse: collapse; width: 100%; font-size: 13px }
+th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: top }
+td.wrap { white-space: normal; min-width: 180px; max-width: 320px }
+th { position: sticky; top: 0; background: var(--surface-2); font-weight: 600; font-size: 12px; color: var(--muted); z-index: 1 }
+th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px }
+th button:focus-visible { outline: 2px solid var(--accent) }
+th.n, td.n { text-align: right; font-variant-numeric: tabular-nums }
+tbody tr { cursor: default }
+tbody tr.click { cursor: pointer }
+tbody tr.click:hover { background: var(--surface-2) }
+tfoot td { font-weight: 600; background: var(--surface-2); border-bottom: 0 }
+td.off { color: var(--bad); font-weight: 600 }
+.empty { padding: 32px 16px; text-align: center; color: var(--muted) }
+.empty b { display: block; color: var(--fg); font-size: 15px; margin-bottom: 4px }
+
+.chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; background: var(--surface-2); color: var(--fg) }
+.chip.good { background: var(--good-bg); color: var(--good) } .chip.warn { background: var(--warn-bg); color: var(--warn) }
+.chip.bad { background: var(--bad-bg); color: var(--bad) } .chip.info { background: var(--info-bg); color: var(--s2) }
+
+/* Beds */
+.bed-sum { display: flex; flex-wrap: wrap; gap: 8px }
+.beds { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px }
+.bed { all: unset; box-sizing: border-box; cursor: pointer; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 9px 8px 12px; display: grid; gap: 1px; position: relative; overflow: hidden }
+.bed::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--muted) }
+.bed.s-active::before { background: var(--s1) } .bed.s-ready::before, .bed.s-overdue::before { background: var(--warn) }
+.bed.s-harvested::before { background: var(--soil) } .bed.s-filled::before { background: var(--s2) }
+.bed:hover { border-color: var(--muted) }
+.bed:focus-visible { outline: 2px solid var(--accent) }
+.bed .id { font-family: var(--f-mono); font-weight: 500; font-size: 12.5px }
+.bed .st { font-size: 11.5px; color: var(--muted) }
+.bed .kg { font-variant-numeric: tabular-nums; font-weight: 600 }
+.bed.s-overdue .st { color: var(--warn); font-weight: 600 }
+
+/* Chart */
+.chart { position: relative; overflow-x: auto }
+.chart svg { width: 100%; min-width: 540px; height: auto; display: block }
+.chart .tip { position: absolute; pointer-events: none; background: var(--fg); color: var(--bg); padding: 6px 9px; border-radius: 6px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -100%); }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted) }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px }
+.bars { display: grid; gap: 7px }
+.bars .row { display: grid; grid-template-columns: minmax(90px, 130px) 1fr auto; gap: 10px; align-items: center; font-size: 13px }
+.bars .row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.bars .track { height: 12px }
+.bars .bar { height: 12px; background: var(--s1); border-radius: 0 4px 4px 0; min-width: 2px }
+.bars .row:hover .bar { filter: brightness(1.15) }
+
+/* Trace */
+.trace { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px }
+.trace .stage { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: grid; gap: 6px; align-content: start; min-width: 0 }
+.trace .stage h4 { margin: 0; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--soil) }
+.trace .stage .q { font-family: var(--f-display); font-weight: 700; font-size: 19px }
+.trace ul { margin: 0; padding: 0; list-style: none; font-family: var(--f-mono); font-size: 12px; display: grid; gap: 2px; max-height: 180px; overflow: auto }
+
+/* Dialog */
+dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; background: var(--surface); color: var(--fg); width: min(760px, calc(100vw - 24px)); max-height: calc(100dvh - 40px) }
+dialog::backdrop { background: rgb(0 0 0 / .45) }
+dialog form { display: grid; grid-template-rows: auto 1fr auto; max-height: calc(100dvh - 42px) }
+.dlg-h { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px }
+.dlg-h h3 { font-size: 18px }
+.dlg-h .x { margin-left: auto }
+.dlg-b { padding: 16px 18px; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 14px }
+.dlg-f { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+.dlg-f .sp { flex: 1 }
+.fld { display: grid; gap: 4px; min-width: 0 }
+.fld.wide { grid-column: 1 / -1 }
+.fld label { font-size: 12px; font-weight: 600; color: var(--muted) }
+.fld input, .fld select, .fld textarea { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 7px 9px; width: 100%; min-width: 0 }
+.fld textarea { min-height: 64px; resize: vertical }
+.turns { display: grid; gap: 6px }
+.turn-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 6px; align-items: end }
+@media (max-width: 560px) { .turn-row { grid-template-columns: 1fr 1fr } }
+.note { font-size: 12.5px; color: var(--muted); grid-column: 1 / -1; margin: 0 }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 9px 14px; border-radius: 8px; font-size: 13px; z-index: 50; max-width: calc(100vw - 32px) }
+.muted { color: var(--muted) }
+.foot { color: var(--muted); font-size: 12px }
+@media (max-width: 560px) { input.search { width: 100% } .page-head .tools { width: 100%; margin-left: 0 } .kpi { padding: 10px 12px } .kpi .v { font-size: 21px } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+</style>
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand"><h1>Navjyoti</h1><span>Vermicompost production register</span></div>
+    <div class="top-tools">
+      <label class="muted" for="batchSel" style="font-size:12px">Batch</label>
+      <select id="batchSel" class="sel"></select>
+      <button class="btn small" id="exportBtn" hidden>Export Excel</button>
+      <div class="sync" id="sync"><i></i><span>Connecting…</span></div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Registers"></nav>
+</header>
+
+<main id="main"><div class="empty"><b>Loading the production register…</b>Records sync from the cloud as soon as the page connects.</div></main>
+
+<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+const COLLS = ['batches', 'logs', 'rm', 'precompost', 'beds', 'harvest', 'qc', 'sales', 'stock', 'expenses'];
+const BATCH_STATUS = ['Planning', 'Raw material', 'Pre-composting', 'In beds', 'Harvesting', 'Closing', 'Closed'];
+const BED_STATUS = ['Filled', 'Inoculated', 'Active', 'Ready to harvest', 'Harvested', 'Empty'];
+const EXP_CATS = ['Raw material', 'Culture & inputs', 'Bed setup', 'Labour', 'Sieving', 'Transport', 'Machinery', 'Packaging', 'Lab testing', 'Sales & dispatch', 'Utilities', 'Other'];
+const ACTIVITIES = ['Watering', 'Turning', 'Temperature check', 'Moisture check', 'Feeding', 'Shuffling', 'Worm inoculation', 'Pest / ant control', 'Shade / cover repair', 'Harvest', 'Sieving', 'Inspection', 'Other'];
+// FCO reference for vermicompost (finished goods). P and K are specified as P2O5 / K2O.
+const FCO = { moisture: [15, 25, 'Moisture 15–25 %'], ph: [6.5, 7.5, 'pH 6.5–7.5'], ec: [null, 4, 'EC ≤ 4 dS/m'], oc: [18, null, 'Organic carbon ≥ 18 %'],
+  n: [1, null, 'Nitrogen ≥ 1.0 %'], p: [0.8, null, 'P₂O₅ ≥ 0.8 %'], k: [0.8, null, 'K₂O ≥ 0.8 %'], cn: [null, 20, 'C:N ≤ 20'] };
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isNum = v => typeof v === 'number' && isFinite(v);
+const fmt = (n, d = 0) => isNum(n) ? n.toLocaleString('en-IN', { maximumFractionDigits: d }) : '—';
+const inr = n => isNum(n) ? (n < 0 ? '−₹' : '₹') + Math.abs(Math.round(n)).toLocaleString('en-IN') : '—';
+const tons = kg => isNum(kg) ? (kg / 1000).toLocaleString('en-IN', { maximumFractionDigits: 1 }) : '—';
+const isISO = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+const fdate = s => isISO(s) ? new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : (s || '—');
+const localISO = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const TODAY = localISO(new Date());
+const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return localISO(d); };
+const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
+const sum = (arr, f) => arr.reduce((t, r) => { const v = f(r); return t + (isNum(v) ? v : 0); }, 0);
+const uniq = a => [...new Set(a.filter(Boolean))];
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+const F = (k, l, t = 'text', o = {}) => ({ k, l, t, ...o });
+const C = (k, l, t = 'text', fn) => ({ k, l, t, fn });
+const listOf = (coll, key) => () => uniq(rows(coll).map(r => r[key]));
+
+const REG = {
+  logs: { title: 'Daily log', one: 'log entry', blurb: 'Watering, turning, temperature and moisture checks, feeding and inspections, logged as they happen on the floor.',
+    sort: ['date', 'desc'],
+    fields: [F('date', 'Date', 'date', { req: 1, def: () => TODAY }), F('activity', 'Activity', 'select', { opts: ACTIVITIES }), F('area', 'Beds / area', 'text', { ph: 'BED-01 to BED-20', list: listOf('beds', 'bed') }),
+      F('temp', 'Temperature (°C)', 'num'), F('moisture', 'Moisture (%)', 'num'), F('qty', 'Quantity (L or kg)', 'num'), F('by', 'Recorded by', 'text'), F('notes', 'Observations', 'textarea', { wide: 1 })],
+    cols: [C('date', 'Date', 'date'), C('activity', 'Activity'), C('area', 'Beds / area'), C('temp', 'Temp °C', 'num'), C('moisture', 'Moisture %', 'num'), C('qty', 'Qty', 'num'), C('by', 'By'), C('notes', 'Observations', 'wrap')] },
+  rm: { title: 'Raw material purchase', one: 'purchase', blurb: 'Organic input origin, cost and quality checks for each truck received (EcoCert / MRC traceability).',
+    sort: ['date', 'asc'],
+    fields: [F('date', 'Purchase date', 'date', { def: () => TODAY }), F('lot', 'RM lot code', 'text', { req: 1, ph: 'RM/20260110/SMC' }), F('supplier', 'Supplier / dairy', 'text', { list: listOf('rm', 'supplier') }),
+      F('material', 'Material type', 'text', { list: () => uniq(['SMC', 'Cow dung', 'Press mud', ...rows('rm').map(r => r.material)]) }), F('vehicle', 'Vehicle no.', 'text'), F('invoice', 'Vehicle / invoice ref.', 'text'),
+      F('qtyKg', 'Quantity (kg)', 'num'), F('rate', 'Rate (₹ per kg)', 'num'), F('transport', 'Transport cost (₹)', 'num'), F('payment', 'Payment status', 'select', { opts: ['Paid', 'Pending', 'Partial'] }),
+      F('moisture', 'Moisture (%)', 'num'), F('temp', 'Temperature (°C)', 'num'), F('odour', 'Odour observed', 'select', { opts: ['No', 'Yes'] }), F('contamination', 'Contamination check done', 'select', { opts: ['Yes', 'No'] }),
+      F('sampleDate', 'Sample collected', 'date'), F('labDate', 'Sample sent to lab', 'date'), F('labResult', 'Lab result', 'select', { opts: ['Accepted', 'Awaiting', 'Rejected'] }), F('seal', 'Seal no.', 'text'), F('remarks', 'Quality remarks', 'textarea', { wide: 1 })],
+    cols: [C('date', 'Date', 'date'), C('lot', 'RM lot', 'mono'), C('supplier', 'Supplier'), C('material', 'Material'), C('vehicle', 'Vehicle', 'mono'), C('qtyKg', 'Qty kg', 'num'), C('rate', 'Rate ₹/kg', 'num2'),
+      C('amount', 'Amount', 'inr', r => r.qtyKg * r.rate), C('transport', 'Transport', 'inr'), C('payment', 'Payment', 'chip'), C('moisture', 'Moist. %', 'num'), C('labResult', 'Lab', 'chip')],
+    sums: ['qtyKg', 'amount', 'transport'] },
+  precompost: { title: 'Pre-composting', one: 'pre-compost lot', blurb: 'Decomposition phase: culture dose, turnings, temperature and moisture for pathogen control (MRC).',
+    sort: ['start', 'asc'],
+    fields: [F('lot', 'Pre-compost lot code', 'text', { req: 1, ph: 'RM/20260111/PC-01' }), F('rmLot', 'Linked RM lot', 'text', { list: listOf('rm', 'lot') }), F('start', 'Start date', 'date', { def: () => TODAY }),
+      F('cultureDate', 'Culture applied on', 'date'), F('end', 'End / transfer date', 'date'), F('weightMT', 'Total weight (MT)', 'num'), F('beds', 'Linked production beds', 'text', { ph: 'BED-01 to BED-05' }),
+      F('cultureDose', 'Culture dose', 'textarea', { wide: 1 }), F('turns', 'Turning log', 'turns', { wide: 1 }), F('remarks', 'Remarks', 'textarea', { wide: 1 })],
+    cols: [C('lot', 'PC lot', 'mono'), C('rmLot', 'RM lot', 'mono'), C('start', 'Start', 'date'), C('end', 'Transfer', 'date'), C('weightMT', 'Weight MT', 'num1'),
+      C('nturns', 'Turnings', 'num', r => (r.turns || []).length), C('peak', 'Peak °C', 'num', r => Math.max(...(r.turns || []).map(t => t.temp).filter(isNum))), C('beds', 'Beds'), C('remarks', 'Remarks', 'wrap')],
+    sums: ['weightMT'] },
+  beds: { title: 'Beds', one: 'bed', blurb: 'Bed-wise lifecycle: filling, worm inoculation, feeding, shuffling and harvest.',
+    sort: ['bed', 'asc'],
+    fields: [F('bed', 'Bed number', 'text', { req: 1, ph: 'BED-01' }), F('status', 'Current status', 'select', { opts: BED_STATUS }), F('dims', 'Dimensions (ft)', 'text', { ph: '12 x 4 x 2' }),
+      F('fillDate', 'Filling date', 'date'), F('dungT', 'Dung / compost filled (t)', 'num'), F('pcLot', 'Linked pre-compost lot', 'text', { list: listOf('precompost', 'lot') }),
+      F('species', 'Worm species & source', 'text', { list: listOf('beds', 'species') }), F('wormDate', 'Worms added on', 'date'), F('wormsKg', 'Worms added (kg)', 'num'),
+      F('feedDate', 'Worm feed applied on', 'date'), F('watering', 'Watering frequency', 'text'), F('shuffleDate', 'Shuffling date', 'date'),
+      F('expHarvest', 'Expected harvest', 'date'), F('actHarvest', 'Actual harvest start', 'date'), F('harvestDone', 'Harvest complete', 'date'),
+      F('prodCode', 'Production batch code', 'text', { list: listOf('beds', 'prodCode') }), F('remark', 'Supervisor remark', 'text')],
+    cols: [C('bed', 'Bed', 'mono'), C('fillDate', 'Filled', 'date'), C('dungT', 'Dung t', 'num1'), C('species', 'Worms'), C('wormsKg', 'Worm kg', 'num'), C('expHarvest', 'Expected', 'date'),
+      C('actHarvest', 'Harvested', 'date'), C('prodCode', 'Prod. code', 'mono'), C('pcLot', 'PC lot', 'mono'), C('bstatus', 'Status', 'chip', r => bedState(r).label), C('net', 'Net kg', 'num', r => harvestFor(r)?.netKg), C('remark', 'Remark')],
+    sums: ['dungT', 'wormsKg', 'net'] },
+  harvest: { title: 'Harvest & packing', one: 'harvest entry', blurb: 'Raw yield per bed, net yield after sieving, finished-goods batch and packing.',
+    sort: ['bed', 'asc'],
+    fields: [F('date', 'Harvest date', 'date', { def: () => TODAY }), F('bed', 'Bed number', 'text', { req: 1, list: listOf('beds', 'bed') }), F('rawKg', 'Raw compost (kg)', 'num'), F('netKg', 'Net after sieving (kg)', 'num'),
+      F('prodBatch', 'Production batch', 'text', { list: listOf('beds', 'prodCode') }), F('fgBatch', 'Finished-goods batch no.', 'text', { list: listOf('harvest', 'fgBatch') }),
+      F('packaging', 'Packaging', 'text', { list: () => uniq(['Loose', 'Bags 50 kg', 'Bags 25 kg', 'Bags 5 kg', ...rows('harvest').map(r => r.packaging)]) }), F('packets', 'Packets / bags', 'num'),
+      F('moisture', 'Moisture (%)', 'num'), F('tagging', 'Tagging', 'text')],
+    cols: [C('date', 'Date', 'date'), C('bed', 'Bed', 'mono'), C('rawKg', 'Raw kg', 'num'), C('netKg', 'Net kg', 'num'), C('rec', 'Recovery', 'pct', r => r.netKg / r.rawKg),
+      C('prodBatch', 'Prod. batch', 'mono'), C('fgBatch', 'FG batch', 'mono'), C('packaging', 'Packing'), C('packets', 'Packets', 'num1'), C('moisture', 'Moist. %', 'num')],
+    sums: ['rawKg', 'netKg', 'packets'] },
+  qc: { title: 'Quality control', one: 'lab report', blurb: 'Lab analysis for raw material (RM) and finished goods (FG). FG rows are checked against the FCO vermicompost reference.',
+    sort: ['date', 'asc'],
+    fields: [F('date', 'Sampling date', 'date', { def: () => TODAY }), F('product', 'Product', 'select', { opts: ['FG', 'RM'] }), F('seal', 'Sample seal no.', 'text'), F('lab', 'Lab name & date sent', 'text'),
+      F('batchNo', 'Batch number', 'text', { list: listOf('qc', 'batchNo') }), F('reportDate', 'Report date', 'date'), F('reportNo', 'Lab report no.', 'text'), F('status', 'FCO status', 'select', { opts: ['Pass (FCO Compliant)', 'Awaiting report', 'Fail'] }),
+      F('ph', 'pH', 'num'), F('ec', 'EC (dS/m)', 'num'), F('moisture', 'Moisture %', 'num'), F('oc', 'Organic carbon %', 'num'), F('om', 'Organic matter %', 'num'), F('cn', 'C:N ratio', 'num'),
+      F('n', 'Nitrogen %', 'num'), F('p', 'Phosphorus %', 'num'), F('k', 'Potassium %', 'num'), F('ash', 'Ash %', 'num'), F('ca', 'Calcium', 'num'), F('mn', 'Manganese', 'num'), F('fe', 'Iron', 'num'),
+      F('mn2', 'Manganese (2nd column)', 'num'), F('zn', 'Zinc', 'num'), F('cu', 'Copper', 'num')],
+    cols: [C('date', 'Sampled', 'date'), C('product', 'Type', 'chip'), C('reportNo', 'Report no.', 'mono'), C('ph', 'pH', 'num2'), C('ec', 'EC', 'num2'), C('moisture', 'Moist. %', 'num2'), C('oc', 'OC %', 'num2'),
+      C('cn', 'C:N', 'num2'), C('n', 'N %', 'num2'), C('p', 'P %', 'num2'), C('k', 'K %', 'num2'), C('status', 'FCO status', 'chip')] },
+  sales: { title: 'Sales register', one: 'sale', blurb: 'Invoices and dispatches to dealers and direct customers (DRC).',
+    sort: ['date', 'asc'],
+    fields: [F('invoice', 'Invoice no.', 'text', { req: 1 }), F('date', 'Sale date', 'date', { def: () => TODAY }), F('customer', 'Customer / dealer', 'text', { list: listOf('sales', 'customer') }),
+      F('drc', 'Dealer DRC no.', 'text'), F('fgBatch', 'FG batch no.', 'text', { list: listOf('harvest', 'fgBatch') }), F('qtyKg', 'Quantity (kg)', 'num'), F('price', 'Price (₹ per kg)', 'num'),
+      F('payment', 'Payment', 'select', { opts: ['', 'Received', 'Pending', 'Partial'] }), F('notes', 'Notes', 'textarea', { wide: 1 })],
+    cols: [C('invoice', 'Invoice', 'mono'), C('date', 'Date', 'date'), C('customer', 'Customer'), C('fgBatch', 'FG batch', 'mono'), C('qtyKg', 'Qty kg', 'num'), C('price', '₹/kg', 'num2'),
+      C('revenue', 'Revenue', 'inr', r => r.qtyKg * r.price), C('payment', 'Payment', 'chip')],
+    sums: ['qtyKg', 'revenue'] },
+  stock: { title: 'Stock ledger', one: 'stock entry', blurb: 'Finished vermicompost in and out. Closing stock runs down the ledger in entry order.',
+    sort: ['seq', 'asc'], fixedSort: 1,
+    fields: [F('seq', 'Entry no.', 'num', { def: () => Math.max(0, ...rows('stock').map(r => r.seq).filter(isNum)) + 1 }), F('date', 'Date', 'date', { def: () => TODAY }),
+      F('product', 'Product', 'text', { def: () => 'Premium Organic Vermicompost' }), F('pack', 'Packing', 'select', { opts: ['Bulk / Loose', 'Bags'] }),
+      F('inKg', 'Production in (kg)', 'num'), F('outKg', 'Sales out (kg)', 'num'), F('lossKg', 'Damage / loss (kg)', 'num'),
+      F('audit', 'Physical audit', 'select', { opts: ['Verified (Match)', 'Pending', 'Mismatch'] }), F('note', 'Note', 'text', { wide: 1 })],
+    cols: [C('seq', 'No.', 'num'), C('date', 'Date', 'date'), C('pack', 'Packing'), C('inKg', 'In kg', 'num'), C('outKg', 'Out kg', 'num'), C('lossKg', 'Loss / adj. kg', 'num'),
+      C('closing', 'Closing kg', 'num', r => r._closing), C('audit', 'Audit', 'chip'), C('note', 'Note', 'wrap')],
+    sums: ['inKg', 'outKg', 'lossKg'] },
+  expenses: { title: 'Costs & expenses', one: 'expense', blurb: 'Every rupee spent on the batch, by category.',
+    sort: ['date', 'asc'],
+    fields: [F('date', 'Date', 'date', { def: () => TODAY }), F('category', 'Category', 'select', { opts: EXP_CATS }), F('desc', 'Description / vendor', 'text', { req: 1, wide: 1 }),
+      F('mode', 'Payment mode', 'select', { opts: ['Online', 'UPI', 'Cash', 'Cheque'] }), F('amount', 'Amount (₹)', 'num'), F('note', 'Cost / compliance note', 'text')],
+    cols: [C('date', 'Date', 'date'), C('category', 'Category'), C('desc', 'Description', 'wrap'), C('mode', 'Mode'), C('amount', 'Amount', 'inr'), C('note', 'Note')],
+    sums: ['amount'] },
+  batches: { title: 'Batches', one: 'batch', blurb: 'Each production cycle. Every record above belongs to one batch.', noBatch: 1,
+    sort: ['start', 'asc'],
+    fields: [F('code', 'Batch code', 'text', { req: 1, ph: 'B5' }), F('name', 'Name', 'text', { ph: 'Batch 5' }), F('site', 'Site', 'text', { def: () => 'Akola' }), F('start', 'Start date', 'date', { def: () => TODAY }),
+      F('status', 'Stage', 'select', { opts: BATCH_STATUS }), F('notes', 'Notes', 'textarea', { wide: 1 })],
+    cols: [C('code', 'Code', 'mono'), C('name', 'Name'), C('site', 'Site'), C('start', 'Started', 'date'), C('status', 'Stage', 'chip'), C('nbeds', 'Beds', 'num', r => all('beds').filter(b => b.batch === r.code).length),
+      C('net', 'Net yield kg', 'num', r => sum(all('harvest').filter(h => h.batch === r.code), h => h.netKg)), C('notes', 'Notes', 'wrap')] },
+};
+const TABS = [['overview', 'Overview'], ['logs', 'Daily log'], ['rm', 'Raw material'], ['precompost', 'Pre-compost'], ['beds', 'Beds'], ['harvest', 'Harvest'], ['qc', 'Quality'],
+  ['sales', 'Sales'], ['stock', 'Stock'], ['expenses', 'Expenses'], ['trace', 'Traceability'], ['batches', 'Batches']];
+
+const state = { data: {}, loaded: new Set(), db: null, dl: null, conn: 'connecting', canWrite: true, batch: store.get('nv.batch') || 'ALL',
+  tab: (location.hash || '').slice(1) || store.get('nv.tab') || 'overview', ui: {}, bedView: 'grid', traceQ: '' };
+if (!TABS.some(t => t[0] === state.tab)) state.tab = 'overview';
+
+const all = c => state.data[c] || [];
+const rows = c => REG[c]?.noBatch || state.batch === 'ALL' ? all(c) : all(c).filter(r => r.batch === state.batch);
+const batchCodes = () => uniq([...all('batches').sort((a, b) => (a.start || '').localeCompare(b.start || '')).map(b => b.code), ...COLLS.flatMap(c => all(c).map(r => r.batch))]);
+const defaultBatch = () => state.batch !== 'ALL' ? state.batch : (batchCodes().slice(-1)[0] || 'B5');
+
+let hvIndex = new Map();
+function reindex() {
+  hvIndex = new Map(all('harvest').map(h => [h.batch + '|' + h.bed, h]));
+  // running closing stock per batch in entry order
+  const byBatch = {};
+  [...all('stock')].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0)).forEach(r => {
+    byBatch[r.batch] = (byBatch[r.batch] || 0) + (r.inKg || 0) - (r.outKg || 0) - (r.lossKg || 0);
+    r._closing = byBatch[r.batch];
+  });
+}
+const harvestFor = b => hvIndex.get(b.batch + '|' + b.bed);
+function bedState(b) {
+  const h = harvestFor(b);
+  if ((h && isNum(h.netKg)) || b.status === 'Harvested') return { key: 'harvested', label: 'Harvested' };
+  if (isISO(b.expHarvest) && b.expHarvest < TODAY) return { key: 'overdue', label: 'Overdue ' + daysBetween(b.expHarvest, TODAY) + 'd' };
+  if (b.status === 'Ready to harvest') return { key: 'ready', label: 'Ready' };
+  if (b.status === 'Filled' || b.status === 'Empty') return { key: 'filled', label: b.status };
+  return { key: 'active', label: b.status || 'Active' };
+}
+const chipClass = v => {
+  const s = String(v || '').toLowerCase();
+  if (/^(paid|accepted|pass|received|verified|harvested|closed|fg)/.test(s)) return 'good';
+  if (/(pending|awaiting|partial|overdue|ready|mismatch)/.test(s)) return 'warn';
+  if (/(reject|fail)/.test(s)) return 'bad';
+  if (/^(rm|in beds|harvesting|active|inoculated)/.test(s)) return 'info';
+  return '';
+};
+
+/* ---------- rendering ---------- */
+let raf = 0;
+const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
+function render() {
+  reindex();
+  renderChrome();
+  const main = $('#main');
+  const active = document.activeElement, activeId = active && active.id, caret = active && active.selectionStart;
+  if (!state.db && state.conn !== 'connecting') { main.innerHTML = offlineView(); return; }
+  if (state.conn === 'connecting' && !state.loaded.size) return;
+  const t = state.tab;
+  main.innerHTML = t === 'overview' ? overview() : t === 'trace' ? traceView() : t === 'beds' ? bedsView() : registerView(t);
+  if (t === 'overview') wireChart();
+  if (activeId) { const el = document.getElementById(activeId); if (el && el !== active && 'focus' in el) { el.focus(); try { if (caret != null) el.setSelectionRange(caret, caret); } catch {} } }
+}
+function renderChrome() {
+  const codes = batchCodes();
+  if (state.batch !== 'ALL' && state.loaded.size === COLLS.length && !codes.includes(state.batch)) state.batch = 'ALL';
+  const sel = $('#batchSel');
+  sel.innerHTML = `<option value="ALL">All batches</option>` + codes.map(c => {
+    const b = all('batches').find(x => x.code === c);
+    return `<option value="${esc(c)}">${esc(b?.name || c)}${b?.status ? ' · ' + esc(b.status) : ''}</option>`;
+  }).join('');
+  sel.value = state.batch;
+  $('#tabs').innerHTML = TABS.map(([k, l]) => `<button type="button" data-tab="${k}" ${k === state.tab ? 'aria-current="page"' : ''}>${l}</button>`).join('');
+  const s = $('#sync');
+  s.className = 'sync ' + (state.conn === 'live' ? 'live' : state.conn === 'off' ? 'off' : '');
+  s.querySelector('span').textContent = state.conn === 'live' ? (state.canWrite ? 'Live · saved to cloud' : 'Live · view only') : state.conn === 'off' ? 'Not connected' : 'Connecting…';
+  $('#exportBtn').hidden = !state.dl;
+}
+function offlineView() {
+  return `<div class="banner"><b>The register is not connected.</b> Open this tracker on claude.ai while signed in to load and save records. Records are stored in the tracker's cloud database, so every signed-in teammate with access sees the same data.</div>`;
+}
+
+function head(title, blurb, tools = '') {
+  const bname = state.batch === 'ALL' ? 'All batches' : (all('batches').find(b => b.code === state.batch)?.name || state.batch);
+  return `<div class="page-head"><div><h2>${esc(title)}</h2><p>${esc(blurb)} <span class="muted">Showing ${esc(bname)}.</span></p></div><div class="tools">${tools}</div></div>`;
+}
+const addBtn = key => state.canWrite ? `<button class="btn primary" type="button" data-add="${key}">+ Add ${REG[key].one}</button>` : '';
+
+function cell(col, r) {
+  const v = col.fn ? col.fn(r) : r[col.k];
+  switch (col.t) {
+    case 'date': return `<td>${esc(fdate(v))}</td>`;
+    case 'num': return `<td class="n">${fmt(v)}</td>`;
+    case 'num1': return `<td class="n">${fmt(v, 1)}</td>`;
+    case 'num2': return `<td class="n">${fmt(v, 2)}</td>`;
+    case 'inr': return `<td class="n">${inr(v)}</td>`;
+    case 'pct': return `<td class="n">${isNum(v) ? fmt(v * 100, 1) + '%' : '—'}</td>`;
+    case 'chip': return `<td>${v ? `<span class="chip ${chipClass(v)}">${esc(v)}</span>` : ''}</td>`;
+    case 'mono': return `<td class="mono">${esc(v)}</td>`;
+    case 'wrap': return `<td class="wrap">${esc(v)}</td>`;
+    default: return `<td>${esc(v)}</td>`;
+  }
+}
+function sortedRows(key) {
+  const def = REG[key], ui = state.ui[key] || (state.ui[key] = { q: '', sort: def.sort[0], dir: def.sort[1] });
+  let list = rows(key);
+  if (ui.q) {
+    const q = ui.q.toLowerCase();
+    list = list.filter(r => Object.values(r).some(v => typeof v !== 'object' && String(v).toLowerCase().includes(q)));
+  }
+  const col = def.cols.find(c => c.k === ui.sort);
+  const get = r => col?.fn ? col.fn(r) : r[ui.sort];
+  const m = ui.dir === 'desc' ? -1 : 1;
+  const nat = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
+  list = [...list].sort((a, b) => {
+    const x = get(a), y = get(b);
+    if (x == null || x === '') return 1; if (y == null || y === '') return -1;
+    const c = isNum(x) && isNum(y) ? x - y : nat(x, y);
+    return (c || nat(a.batch, b.batch)) * m;
+  });
+  return list;
+}
+function tableHTML(key, list) {
+  const def = REG[key], ui = state.ui[key];
+  const showBatch = state.batch === 'ALL' && !def.noBatch;
+  const cols = def.cols;
+  if (!list.length) return `<div class="tbl-wrap"><div class="empty"><b>No ${esc(def.one)} records ${ui.q ? 'match “' + esc(ui.q) + '”' : 'yet'}</b>${state.canWrite && !ui.q ? 'Use “+ Add ' + esc(def.one) + '” to record the first one.' : ''}</div></div>`;
+  const th = c => {
+    const n = ['num', 'num1', 'num2', 'inr', 'pct'].includes(c.t);
+    const arrow = ui.sort === c.k ? (ui.dir === 'asc' ? '▲' : '▼') : '';
+    return `<th class="${n ? 'n' : ''}">${def.fixedSort ? esc(c.l) : `<button type="button" data-sort="${key}:${c.k}">${esc(c.l)} <span aria-hidden="true">${arrow}</span></button>`}</th>`;
+  };
+  const qcOff = (r, c) => key === 'qc' && r.product === 'FG' && FCO[c.k] && isNum(r[c.k]) && outOfRange(c.k, r[c.k]);
+  const body = list.map(r => `<tr class="${state.canWrite ? 'click' : ''}" data-edit="${key}:${esc(r._id)}" ${state.canWrite ? 'tabindex="0"' : ''}>${showBatch ? `<td class="mono">${esc(r.batch)}</td>` : ''}${cols.map(c => {
+    let h = cell(c, r); if (qcOff(r, c)) h = h.replace('<td class="n">', `<td class="n off" title="Outside FCO reference: ${esc(FCO[c.k][2])}">`); return h;
+  }).join('')}</tr>`).join('');
+  let foot = '';
+  if (def.sums) {
+    foot = `<tfoot><tr>${showBatch ? '<td></td>' : ''}${cols.map((c, i) => {
+      if (!def.sums.includes(c.k)) return `<td>${i === 0 ? 'Total · ' + list.length : ''}</td>`;
+      const s = sum(list, r => c.fn ? c.fn(r) : r[c.k]);
+      return `<td class="n">${c.t === 'inr' ? inr(s) : fmt(s, c.t === 'num1' ? 1 : 0)}</td>`;
+    }).join('')}</tr></tfoot>`;
+  }
+  return `<div class="tbl-wrap"><table><thead><tr>${showBatch ? '<th>Batch</th>' : ''}${cols.map(th).join('')}</tr></thead><tbody>${body}</tbody>${foot}</table></div>`;
+}
+function registerView(key) {
+  const def = REG[key];
+  const ui = state.ui[key] || (state.ui[key] = { q: '', sort: def.sort[0], dir: def.sort[1] });
+  const list = sortedRows(key);
+  let extra = '';
+  if (key === 'qc') extra = `<p class="foot">FCO reference for finished vermicompost: ${Object.values(FCO).map(f => esc(f[2])).join(' · ')}. Values in red fall outside it. Check whether your lab reports P and K as P₂O₅ and K₂O before comparing.</p>`;
+  if (key === 'stock') { const cl = state.batch === 'ALL' ? sum(batchCodes(), c => closingFor(c)) : closingFor(state.batch); extra = `<p class="foot">Closing stock now: <b>${fmt(cl)} kg</b>.</p>`; }
+  return head(def.title, def.blurb, `<input class="search" id="q_${key}" type="search" placeholder="Search ${esc(def.title.toLowerCase())}" value="${esc(ui.q)}" aria-label="Search">${addBtn(key)}`)
+    + `<div id="tbl_${key}">${tableHTML(key, list)}</div>` + extra;
+}
+const closingFor = code => { const l = all('stock').filter(r => r.batch === code).sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0)); return l.length ? l[l.length - 1]._closing : 0; };
+const outOfRange = (k, v) => { const [lo, hi] = FCO[k]; return (lo != null && v < lo) || (hi != null && v > hi); };
+
+/* ---------- beds ---------- */
+function bedsView() {
+  const list = sortedRows('beds');
+  const counts = {};
+  list.forEach(b => { const s = bedState(b).key; counts[s] = (counts[s] || 0) + 1; });
+  const lbl = { active: 'Active', filled: 'Filled', ready: 'Ready', overdue: 'Overdue', harvested: 'Harvested' };
+  const tools = `<button class="btn" type="button" data-bedview="${state.bedView === 'grid' ? 'table' : 'grid'}">${state.bedView === 'grid' ? 'Table view' : 'Grid view'}</button>`
+    + (state.canWrite ? `<button class="btn" type="button" data-act="bulkupd">Update many beds</button><button class="btn" type="button" data-act="bulkadd">Add beds in bulk</button>${addBtn('beds')}` : '');
+  let body;
+  if (state.bedView === 'table') body = `<input class="search" id="q_beds" type="search" placeholder="Search beds" value="${esc(state.ui.beds.q)}" aria-label="Search beds"><div id="tbl_beds">${tableHTML('beds', list)}</div>`;
+  else if (!list.length) body = `<div class="tbl-wrap"><div class="empty"><b>No beds in this batch yet</b>Use “Add beds in bulk” to create BED-01 to BED-80 in one step.</div></div>`;
+  else {
+    const groups = state.batch === 'ALL' ? batchCodes().map(c => [c, list.filter(b => b.batch === c)]).filter(g => g[1].length) : [[state.batch, list]];
+    body = groups.map(([code, bl]) => `${groups.length > 1 ? `<h3 style="font-size:15px">${esc(code)}</h3>` : ''}<div class="beds">${bl.map(b => {
+      const s = bedState(b), h = harvestFor(b);
+      const age = isISO(b.fillDate) ? daysBetween(b.fillDate, h && isISO(h.date) ? h.date : TODAY) : null;
+      return `<button type="button" class="bed s-${s.key}" data-edit="beds:${esc(b._id)}" title="${esc(b.bed)} · ${esc(s.label)}"><span class="id">${esc(b.bed)}</span><span class="st">${esc(s.label)}${age != null && s.key !== 'overdue' ? ' · ' + age + 'd' : ''}</span><span class="kg">${h && isNum(h.netKg) ? fmt(h.netKg) + ' kg' : '&nbsp;'}</span></button>`;
+    }).join('')}</div>`).join('');
+  }
+  return head('Beds', REG.beds.blurb, tools)
+    + `<div class="bed-sum">${Object.entries(lbl).filter(([k]) => counts[k]).map(([k, l]) => `<span class="chip ${k === 'overdue' || k === 'ready' ? 'warn' : k === 'harvested' ? 'good' : k === 'active' ? 'info' : ''}">${l}: ${counts[k]}</span>`).join('')}<span class="chip">Total: ${list.length}</span></div>`
+    + body;
+}
+
+/* ---------- overview ---------- */
+function metrics(code) {
+  const pick = c => code === 'ALL' ? all(c) : all(c).filter(r => r.batch === code);
+  const rm = pick('rm'), pc = pick('precompost'), beds = pick('beds'), hv = pick('harvest'), sales = pick('sales'), ex = pick('expenses');
+  const net = sum(hv, r => r.netKg), dungKg = sum(beds, r => r.dungT) * 1000, sold = sum(sales, r => r.qtyKg);
+  const revenue = sum(sales, r => r.qtyKg * r.price), spend = sum(ex, r => r.amount);
+  const states = beds.map(bedState);
+  return { rmKg: sum(rm, r => r.qtyKg), rmAmt: sum(rm, r => r.qtyKg * r.rate), rmLots: uniq(rm.map(r => r.lot)).length, pcMT: sum(pc, r => r.weightMT), pcLots: pc.length,
+    beds: beds.length, harvested: states.filter(s => s.key === 'harvested').length, overdue: states.filter(s => s.key === 'overdue').length, dungKg,
+    net, raw: sum(hv, r => r.rawKg), sold, invoices: sales.length, revenue, spend,
+    stock: code === 'ALL' ? sum(batchCodes(), c => closingFor(c)) : closingFor(code), hvCount: hv.filter(r => isNum(r.netKg)).length };
+}
+function alerts() {
+  const out = [];
+  const beds = rows('beds'), hv = rows('harvest');
+  const overdue = beds.filter(b => bedState(b).key === 'overdue');
+  if (overdue.length) out.push(['warn', `${overdue.length} bed${overdue.length > 1 ? 's' : ''} past expected harvest`, overdue.slice(0, 8).map(b => b.bed).join(', ') + (overdue.length > 8 ? ' …' : '')]);
+  const noNet = hv.filter(h => !isNum(h.netKg));
+  if (noNet.length) out.push(['warn', `${noNet.length} harvest entr${noNet.length > 1 ? 'ies have' : 'y has'} no net yield`, noNet.slice(0, 10).map(h => h.bed).join(', ') + ' — add the sieved weight in Harvest.']);
+  const unpaid = rows('rm').filter(r => r.payment && r.payment !== 'Paid');
+  if (unpaid.length) out.push(['warn', `${unpaid.length} raw material payment${unpaid.length > 1 ? 's' : ''} not settled`, inr(sum(unpaid, r => r.qtyKg * r.rate)) + ' outstanding']);
+  const lab = rows('rm').filter(r => r.labResult && r.labResult !== 'Accepted');
+  if (lab.length) out.push([lab.some(r => r.labResult === 'Rejected') ? 'bad' : 'warn', `${lab.length} raw material lot${lab.length > 1 ? 's' : ''} without lab acceptance`, uniq(lab.map(r => r.lot)).join(', ')]);
+  const qcOff = rows('qc').filter(r => r.product === 'FG').map(r => [r, Object.keys(FCO).filter(k => isNum(r[k]) && outOfRange(k, r[k]))]).filter(x => x[1].length);
+  if (qcOff.length) out.push(['warn', `${qcOff.length} finished-goods report${qcOff.length > 1 ? 's' : ''} outside FCO reference`, qcOff.map(([r, ks]) => `${r.reportNo || fdate(r.date)}: ${ks.map(k => FCO[k][2].split(' ')[0]).join(', ')}`).join(' · ')]);
+  const cheap = rows('sales').filter(r => isNum(r.qtyKg) && (!isNum(r.price) || r.price < 1));
+  if (cheap.length) out.push(['warn', `${cheap.length} sale${cheap.length > 1 ? 's' : ''} priced under ₹1 per kg`, cheap.map(r => r.invoice).join(', ') + ' — confirm the rate or mark as sample.']);
+  const neg = uniq(rows('stock').filter(r => r._closing < 0).map(r => r.batch));
+  if (neg.length) out.push(['bad', 'Stock ledger goes negative', 'Batch ' + neg.join(', ') + ': more sold than produced at some entry.']);
+  // watering gap for batches with live beds
+  const liveBatches = uniq(beds.filter(b => ['active', 'overdue', 'ready', 'filled'].includes(bedState(b).key)).map(b => b.batch));
+  liveBatches.forEach(code => {
+    const last = all('logs').filter(l => l.batch === code && l.activity === 'Watering' && isISO(l.date)).map(l => l.date).sort().pop();
+    const gap = last ? daysBetween(last, TODAY) : null;
+    if (gap == null || gap > 3) out.push(['warn', `${code}: ${gap == null ? 'no watering logged yet' : 'no watering logged for ' + gap + ' days'}`, 'Beds with live worms need regular watering. Record it in the Daily log.']);
+  });
+  if (!out.length) out.push(['ok', 'Nothing needs attention', 'All beds, payments, lab reports and stock entries are in order.']);
+  return out;
+}
+function overview() {
+  const m = metrics(state.batch);
+  const b = all('batches').find(x => x.code === state.batch);
+  const title = state.batch === 'ALL' ? 'All batches' : (b?.name || state.batch);
+  const sub = b ? `${b.site ? esc(b.site) + ' · ' : ''}started ${fdate(b.start)}${isISO(b.start) ? ' (' + daysBetween(b.start, TODAY) + ' days ago)' : ''} · stage: ${esc(b.status || '—')}` : 'Every batch combined.';
+  const conv = m.dungKg ? m.net / m.dungKg : null;
+  const tiles = [
+    ['Raw material in', tons(m.rmKg), 't', `${m.rmLots} lot${m.rmLots === 1 ? '' : 's'} · ${inr(m.rmAmt)}`],
+    ['Beds harvested', `${m.harvested}`, `/ ${m.beds}`, m.overdue ? `${m.overdue} overdue` : `${m.beds - m.harvested} still in process`],
+    ['Net yield', tons(m.net), 't', conv != null ? `${fmt(conv * 100, 1)}% of ${tons(m.dungKg)} t filled` : `${m.hvCount} beds weighed`],
+    ['Sold', tons(m.sold), 't', `${m.invoices} invoice${m.invoices === 1 ? '' : 's'}`],
+    ['Stock on hand', fmt(m.stock), 'kg', `per stock ledger · harvested − sold = ${fmt(m.net - m.sold)} kg`],
+    ['Revenue', inr(m.revenue), '', m.sold ? `avg ₹${fmt(m.revenue / m.sold, 2)} per kg` : 'no sales yet'],
+    ['Expenses', inr(m.spend), '', m.net ? `₹${fmt(m.spend / m.net, 2)} per kg produced` : 'cost per kg after harvest'],
+    ['Revenue − expenses', inr(m.revenue - m.spend), '', 'unsold stock not valued'],
+  ];
+  const flow = [['Raw material', tons(m.rmKg) + ' t', `${m.rmLots} lots received`], ['Pre-compost', fmt(m.pcMT, 1) + ' MT', `${m.pcLots} lots decomposed`],
+    ['Beds', tons(m.dungKg) + ' t', `${m.beds} beds filled`], ['Harvest', tons(m.net) + ' t', `net from ${fmt(m.raw / 1000, 1)} t raw`], ['Sold', tons(m.sold) + ' t', inr(m.revenue)]];
+  const al = alerts();
+  const logs = [...rows('logs')].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 6);
+  const cats = {};
+  rows('expenses').forEach(e => { cats[e.category || 'Other'] = (cats[e.category || 'Other'] || 0) + (e.amount || 0); });
+  const catList = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  const catMax = Math.max(1, ...catList.map(c => c[1]));
+  const codes = batchCodes();
+  const compare = state.batch === 'ALL' && codes.length ? `<div class="panel"><h3>Batch comparison</h3><div class="tbl-wrap"><table><thead><tr><th>Batch</th><th>Stage</th><th class="n">Beds</th><th class="n">RM t</th><th class="n">Net yield kg</th><th class="n">Conversion</th><th class="n">Sold kg</th><th class="n">Revenue</th><th class="n">Expenses</th></tr></thead><tbody>${codes.map(c => {
+    const x = metrics(c), bb = all('batches').find(q => q.code === c);
+    return `<tr><td class="mono">${esc(c)}</td><td>${bb?.status ? `<span class="chip ${chipClass(bb.status)}">${esc(bb.status)}</span>` : ''}</td><td class="n">${x.harvested}/${x.beds}</td><td class="n">${tons(x.rmKg)}</td><td class="n">${fmt(x.net)}</td><td class="n">${x.dungKg ? fmt(x.net / x.dungKg * 100, 1) + '%' : '—'}</td><td class="n">${fmt(x.sold)}</td><td class="n">${inr(x.revenue)}</td><td class="n">${inr(x.spend)}</td></tr>`;
+  }).join('')}</tbody></table></div></div>` : '';
+  const empty = !COLLS.some(c => c !== 'batches' && rows(c).length);
+  return `<div class="page-head"><div><h2>${esc(title)}</h2><p>${sub}</p></div><div class="tools">${state.canWrite ? `<button class="btn" type="button" data-add="logs">+ Log activity</button><button class="btn" type="button" data-add="batches">+ New batch</button>` : ''}</div></div>`
+    + (empty ? `<div class="banner"><b>No records for this batch yet.</b> Start with the raw material purchase, then add pre-compost lots, beds (use “Add beds in bulk”), and log daily activity as the batch runs.</div>` : '')
+    + `<div class="kpis">${tiles.map(t => `<div class="kpi"><span class="l">${t[0]}</span><span class="v">${t[1]}${t[2] ? `<small>${t[2]}</small>` : ''}</span><span class="s">${t[3]}</span></div>`).join('')}</div>`
+    + `<div class="flow" aria-label="Material flow">${flow.map(f => `<div><div class="st">${f[0]}</div><div class="q">${f[1]}</div><div class="d">${esc(f[2])}</div></div>`).join('')}</div>`
+    + `<div class="grid2"><div class="panel"><h3>Produced vs sold</h3><p class="sub">Cumulative net yield from harvest entries against cumulative sales, in kg.</p>${cumChart()}</div>
+       <div class="panel"><h3>Needs attention</h3><ul class="alerts">${al.map(a => `<li class="${a[0]}"><span class="ic" aria-hidden="true">${a[0] === 'ok' ? '✓' : a[0] === 'bad' ? '!!' : '!'}</span><div><b>${esc(a[1])}</b><span>${esc(a[2])}</span></div></li>`).join('')}</ul></div></div>`
+    + `<div class="grid2"><div class="panel"><h3>Recent activity</h3>${logs.length ? `<div class="tbl-wrap"><table><thead><tr><th>Date</th>${state.batch === 'ALL' ? '<th>Batch</th>' : ''}<th>Activity</th><th>Beds / area</th><th class="n">Temp °C</th><th class="n">Moist. %</th><th>Observations</th></tr></thead><tbody>${logs.map(l => `<tr><td>${fdate(l.date)}</td>${state.batch === 'ALL' ? `<td class="mono">${esc(l.batch)}</td>` : ''}<td>${esc(l.activity)}</td><td>${esc(l.area)}</td><td class="n">${fmt(l.temp)}</td><td class="n">${fmt(l.moisture)}</td><td class="wrap">${esc(l.notes)}</td></tr>`).join('')}</tbody></table></div>` : `<div class="empty"><b>No daily log entries yet</b>Log watering, turning and temperature checks so the batch history is complete for audits.</div>`}</div>
+       <div class="panel"><h3>Where the money went</h3>${catList.length ? `<div class="bars">${catList.map(([c, v]) => `<div class="row" title="${esc(c)}: ${inr(v)}"><span>${esc(c)}</span><div class="track"><div class="bar" style="width:${(v / catMax * 100).toFixed(1)}%"></div></div><span class="num">${inr(v)}</span></div>`).join('')}</div>` : `<div class="empty">No expenses recorded.</div>`}</div></div>`
+    + compare;
+}
+
+/* cumulative produced vs sold step chart */
+let chartData = null;
+function cumChart() {
+  const hv = rows('harvest').filter(r => isISO(r.date) && isNum(r.netKg)), sl = rows('sales').filter(r => isISO(r.date) && isNum(r.qtyKg));
+  if (!hv.length && !sl.length) { chartData = null; return `<div class="empty">The chart fills in once harvest and sales entries have dates.</div>`; }
+  const cum = list => { const m = {}; list.forEach(([d, v]) => m[d] = (m[d] || 0) + v); let t = 0; return Object.keys(m).sort().map(d => [d, t += m[d]]); };
+  const P = cum(hv.map(r => [r.date, r.netKg])), S = cum(sl.map(r => [r.date, r.qtyKg]));
+  const dates = uniq([...P, ...S].map(p => p[0])).sort();
+  const t0 = +new Date(dates[0] + 'T00:00:00') - 5 * 864e5, t1 = Math.max(+new Date(dates[dates.length - 1] + 'T00:00:00'), t0 + 20 * 864e5) + 5 * 864e5;
+  const W = 720, H = 280, ml = 58, mr = 128, mt = 14, mb = 30;
+  const ymaxRaw = Math.max(1, ...P.map(p => p[1]), ...S.map(p => p[1]));
+  const step = (() => { const raw = ymaxRaw / 4, mag = 10 ** Math.floor(Math.log10(raw)); return [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => s >= raw); })();
+  const ymax = Math.ceil(ymaxRaw / step) * step;
+  const x = d => ml + ((+new Date(d + 'T00:00:00') - t0) / (t1 - t0)) * (W - ml - mr);
+  const y = v => mt + (1 - v / ymax) * (H - mt - mb);
+  const path = s => s.length ? `M${x(s[0][0]).toFixed(1)},${y(0)} ` + s.map((p, i) => `V${y(i ? s[i - 1][1] : 0).toFixed(1)} H${x(p[0]).toFixed(1)} V${y(p[1]).toFixed(1)}`).join(' ') + ` H${(W - mr).toFixed(1)}` : '';
+  let grid = '';
+  for (let v = 0; v <= ymax + 1e-9; v += step) grid += `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${ml - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${v >= 1000 ? fmt(v / 1000, 1) + 't' : fmt(v)}</text>`;
+  const m0 = new Date(t0); m0.setDate(1); m0.setMonth(m0.getMonth() + 1);
+  const months = []; for (let d = new Date(m0); +d <= t1; d.setMonth(d.getMonth() + 1)) months.push(localISO(d));
+  const every = Math.ceil(months.length / 7);
+  const xt = months.filter((_, i) => i % every === 0).map(d => `<line x1="${x(d)}" x2="${x(d)}" y1="${H - mb}" y2="${H - mb + 4}" stroke="var(--muted)"/><text x="${x(d)}" y="${H - mb + 17}" text-anchor="middle" font-size="11" fill="var(--muted)">${new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}</text>`).join('');
+  const endLbl = (s, name, color, dy) => { if (!s.length) return ''; const v = s[s.length - 1][1]; return `<circle cx="${W - mr}" cy="${y(v)}" r="4" fill="${color}" stroke="var(--surface)" stroke-width="2"/><text x="${W - mr + 8}" y="${y(v) + 4 + dy}" font-size="12" fill="var(--fg)" font-weight="600">${name} ${tons(v)}t</text>`; };
+  const pv = P.length ? P[P.length - 1][1] : 0, sv = S.length ? S[S.length - 1][1] : 0;
+  const dyP = Math.abs(y(pv) - y(sv)) < 16 ? (pv >= sv ? -8 : 8) : 0;
+  chartData = { P, S, dates, x, y, W, H, ml, mr, mt, mb };
+  return `<div class="legend"><span><i style="background:var(--s1)"></i>Produced (net)</span><span><i style="background:var(--s2)"></i>Sold</span></div>
+  <div class="chart" id="cumChart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative produced ${fmt(pv)} kg versus sold ${fmt(sv)} kg">
+    ${grid}${xt}<line x1="${ml}" x2="${W - mr}" y1="${y(0)}" y2="${y(0)}" stroke="var(--muted)"/>
+    <path d="${path(P)}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="${path(S)}" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 3"/>
+    ${endLbl(P, 'Produced', 'var(--s1)', dyP)}${endLbl(S, 'Sold', 'var(--s2)', -dyP)}
+    <line id="cx" y1="${mt}" y2="${H - mb}" stroke="var(--muted)" stroke-dasharray="3 3" visibility="hidden"/>
+    <rect id="chit" x="${ml}" y="${mt}" width="${W - ml - mr}" height="${H - mt - mb}" fill="transparent"/>
+  </svg><div class="tip" id="ctip" hidden></div></div>`;
+}
+function wireChart() {
+  const box = $('#cumChart'); if (!box || !chartData) return;
+  const svg = box.querySelector('svg'), tip = $('#ctip'), line = $('#cx');
+  const { P, S, dates, x, W } = chartData;
+  const at = (s, d) => { let v = 0; for (const p of s) { if (p[0] <= d) v = p[1]; else break; } return v; };
+  const move = ev => {
+    const r = svg.getBoundingClientRect(), vx = (ev.clientX - r.left) / r.width * W;
+    let best = dates[0]; dates.forEach(d => { if (Math.abs(x(d) - vx) < Math.abs(x(best) - vx)) best = d; });
+    const px = x(best); line.setAttribute('x1', px); line.setAttribute('x2', px); line.setAttribute('visibility', 'visible');
+    tip.hidden = false; tip.style.left = (px / W * r.width) + 'px'; tip.style.top = '8px';
+    tip.style.transform = px / W > 0.7 ? 'translate(-100%, 0)' : px / W < 0.25 ? 'translate(0, 0)' : 'translate(-50%, 0)';
+    tip.innerHTML = `<b>${fdate(best)}</b><br>Produced ${fmt(at(P, best))} kg<br>Sold ${fmt(at(S, best))} kg`;
+  };
+  const leave = () => { tip.hidden = true; line.setAttribute('visibility', 'hidden'); };
+  const hit = $('#chit'); hit.addEventListener('pointermove', move); hit.addEventListener('pointerleave', leave);
+}
+
+/* ---------- traceability ---------- */
+function traceView() {
+  const q = state.traceQ.trim().toLowerCase();
+  const codes = uniq([...all('rm').map(r => r.lot), ...all('precompost').map(r => r.lot), ...all('beds').map(r => r.prodCode), ...all('harvest').map(r => r.fgBatch), ...all('sales').map(r => r.invoice)]);
+  let res = '';
+  if (q) {
+    const scope = c => rows(c);
+    const eq = v => String(v || '').trim().toLowerCase() === q;
+    let beds = [];
+    const pcsFromRm = scope('precompost').filter(p => eq(p.rmLot)).map(p => p.lot);
+    if (pcsFromRm.length) beds = scope('beds').filter(b => pcsFromRm.includes(b.pcLot));
+    if (!beds.length) beds = scope('beds').filter(b => eq(b.pcLot) || eq(b.prodCode) || eq(b.bed));
+    if (!beds.length) {
+      const sale = scope('sales').find(s => eq(s.invoice));
+      const fg = sale ? sale.fgBatch.trim().toLowerCase() : q;
+      const hs = scope('harvest').filter(h => String(h.fgBatch || '').trim().toLowerCase() === fg);
+      beds = scope('beds').filter(b => hs.some(h => h.batch === b.batch && h.bed === b.bed));
+    }
+    if (!beds.length) res = `<div class="tbl-wrap"><div class="empty"><b>No beds trace to “${esc(state.traceQ)}”</b>Try an RM lot, pre-compost lot, bed number, production code, FG batch or invoice number.</div></div>`;
+    else {
+      const pcs = scope('precompost').filter(p => beds.some(b => b.pcLot === p.lot));
+      const rms = scope('rm').filter(r => pcs.some(p => p.rmLot === r.lot));
+      const hv = beds.map(harvestFor).filter(Boolean);
+      const fgs = uniq(hv.map(h => h.fgBatch));
+      const sales = scope('sales').filter(s => fgs.includes(s.fgBatch));
+      const bset = uniq(beds.map(b => b.batch));
+      const qc = scope('qc').filter(r => bset.includes(r.batch));
+      const stage = (h, qv, items) => `<div class="stage"><h4>${h}</h4><div class="q">${qv}</div><ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`;
+      res = `<div class="trace">
+        ${stage('Raw material', tons(sum(rms, r => r.qtyKg)) + ' t', uniq(rms.map(r => `${r.lot} · ${r.supplier}`)))}
+        ${stage('Pre-compost', fmt(sum(pcs, p => p.weightMT), 1) + ' MT', pcs.map(p => `${p.lot} · ${fdate(p.start)}`))}
+        ${stage('Beds', beds.length + ' beds', beds.map(b => `${b.batch} ${b.bed} · ${b.prodCode || ''}`))}
+        ${stage('Harvest', fmt(sum(hv, h => h.netKg)) + ' kg', uniq(hv.map(h => h.fgBatch)).map(f => `${f} · ${fmt(sum(hv.filter(h => h.fgBatch === f), h => h.netKg))} kg`))}
+        ${stage('Quality', qc.length + ' reports', qc.map(r => `${r.product} ${r.reportNo} · ${r.status}`))}
+        ${stage('Sales', fmt(sum(sales, s => s.qtyKg)) + ' kg', sales.map(s => `${s.invoice} · ${s.customer} · ${fmt(s.qtyKg)} kg`))}
+      </div><p class="foot">Quality reports are linked by batch. Sales are linked through the finished-goods batch number on the harvest entries.</p>`;
+    }
+  }
+  return head('Traceability', 'Follow any lot forward to its sales or back to its raw material, for EcoCert and MRC / DRC audits.')
+    + `<div style="display:flex;gap:8px;flex-wrap:wrap"><input class="search" id="traceQ" list="traceCodes" style="width:min(420px,100%)" placeholder="RM lot, PC lot, bed, VB code, FG batch or invoice" value="${esc(state.traceQ)}" aria-label="Code to trace"><datalist id="traceCodes">${codes.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>`
+    + (res || `<div class="tbl-wrap"><div class="empty"><b>Enter a code to trace</b>For example ${esc(codes[0] || 'RM/20251204/SMC')}.</div></div>`);
+}
+
+/* ---------- forms ---------- */
+const dlg = $('#dlg'), form = $('#dlgForm');
+let editing = null;
+function fieldHTML(f, val) {
+  const id = 'f_' + f.k, v = val ?? '';
+  const dl = f.list ? `<datalist id="dl_${f.k}">${f.list().map(o => `<option value="${esc(o)}">`).join('')}</datalist>` : '';
+  let input;
+  if (f.t === 'select') input = `<select id="${id}">${uniq(['', ...f.opts, v]).map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}${f.opts.includes('') ? '' : ''}</select>`;
+  else if (f.t === 'textarea') input = `<textarea id="${id}">${esc(v)}</textarea>`;
+  else if (f.t === 'turns') return `<div class="fld wide"><label>${esc(f.l)}</label><div class="turns" id="${id}">${(val || []).map(turnRow).join('')}</div><div><button type="button" class="btn small" data-act="addturn">+ Add turning</button></div></div>`;
+  else input = `<input id="${id}" type="${f.t === 'num' ? 'number' : f.t === 'date' ? 'date' : 'text'}" ${f.t === 'num' ? 'step="any" inputmode="decimal"' : ''} value="${esc(f.t === 'date' && v && !isISO(v) ? '' : v)}" ${f.req ? 'required' : ''} ${f.ph ? `placeholder="${esc(f.ph)}"` : ''} ${f.list ? `list="dl_${f.k}"` : ''}>${f.t === 'date' && v && !isISO(v) ? `<span class="foot">Was recorded as “${esc(v)}”</span>` : ''}`;
+  return `<div class="fld ${f.wide ? 'wide' : ''}"><label for="${id}">${esc(f.l)}${f.req ? ' *' : ''}</label>${input}${dl}</div>`;
+}
+const turnRow = (t = {}) => `<div class="turn-row"><div class="fld"><label>Turning date</label><input type="date" data-t="date" value="${esc(t.date || '')}"></div><div class="fld"><label>Temp °C</label><input type="number" step="any" data-t="temp" value="${esc(t.temp ?? '')}"></div><div class="fld"><label>Moisture %</label><input type="number" step="any" data-t="moisture" value="${esc(t.moisture ?? '')}"></div><div class="fld"><label>Watering date</label><input type="date" data-t="watering" value="${esc(t.watering || '')}"></div><button type="button" class="btn small" data-act="rmturn" aria-label="Remove turning">✕</button></div>`;
+
+function openForm(key, rec) {
+  const def = REG[key];
+  editing = { key, rec, confirmDel: false };
+  const batchSel = def.noBatch ? '' : `<div class="fld"><label for="f__batch">Batch *</label><select id="f__batch">${uniq([...batchCodes(), rec?.batch || defaultBatch()]).map(c => `<option ${c === (rec?.batch || defaultBatch()) ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div>`;
+  form.innerHTML = `<div class="dlg-h"><h3>${rec ? 'Edit' : 'Add'} ${esc(def.one)}</h3><button type="button" class="btn small x" data-act="close">Close</button></div>
+    <div class="dlg-b">${batchSel}${def.fields.map(f => fieldHTML(f, rec ? rec[f.k] : (f.def ? f.def() : ''))).join('')}
+    ${key === 'harvest' ? '<p class="note">Entering a net weight marks the bed as harvested on the Beds board.</p>' : ''}</div>
+    <div class="dlg-f">${rec ? `<button type="button" class="btn danger" data-act="del">Delete</button>` : ''}<span class="sp"></span><span class="foot" id="dlgMsg"></span><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary" value="save">Save</button></div>`;
+  dlg.showModal();
+}
+function readForm(def) {
+  const out = {};
+  for (const f of def.fields) {
+    const el = document.getElementById('f_' + f.k);
+    if (f.t === 'turns') { out.turns = [...el.querySelectorAll('.turn-row')].map(r => { const o = {}; r.querySelectorAll('[data-t]').forEach(i => { o[i.dataset.t] = i.type === 'number' ? (i.value === '' ? null : Number(i.value)) : i.value; }); return o; }).filter(o => o.date || isNum(o.temp)); continue; }
+    const v = el.value.trim();
+    out[f.k] = f.t === 'num' ? (v === '' ? null : Number(v)) : v;
+  }
+  return out;
+}
+async function saveForm() {
+  const { key, rec } = editing, def = REG[key];
+  const vals = readForm(def);
+  const miss = def.fields.filter(f => f.req && (vals[f.k] == null || vals[f.k] === ''));
+  if (miss.length) return msg(`Fill in ${miss.map(f => f.l).join(', ')}.`);
+  if (!def.noBatch) vals.batch = $('#f__batch').value;
+  if (key === 'batches') vals.code = vals.code.toUpperCase().replace(/\s+/g, '');
+  const body = { ...(rec ? stripMeta(rec) : {}), ...vals, updatedAt: new Date().toISOString() };
+  let id = rec?._id;
+  if (!id && key === 'batches') id = vals.code.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!id && key === 'beds') id = `${vals.batch}-${vals.bed}`.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!rec && id && all(key).some(r => r._id === id)) return msg(`${vals.code || vals.bed} already exists. Open it from the list to edit it.`);
+  try {
+    msg('Saving…');
+    const ref = id ? state.db.collection(key).doc(id) : state.db.collection(key).doc();
+    await ref.set(body);
+    dlg.close(); toast(`${def.one[0].toUpperCase() + def.one.slice(1)} saved`);
+    if (key === 'batches' && !rec) { state.batch = vals.code; store.set('nv.batch', state.batch); schedule(); }
+  } catch (e) { msg(errText(e)); }
+}
+const stripMeta = r => { const o = { ...r }; delete o._id; delete o._closing; return o; };
+async function deleteRec() {
+  const { key, rec } = editing;
+  if (!editing.confirmDel) { editing.confirmDel = true; const b = form.querySelector('[data-act="del"]'); b.textContent = 'Confirm delete'; msg('This removes the record for everyone.'); return; }
+  try { await state.db.collection(key).doc(rec._id).delete(); dlg.close(); toast('Record deleted'); } catch (e) { msg(errText(e)); }
+}
+const msg = t => { const m = $('#dlgMsg'); if (m) m.textContent = t; };
+function errText(e) {
+  if (e?.code === 'invalid_argument') { state.canWrite = false; schedule(); return 'Your access is view-only. Ask the owner to share the tracker with you as Contributor or Editor.'; }
+  if (e?.code === 'quota_exceeded') return 'The database is full. Delete old records or export and archive a closed batch.';
+  if (e?.code === 'resource_exhausted') return 'Too many saves at once. Wait a few seconds and try again.';
+  return 'Could not save: ' + (e?.message || 'connection problem') + '. Try again.';
+}
+
+/* bulk bed tools */
+function openBulkAdd() {
+  editing = { key: '_bulkadd' };
+  const f = (k, l, t, v = '', o = '') => `<div class="fld"><label for="b_${k}">${l}</label><input id="b_${k}" type="${t}" value="${esc(v)}" ${t === 'number' ? 'step="any"' : ''} ${o}></div>`;
+  form.innerHTML = `<div class="dlg-h"><h3>Add beds in bulk</h3><button type="button" class="btn small x" data-act="close">Close</button></div>
+  <div class="dlg-b"><div class="fld"><label for="b_batch">Batch</label><select id="b_batch">${uniq([...batchCodes(), defaultBatch()]).map(c => `<option ${c === defaultBatch() ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div>
+  ${f('from', 'From bed no.', 'number', 1)}${f('to', 'To bed no.', 'number', 80)}${f('dims', 'Dimensions (ft)', 'text', '12 x 4 x 2')}${f('fillDate', 'Filling date', 'date', TODAY)}${f('dungT', 'Dung per bed (t)', 'number', 2)}
+  ${f('pcLot', 'Pre-compost lot', 'text', '', 'list="dl_pc"')}<datalist id="dl_pc">${uniq(all('precompost').map(p => p.lot)).map(o => `<option value="${esc(o)}">`).join('')}</datalist>
+  ${f('prodCode', 'Production batch code', 'text', 'VB/' + TODAY.replace(/-/g, '') + '/01')}${f('species', 'Worm species & source', 'text', 'Eisenia Fetida - Local')}${f('wormsKg', 'Worms per bed (kg)', 'number', 4)}
+  ${f('watering', 'Watering frequency', 'text', 'weekly thrice')}${f('days', 'Days to harvest', 'number', 60)}
+  <p class="note">Creates BED-xx records with status “Filled” and an expected harvest date. Beds that already exist in the batch are skipped.</p></div>
+  <div class="dlg-f"><span class="sp"></span><span class="foot" id="dlgMsg"></span><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary">Create beds</button></div>`;
+  dlg.showModal();
+}
+async function runBulkAdd() {
+  const g = k => $('#b_' + k).value.trim(), from = parseInt(g('from')), to = parseInt(g('to')), batch = g('batch');
+  if (!(from >= 1 && to >= from && to - from < 400)) return msg('Check the bed range.');
+  const exist = new Set(all('beds').filter(b => b.batch === batch).map(b => b.bed));
+  const fill = g('fillDate'), days = parseInt(g('days')) || 60;
+  let made = 0;
+  try {
+    for (let n = from; n <= to; n++) {
+      const bed = 'BED-' + String(n).padStart(2, '0');
+      if (exist.has(bed)) continue;
+      msg(`Creating ${bed}…`);
+      await state.db.collection('beds').doc(`${batch}-${bed}`.toLowerCase()).set({ batch, bed, dims: g('dims'), fillDate: fill, dungT: Number(g('dungT')) || null, pcLot: g('pcLot'), prodCode: g('prodCode'),
+        species: g('species'), wormsKg: Number(g('wormsKg')) || null, watering: g('watering'), expHarvest: isISO(fill) ? addDays(fill, days) : '', status: 'Filled', updatedAt: new Date().toISOString() });
+      made++;
+    }
+    dlg.close(); toast(`${made} bed${made === 1 ? '' : 's'} created`);
+  } catch (e) { msg(errText(e) + ` (${made} created)`); }
+}
+const BULK_FIELDS = [['status', 'Current status', 'select'], ['wormDate', 'Worms added on', 'date'], ['wormsKg', 'Worms added (kg)', 'number'], ['feedDate', 'Worm feed applied on', 'date'], ['shuffleDate', 'Shuffling date', 'date'],
+  ['expHarvest', 'Expected harvest', 'date'], ['actHarvest', 'Actual harvest start', 'date'], ['harvestDone', 'Harvest complete', 'date'], ['pcLot', 'Pre-compost lot', 'text'], ['prodCode', 'Production batch code', 'text'], ['remark', 'Supervisor remark', 'text']];
+function openBulkUpd() {
+  editing = { key: '_bulkupd' };
+  form.innerHTML = `<div class="dlg-h"><h3>Update many beds</h3><button type="button" class="btn small x" data-act="close">Close</button></div>
+  <div class="dlg-b"><div class="fld"><label for="u_batch">Batch</label><select id="u_batch">${batchCodes().map(c => `<option ${c === defaultBatch() ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div>
+  <div class="fld"><label for="u_from">From bed no.</label><input id="u_from" type="number" value="1"></div><div class="fld"><label for="u_to">To bed no.</label><input id="u_to" type="number" value="80"></div>
+  <div class="fld"><label for="u_field">Field to set</label><select id="u_field">${BULK_FIELDS.map(f => `<option value="${f[0]}">${f[1]}</option>`).join('')}</select></div>
+  <div class="fld" id="u_valbox"></div>
+  <p class="note">Use this for jobs done across a run of beds on one day, such as worm inoculation, feeding or shuffling. It changes only the chosen field.</p></div>
+  <div class="dlg-f"><span class="sp"></span><span class="foot" id="dlgMsg"></span><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary">Update beds</button></div>`;
+  const draw = () => { const f = BULK_FIELDS.find(x => x[0] === $('#u_field').value); $('#u_valbox').innerHTML = `<label for="u_val">New value</label>` + (f[2] === 'select' ? `<select id="u_val">${BED_STATUS.map(s => `<option>${s}</option>`).join('')}</select>` : `<input id="u_val" type="${f[2]}" ${f[2] === 'date' ? `value="${TODAY}"` : ''} step="any">`); };
+  draw(); $('#u_field').addEventListener('change', draw);
+  dlg.showModal();
+}
+async function runBulkUpd() {
+  const batch = $('#u_batch').value, from = parseInt($('#u_from').value), to = parseInt($('#u_to').value), field = $('#u_field').value, el = $('#u_val');
+  const val = el.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value;
+  const targets = all('beds').filter(b => b.batch === batch).filter(b => { const n = parseInt(String(b.bed).replace(/\D/g, '')); return n >= from && n <= to; });
+  if (!targets.length) return msg('No beds in that range.');
+  let done = 0;
+  try {
+    for (const b of targets) { msg(`Updating ${b.bed}…`); await state.db.collection('beds').doc(b._id).update({ [field]: val, updatedAt: new Date().toISOString() }); done++; }
+    dlg.close(); toast(`${done} beds updated`);
+  } catch (e) { msg(errText(e) + ` (${done} updated)`); }
+}
+
+/* ---------- export ---------- */
+function loadXLSX() {
+  if (window.XLSX) return Promise.resolve();
+  return new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+}
+async function exportXLSX() {
+  try {
+    toast('Preparing workbook…');
+    await loadXLSX();
+    const wb = XLSX.utils.book_new();
+    const order = ['rm', 'precompost', 'beds', 'harvest', 'qc', 'sales', 'stock', 'expenses', 'logs', 'batches'];
+    for (const key of order) {
+      const def = REG[key], list = sortedRows(key);
+      const flds = def.fields.filter(f => f.t !== 'turns');
+      const hdr = [...(def.noBatch ? [] : ['Batch']), ...flds.map(f => f.l)];
+      const extra = key === 'rm' ? ['Amount (₹)'] : key === 'sales' ? ['Revenue (₹)'] : key === 'stock' ? ['Closing (kg)'] : key === 'precompost' ? ['Turnings (date / °C / % / watered)'] : [];
+      const data = list.map(r => [...(def.noBatch ? [] : [r.batch]), ...flds.map(f => r[f.k] ?? ''),
+        ...(key === 'rm' ? [r.qtyKg * r.rate || ''] : key === 'sales' ? [r.qtyKg * r.price || ''] : key === 'stock' ? [r._closing] : key === 'precompost' ? [(r.turns || []).map(t => `${t.date} / ${t.temp ?? ''} / ${t.moisture ?? ''} / ${t.watering || ''}`).join('; ')] : [])]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[...hdr, ...extra], ...data]), def.title.slice(0, 31));
+    }
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    await state.dl.save({ filename: `Navjyoti_${state.batch === 'ALL' ? 'all_batches' : state.batch}_register_${TODAY}.xlsx`, data: buf });
+    toast('Workbook ready');
+  } catch (e) { toast(e?.code === 'declined' ? 'Export cancelled' : 'Export failed: ' + (e?.message || 'could not build the workbook')); }
+}
+
+/* ---------- events ---------- */
+let toastT;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 2800); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab],[data-add],[data-edit],[data-sort],[data-act],[data-bedview]');
+  if (!t) return;
+  if (t.dataset.tab) { state.tab = t.dataset.tab; store.set('nv.tab', state.tab); history.replaceState(null, '', '#' + state.tab); render(); window.scrollTo(0, 0); }
+  else if (t.dataset.add) openForm(t.dataset.add, null);
+  else if (t.dataset.edit) { if (!state.canWrite) return; const [k, id] = t.dataset.edit.split(/:(.*)/s); const rec = all(k).find(r => r._id === id); if (rec) openForm(k, rec); }
+  else if (t.dataset.sort) { const [k, c] = t.dataset.sort.split(':'); const ui = state.ui[k]; ui.dir = ui.sort === c && ui.dir === 'asc' ? 'desc' : 'asc'; ui.sort = c; render(); }
+  else if (t.dataset.bedview) { state.bedView = t.dataset.bedview; render(); }
+  else if (t.dataset.act === 'close') dlg.close();
+  else if (t.dataset.act === 'del') deleteRec();
+  else if (t.dataset.act === 'addturn') $('#f_turns').insertAdjacentHTML('beforeend', turnRow());
+  else if (t.dataset.act === 'rmturn') t.closest('.turn-row').remove();
+  else if (t.dataset.act === 'bulkadd') openBulkAdd();
+  else if (t.dataset.act === 'bulkupd') openBulkUpd();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('tr[data-edit]')) e.target.click(); });
+document.addEventListener('input', e => {
+  const id = e.target.id || '';
+  if (id.startsWith('q_')) { const k = id.slice(2); state.ui[k].q = e.target.value; $('#tbl_' + k).innerHTML = tableHTML(k, sortedRows(k)); }
+  if (id === 'traceQ') { state.traceQ = e.target.value; render(); }
+});
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  if (!state.db) return msg('Not connected. Open the tracker on claude.ai while signed in.');
+  if (editing.key === '_bulkadd') runBulkAdd(); else if (editing.key === '_bulkupd') runBulkUpd(); else saveForm();
+});
+$('#batchSel').addEventListener('change', e => { state.batch = e.target.value; store.set('nv.batch', state.batch); render(); });
+$('#exportBtn').addEventListener('click', exportXLSX);
+
+/* ---------- connect ---------- */
+async function connect() {
+  const claude = window.claude;
+  const db = claude?.use ? await claude.use('db') : null;
+  if (!db) { state.conn = 'off'; render(); return; }
+  state.db = db;
+  claude.use('user').then(async u => { if (!u) return; const w = await u.can('data.write'); if (w === false) { state.canWrite = false; schedule(); } }).catch(() => {});
+  claude.use('downloads').then(d => { state.dl = d; schedule(); }).catch(() => {});
+  COLLS.forEach(c => db.collection(c).onSnapshot(snap => {
+    state.data[c] = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
+    state.loaded.add(c);
+    if (state.loaded.size === COLLS.length) state.conn = 'live';
+    schedule();
+  }, err => { if (err?.code === 'revoked' || err?.code === 'not_granted') { state.conn = 'off'; state.db = null; } schedule(); }));
+  setTimeout(() => { if (state.conn === 'connecting') { state.conn = 'live'; schedule(); } }, 8000);
+}
+renderChrome();
+connect();
+})();
+</script>
