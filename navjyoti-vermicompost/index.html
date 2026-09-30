@@ -1099,7 +1099,7 @@ async function exportXLSX() {
 let toastT;
 function toast(t) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 2800); }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-tab],[data-add],[data-edit],[data-sort],[data-act],[data-bedview]');
+  const t = e.target.closest('[data-tab],[data-add],[data-edit],[data-sort],[data-act],[data-bedview],[data-rtype],[data-qcby]');
   if (!t) return;
   if (t.dataset.tab) { state.tab = t.dataset.tab; store.set('nv.tab', state.tab); history.replaceState(null, '', '#' + state.tab); render(); window.scrollTo(0, 0); }
   else if (t.dataset.add) openForm(t.dataset.add, null);
