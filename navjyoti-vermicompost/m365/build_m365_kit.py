@@ -81,8 +81,8 @@ def main(src, out, batch):
 PS_HEAD = r'''<#
   Navjyoti Vermicompost - create the 10 SharePoint lists and load the register data.
   Run in PowerShell 7 with PnP.PowerShell:   Install-Module PnP.PowerShell -Scope CurrentUser
-  Your admin registers a PnP app once:       Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP Navjyoti" -Tenant <yourtenant>.onmicrosoft.com -Interactive
-  Then run from this folder:                 ./Create-NavjyotiLists.ps1 -SiteUrl https://<yourtenant>.sharepoint.com/sites/NavjyotiProduction -ClientId <app id>
+  Your admin registers a PnP app once:       Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP Navjyoti" -Tenant yourcompany.onmicrosoft.com
+  Then run from this folder:                 ./Create-NavjyotiLists.ps1 -SiteUrl https://<yourtenant>.sharepoint.com/sites/NavjyotiProduction -ClientId PASTE-CLIENT-ID-HERE
   Safe to re-run: existing lists and columns are kept; add -SkipData to create the structure without loading rows.
 #>
 param(

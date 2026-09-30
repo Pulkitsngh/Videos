@@ -34,11 +34,15 @@ On a Windows PC:
 1. Install **PowerShell 7** (Microsoft Store) and open it.
 2. `Install-Module PnP.PowerShell -Scope CurrentUser`
 3. One-time app registration (needs a Microsoft 365 admin):
-   `Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP Navjyoti" -Tenant yourcompany.onmicrosoft.com -Interactive`
+   `Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP Navjyoti" -Tenant yourcompany.onmicrosoft.com`
    and copy the **Client ID** it prints.
-4. In the kit folder run:
-   `./Create-NavjyotiLists.ps1 -SiteUrl https://yourcompany.sharepoint.com/sites/NavjyotiProduction -ClientId <Client ID>`
-5. Check the counts on the site (Site contents): RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6,
+   Replace `yourcompany` with the name in your SharePoint address (`https://yourcompany.sharepoint.com`).
+   A browser window opens: sign in as admin and accept the permissions. Copy the **Client ID** shown at the end.
+4. Go to the unzipped kit folder (not `C:\Windows\System32`) and unblock the files, for example:
+   `cd "$env:USERPROFILE\Downloads\Navjyoti_M365_Kit"; Get-ChildItem -Recurse | Unblock-File`
+5. Run (replace `yourcompany` and `PASTE-CLIENT-ID-HERE` with your values; no < > brackets):
+   `./Create-NavjyotiLists.ps1 -SiteUrl https://yourcompany.sharepoint.com/sites/NavjyotiProduction -ClientId PASTE-CLIENT-ID-HERE`
+6. Check the counts on the site (Site contents): RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6,
    Sales 6, StockLedger 63, Expenses 30, Batches 2 (B4, B5), DailyLog 0.
 
 The script can be run again safely: it keeps existing lists, adds missing columns, and never loads data into a list that already has rows.

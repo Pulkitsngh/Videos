@@ -296,8 +296,8 @@ STAGES = [
     ], [fig_create_site(), fig_site_name()], None),
     ("lists", "Create the 10 lists and load Batch 4", "IT admin · 20 minutes", [
         "Install <b>PowerShell 7</b> from the Microsoft Store, open it, and run the install command.",
-        "A Microsoft 365 admin registers the PnP app once and copies the <b>Client ID</b>.",
-        "Unzip the kit, open PowerShell in that folder and run the Navjyoti script with your site address and Client ID.",
+        "A Microsoft 365 admin registers the PnP app once. Replace <b>yourcompany</b> with the name in your SharePoint address (<i>https://<b>yourcompany</b>.sharepoint.com</i>). A browser window opens to sign in and approve; then copy the <b>Client ID</b> it shows.",
+        "Unzip the kit, then in PowerShell go to that folder with <b>cd</b> (not C:\\Windows\\System32). Run the Navjyoti script, replacing <b>yourcompany</b> with your own SharePoint name and <b>PASTE-CLIENT-ID-HERE</b> with the Client ID from step 2.",
         "Open <b>Site contents</b> and check the item counts: RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6, Sales 6, StockLedger 63, Expenses 30, Batches 2, DailyLog 0.",
     ], [fig_powershell(), fig_site_contents()], "ps"),
     ("app", "Build the data-entry app in Power Apps", "Power user · 2–3 hours", [
@@ -335,8 +335,9 @@ STAGES = [
 CODE = {
     "ps": [
         ("Install PnP PowerShell", "Install-Module PnP.PowerShell -Scope CurrentUser"),
-        ("Register the app (admin, once)", 'Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP Navjyoti" -Tenant yourcompany.onmicrosoft.com -Interactive'),
-        ("Create the lists and load Batch 4", "./Create-NavjyotiLists.ps1 -SiteUrl https://yourcompany.sharepoint.com/sites/NavjyotiProduction -ClientId <Client ID>"),
+        ("Register the app (admin, once)", 'Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP Navjyoti" -Tenant yourcompany.onmicrosoft.com'),
+        ("Go to the unzipped kit folder (example path)", 'cd "$env:USERPROFILE\\Downloads\\Navjyoti_M365_Kit"; Get-ChildItem -Recurse | Unblock-File'),
+        ("Create the lists and load Batch 4", "./Create-NavjyotiLists.ps1 -SiteUrl https://yourcompany.sharepoint.com/sites/NavjyotiProduction -ClientId PASTE-CLIENT-ID-HERE"),
     ],
     "pa": [
         ("Bed board gallery · Items", 'SortByColumns(Filter(Beds, Batch.Value = varBatch), "BedNo")'),
