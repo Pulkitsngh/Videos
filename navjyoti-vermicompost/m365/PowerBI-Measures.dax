@@ -60,7 +60,7 @@ PreCompost[PeakTempC] = MAX ( MAX ( PreCompost[Turn1TempC], PreCompost[Turn2Temp
 // QualityControl – FCO check for finished (FG) and export (EX) material.
 // Limits: FCO vermicompost spec (P as P2O5, K as K2O). Change here if your export buyer's spec differs.
 QualityControl[FCOCheck] =
-VAR fin = QualityControl[Product] IN { "FG", "EX", "EXFG" }
+VAR fin = QualityControl[Product] IN { "FG", "EXFG" }
 VAR m = QualityControl[Moisture]
 VAR flags =
     IF ( NOT ISBLANK ( m ) && ( m < 15 || m > 25 ), "Moisture " )
@@ -75,8 +75,10 @@ RETURN
     IF ( NOT fin, "Trial (not checked)", IF ( flags = "", "Within FCO", "Outside: " & TRIM ( flags ) ) )
 
 // ---------- Measures (create a blank table called _Measures to hold them) ----------
-RM Received t = DIVIDE ( SUM ( RawMaterial[QtyKg] ), 1000 )
-RM Cost = SUMX ( RawMaterial, RawMaterial[QtyKg] * RawMaterial[RatePerKg] )
+// Batch = "Ancillary" marks purchases/expenses not used in production (e.g. earthworm breeding)
+RM Received t = DIVIDE ( CALCULATE ( SUM ( RawMaterial[QtyKg] ), RawMaterial[Batch] <> "Ancillary" ), 1000 )
+RM Cost = SUMX ( FILTER ( RawMaterial, RawMaterial[Batch] <> "Ancillary" ), RawMaterial[QtyKg] * RawMaterial[RatePerKg] )
+Ancillary Spend = SUMX ( FILTER ( RawMaterial, RawMaterial[Batch] = "Ancillary" ), RawMaterial[QtyKg] * RawMaterial[RatePerKg] ) + CALCULATE ( SUM ( Expenses[Amount] ), Expenses[Batch] = "Ancillary" )
 RM Transport = SUM ( RawMaterial[TransportCost] )
 RM Trucks = COUNTROWS ( RawMaterial )
 RM Avg Moisture % = AVERAGE ( RawMaterial[MoisturePct] )
@@ -105,7 +107,7 @@ Low Price Sales = CALCULATE ( COUNTROWS ( Sales ), Sales[PricePerKg] < 1 )
 Stock On Hand kg = SUM ( StockLedger[InKg] ) - SUM ( StockLedger[OutKg] ) - SUM ( StockLedger[LossKg] )
 Harvested minus Sold kg = [Net Yield kg] - [Sold kg]
 
-Expenses = SUM ( Expenses[Amount] )
+Expenses = CALCULATE ( SUM ( Expenses[Amount] ), Expenses[Batch] <> "Ancillary" )
 Expense per kg = DIVIDE ( [Expenses], [Net Yield kg] )
 Revenue minus Expenses = [Revenue] - [Expenses]
 
@@ -121,7 +123,7 @@ QC Avg N = AVERAGE ( QualityControl[Nitrogen] )
 QC Avg P = AVERAGE ( QualityControl[Phosphorus] )
 QC Avg K = AVERAGE ( QualityControl[Potassium] )
 QC Avg Ash = AVERAGE ( QualityControl[Ash] )
-// Put QualityControl[Product] (RM / FG / EX) on the legend to compare trial, finished and export material.
+// Put QualityControl[Product] (RM / FG / EXRM / EXFG) on the legend to compare trial, finished and export material.
 
 Days Since Watering =
 VAR last = CALCULATE ( MAX ( DailyLog[LogDate] ), DailyLog[Activity] = "Watering" )

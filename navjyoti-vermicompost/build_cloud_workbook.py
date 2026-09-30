@@ -34,9 +34,11 @@ FONT = "Arial"
 GREEN, SOIL, INK, MUTED = "1C7148", "6B4424", "16201B", "58685F"
 SERIES = ["2A78D6", "EB6834", "1BAF7A"]
 # Quality product types: code, label, colour (RM/EXRM are trials; FG/EX/EXFG are checked against FCO)
-PRODUCTS = [("RM", "RM trial", "2A78D6"), ("FG", "FG finished", "EB6834"), ("EX", "EX export", "1BAF7A"),
-            ("EXRM", "EXRM export trial", "C98500"), ("EXFG", "EXFG export finished", "D55181")]
-FINISHED = ("FG", "EX", "EXFG")
+PRODUCTS = [("RM", "RM trial", "2A78D6"), ("FG", "FG finished", "EB6834"),
+            ("EXRM", "EXRM export trial", "1BAF7A"), ("EXFG", "EXFG export finished", "C98500")]
+FINISHED = ("FG", "EXFG")
+MATERIALS = ["SMC", "Cow Dung", "Cow Dung Slurry", "Coco Peat", "FOM", "Press Mud", "Crop Residue", "Others"]
+ANCILLARY = "Ancillary"  # raw material / expenses not used in production (e.g. earthworm breeding)
 PASSWORD = "Navjyoti2026"  # sheet protection password (told to the owner; change in Review → Unprotect Sheet)
 CAPACITY = {"Batches": 200, "DailyLog": 5000}  # rows ready for entry per register; others use PREFILL
 F = lambda **k: Font(name=FONT, **{"size": 10, **k})
@@ -89,8 +91,8 @@ def registers():
     return {
         "Batches": ("batches", [("BatchCode", "code", "text", None), ("BatchName", "name", "text", None), ("Site", "site", "text", None),
                     ("StartDate", "start", "date", None), ("Stage", "status", "text", "Stage"), ("Notes", "notes", "text", None)]),
-        "RawMaterial": ("rm", [("Batch", "batch", "text", "Batch"), ("PurchaseDate", "date", "date", None), ("RMLot", "lot", "text", None),
-            ("Supplier", "supplier", "text", "Supplier"), ("Material", "material", "text", None), ("VehicleNo", "vehicle", "text", None),
+        "RawMaterial": ("rm", [("Batch", "batch", "text", "BatchAnc"), ("PurchaseDate", "date", "date", None), ("RMLot", "lot", "text", None),
+            ("Supplier", "supplier", "text", "Supplier"), ("Material", "material", "text", "Material"), ("VehicleNo", "vehicle", "text", None),
             ("InvoiceRef", "invoice", "text", None), ("QtyKg", "qtyKg", "kg", None), ("RatePerKg", "rate", "num", None),
             ("Amount", None, "calc_inr", "=IF(OR({QtyKg}=\"\",{RatePerKg}=\"\"),\"\",{QtyKg}*{RatePerKg})"),
             ("TransportCost", "transport", "inr", None), ("PaymentStatus", "payment", "text", "PaymentStatus"), ("MoisturePct", "moisture", "num", None),
@@ -136,7 +138,7 @@ def registers():
             ("LossKg", "lossKg", "kg", None),
             ("ClosingKg", None, "calc_kg", "=IF({Batch}=\"\",\"\",SUMIFS(StockLedger[InKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo})-SUMIFS(StockLedger[OutKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo})-SUMIFS(StockLedger[LossKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo}))"),
             ("Audit", "audit", "text", "Audit"), ("Note", "note", "text", None)]),
-        "Expenses": ("expenses", [("Batch", "batch", "text", "Batch"), ("ExpenseDate", "date", "date", None), ("Category", "category", "text", "ExpenseCategory"),
+        "Expenses": ("expenses", [("Batch", "batch", "text", "BatchAnc"), ("ExpenseDate", "date", "date", None), ("Category", "category", "text", "ExpenseCategory"),
             ("Description", "desc", "text", None), ("PaymentMode", "mode", "text", "PaymentMode"), ("Amount", "amount", "inr", None), ("Note", "note", "text", None)]),
         "DailyLog": ("logs", [("Batch", "batch", "text", "Batch"), ("LogDate", "date", "date", None), ("Activity", "activity", "text", "Activity"),
             ("BedsArea", "area", "text", None), ("TempC", "temp", "num", None), ("MoisturePct", "moisture", "num", None), ("Qty", "qty", "num", None),
@@ -157,7 +159,7 @@ def fco_formula(t):
         parts.append(f'IF(AND(ISNUMBER({v}),{cond}),"{label.split(" ")[0]} ","")')
     flags = "&".join(parts)
     p = this(t, "Product")
-    return (f'=IF({this(t, "Batch")}="","",IF(OR({p}="FG",{p}="EX",{p}="EXFG"),IF({flags}="","Within FCO","Outside: "&TRIM({flags})),"Trial (not checked)"))')
+    return (f'=IF({this(t, "Batch")}="","",IF(OR({p}="FG",{p}="EXFG"),IF({flags}="","Within FCO","Outside: "&TRIM({flags})),"Trial (not checked)"))')
 
 
 def build(src, out, batch):
@@ -203,6 +205,16 @@ def build(src, out, batch):
         ws_list.cell(i + 2, 19, lo)
         ws_list.cell(i + 2, 20, hi)
         ws_list.cell(i + 2, 21, colname)
+    ws_list["V1"], ws_list["W1"] = "Material", "BatchOrAncillary"
+    for j, m in enumerate(MATERIALS):
+        ws_list.cell(j + 2, 22, m)
+    ws_list["W2"] = ANCILLARY
+    for i in range(3, 53):
+        ws_list[f"W{i}"] = f'=A{i}'
+    list_ranges["Material"] = f"Lists!$V$2:$V${len(MATERIALS) + 1}"
+    list_ranges["BatchAnc"] = "Lists!$W$2:$W$52"
+    ws_list["V1"].comment = Comment("Material types for the RawMaterial drop-down.", "Navjyoti")
+    ws_list["W1"].comment = Comment("Batch drop-down for RawMaterial and Expenses: every batch plus Ancillary (not used in production).", "Navjyoti")
     ws_list["R11"] = "Source: FCO 1985 vermicompost specification (P as P2O5, K as K2O). Edit Min / Max if your buyer's export spec differs."
     for name, ref in list_ranges.items():
         wb.defined_names[f"L_{name}"] = DefinedName(f"L_{name}", attr_text=ref)
@@ -210,7 +222,7 @@ def build(src, out, batch):
         c.font = F(bold=True, color="FFFFFF")
         c.fill = HDR_CALC
     ws_list.column_dimensions["A"].width = 12
-    for L in "BCDEFGHIJKLMNOPQ":
+    for L in "BCDEFGHIJKLMNOPQVW":
         ws_list.column_dimensions[L].width = 20
     ws_list.column_dimensions["R"].width = 18
     ws_list["A1"].comment = Comment("Filled automatically from the Batches sheet. Used by the batch selectors.", "Navjyoti")
@@ -352,7 +364,7 @@ def build(src, out, batch):
     ws["K5"].number_format = "dd mmm yyyy"
     ws["K5"].font = F(bold=True)
     wb.defined_names["SelBatch"] = DefinedName("SelBatch", attr_text='Dashboard!$C$5')
-    K = 'IF(SelBatch="All","*",SelBatch)'  # SUMIFS criterion: * matches every batch
+    K = f'IF(SelBatch="All","<>{ANCILLARY}",SelBatch)'  # All = every batch, never the Ancillary purchases
 
     # detailed figures (B:C) — the tiles above read from these cells
     R = 18
@@ -374,6 +386,8 @@ def build(src, out, batch):
         ("exp", "Expenses", f"=SUMIFS(Expenses[Amount],Expenses[Batch],{K})", INR_FMT),
         ("cpk", "Expense per kg produced (₹)", '=IFERROR(C{exp}/C{net},"")', "₹#,##0.00"),
         ("margin", "Revenue − expenses", "=C{rev}-C{exp}", '₹#,##0;[Red]-₹#,##0'),
+        ("anc", "Ancillary purchases & expenses (not in production)",
+         f'=SUMIFS(RawMaterial[Amount],RawMaterial[Batch],"{ANCILLARY}")+SUMIFS(Expenses[Amount],Expenses[Batch],"{ANCILLARY}")', INR_FMT),
     ]
     at = {k: R + i for i, (k, *_) in enumerate(kpis)}
     subhead(ws, R - 2, 2, 3, "DETAILED FIGURES", GREEN)
@@ -447,7 +461,7 @@ def build(src, out, batch):
         ("Harvest entries without net weight", f'=COUNTIFS(Harvest[Batch],{K},Harvest[BedNo],"<>",Harvest[NetKg],"")', 0),
         ("Raw material payments not settled", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[PaymentStatus],"<>Paid")', 0),
         ("Raw material lots without lab acceptance", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[LabResult],"<>Accepted")', 0),
-        ("FG / EX / EXFG lab reports outside FCO", f'=COUNTIFS(QualityControl[Batch],{K},QualityControl[FCOCheck],"Outside*")', 0),
+        ("FG / EXFG lab reports outside FCO", f'=COUNTIFS(QualityControl[Batch],{K},QualityControl[FCOCheck],"Outside*")', 0),
         ("Sales priced under ₹1 per kg", f'=COUNTIFS(Sales[Batch],{K},Sales[QtyKg],">0",Sales[PricePerKg],"<1")', 0),
         ("Days since watering was logged", '=IF(' + LASTWATER + '=0,"none logged",TODAY()-' + LASTWATER + ')', 3),
     ]
@@ -475,7 +489,7 @@ def build(src, out, batch):
     ms = ws.cell(D - 1, 3)
     ms.number_format, ms.fill, ms.border, ms.font = "mmm yyyy", FILL("FFF3B0"), BOX, F(bold=True)
     ms.protection = Protection(locked=False)
-    first = first_date("RawMaterial[PurchaseDate]", '(((SelBatch="All")+(RawMaterial[Batch]=SelBatch))>0)')
+    first = first_date("RawMaterial[PurchaseDate]", f'((((SelBatch="All")*(RawMaterial[Batch]<>"{ANCILLARY}"))+(RawMaterial[Batch]=SelBatch))>0)')
     first2 = first_date("Harvest[HarvestDate]", '(((SelBatch="All")+(Harvest[Batch]=SelBatch))>0)')
     eff = ws.cell(D - 1, 4, start_month(f"C{D - 1}", first, first2))
     eff.number_format, eff.font = '"from "mmm yyyy', F(color=MUTED, italic=True)
@@ -794,12 +808,12 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
     start = row
     for cc in range(2, 17):
         ws.cell(row, cc).fill = FILL("E3F1E8")
-    ws.cell(row, 2, "Quality – RM · FG · EX · EXRM · EXFG (average of lab reports)").font = F(bold=True, size=12, color=GREEN)
+    ws.cell(row, 2, "Quality – RM · FG · EXRM · EXFG (average of lab reports)").font = F(bold=True, size=12, color=GREEN)
     ws.cell(row, 2).alignment = Alignment(vertical="center", indent=1)
     ws.row_dimensions[row].height = 22
     sections.append(("Quality comparison", row))
     top_button(ws, row, 9)
-    ws.cell(row + 1, 2, "Batch chosen in C7 (All = every batch). FCO limits apply to FG, EX and EXFG (finished material); "
+    ws.cell(row + 1, 2, "Batch chosen in C7 (All = every batch). FCO limits apply to FG and EXFG (finished material); "
                         "RM and EXRM are trials. Red = outside the limit.").font = F(color=MUTED, italic=True)
     hr = row + 2
     heads = ["Parameter", *[p[0] for p in PRODUCTS], "FCO min", "FCO max"]  # same names as the QualityControl sheet
@@ -856,6 +870,75 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
         ch.height, ch.width = 7.5, 17
         ws.add_chart(ch, f"K{anchor + 1}")
     row = max(rr + 3, start + 52)
+
+    # Latest FG report compared with the latest RM report
+    start = row
+    for cc in range(2, 17):
+        ws.cell(row, cc).fill = FILL("E3F1E8")
+    ws.cell(row, 2, "Quality – latest FG result vs latest RM result").font = F(bold=True, size=12, color=GREEN)
+    ws.cell(row, 2).alignment = Alignment(vertical="center", indent=1)
+    ws.row_dimensions[row].height = 22
+    sections.append(("Latest FG vs RM", row))
+    top_button(ws, row, 9)
+    ws.cell(row + 1, 2, "Most recent lab report of each type for the batch chosen in C7 (not an average). "
+                        "Change = FG − RM. Status checks the FG result against the FCO limits.").font = F(color=MUTED, italic=True)
+    bc = '((($C$7="All")+(QualityControl[Batch]=$C$7))>0)*(QualityControl[Batch]<>"")'
+    info = row + 2
+    for k, (p, lab) in enumerate((("RM", "Latest RM report"), ("FG", "Latest FG report"))):
+        r = info + k
+        ws.cell(r, 2, lab).font = F(bold=True, color=INK)
+        dcell = ws.cell(r, 3, f'=SUMPRODUCT(MAX({bc}*(QualityControl[Product]="{p}")*QualityControl[SamplingDate]))')
+        dcell.number_format = 'dd-mm-yyyy;;"none yet"'
+        dcell.font = F(bold=True, color=INK)
+        ws.cell(r, 4, f'=IF(C{r}=0,"",IFERROR(LOOKUP(2,1/({bc}*(QualityControl[Product]="{p}")*(QualityControl[SamplingDate]=C{r})),QualityControl[ReportNo]),""))').font = F(color=MUTED)
+        ws.cell(r, 2).fill = ws.cell(r, 3).fill = ws.cell(r, 4).fill = FILL("F4F7F3")
+    rm_d, fg_d = f"$C${info}", f"$C${info + 1}"
+    hr = info + 3
+    heads = ["Parameter", "Latest RM", "Latest FG", "Change (FG − RM)", "FCO min", "FCO max", "FG status"]
+    for j, h in enumerate(heads):
+        c = ws.cell(hr, 2 + j, h)
+        c.font = F(bold=True, color="FFFFFF")
+        c.fill = FILL([INK, PRODUCTS[0][2], PRODUCTS[1][2], "5B6B62", "5B6B62", "5B6B62", INK][j])
+        c.alignment = Alignment(horizontal="left" if j == 0 else "right", wrap_text=True, vertical="center")
+    ws.row_dimensions[hr].height = 30
+    lcrit = 'IF($C$7="All","*",$C$7)'
+    for i, (colname, _l) in enumerate(params):
+        r = hr + 1 + i
+        ws.cell(r, 2, colname).font = F(color=INK)
+        for j, (p, dref) in enumerate((("RM", rm_d), ("FG", fg_d))):
+            c = ws.cell(r, 3 + j, f'=IF({dref}=0,"",IFERROR(AVERAGEIFS(QualityControl[{colname}],QualityControl[Batch],{lcrit},'
+                                  f'QualityControl[Product],"{p}",QualityControl[SamplingDate],{dref}),""))')
+            c.number_format, c.font = "0.00", F(color=INK)
+        ch_ = ws.cell(r, 5, f'=IF(AND(ISNUMBER(C{r}),ISNUMBER(D{r})),D{r}-C{r},"")')
+        ch_.number_format, ch_.font = '+0.00;-0.00;0.00', F(bold=True, color=INK)
+        if colname in fco_idx:
+            k = fco_idx[colname] + 2
+            ws.cell(r, 6, f'=IF(Lists!$S${k}="","",Lists!$S${k})').font = F(color=MUTED)
+            ws.cell(r, 7, f'=IF(Lists!$T${k}="","",Lists!$T${k})').font = F(color=MUTED)
+            st = ws.cell(r, 8, f'=IF(NOT(ISNUMBER(D{r})),"",IF(OR(AND(ISNUMBER(F{r}),D{r}<F{r}),AND(ISNUMBER(G{r}),D{r}>G{r})),"✗ Outside FCO","✓ Within FCO"))')
+            st.font = F(bold=True)
+            st.alignment = Alignment(horizontal="right")
+        for j in range(7):
+            ws.cell(r, 2 + j).border = Border(bottom=THIN)
+            if j != 6:
+                ws.cell(r, 2 + j).fill = FILL("F4F7F3") if i % 2 else FILL("FFFFFF")
+    lend = hr + len(params)
+    ws.conditional_formatting.add(f"H{hr + 1}:H{lend}", CellIsRule(operator="equal", formula=['"✗ Outside FCO"'], fill=BAD_FILL, font=F(bold=True, color="B3261E")))
+    ws.conditional_formatting.add(f"H{hr + 1}:H{lend}", CellIsRule(operator="equal", formula=['"✓ Within FCO"'], fill=OK_FILL, font=F(bold=True, color="1D7443")))
+    idx = {c: i for i, (c, _l) in enumerate(params)}
+    for title, first_p, last_p, anchor in (("Moisture, OrganicCarbon, OrganicMatter, CNRatio", "Moisture", "CNRatio", start + 1),
+                                           ("Nitrogen, Phosphorus, Potassium", "Nitrogen", "Potassium", start + 18)):
+        a, b = hr + 1 + idx[first_p], hr + 1 + idx[last_p]
+        ws.cell(anchor, 11, title + " · latest RM vs FG").font = F(bold=True, color=INK)
+        ch = BarChart()
+        ch.type = "col"
+        for j, (p, *_x) in enumerate(PRODUCTS[:2]):
+            ch.series.append(Series(Reference(ws, min_col=3 + j, min_row=a, max_row=b), title=p))
+        ch.set_categories(Reference(ws, min_col=2, min_row=a, max_row=b))
+        style_chart(ch, 2, colors=[PRODUCTS[0][2], PRODUCTS[1][2]])
+        ch.height, ch.width = 7.5, 17
+        ws.add_chart(ch, f"K{anchor + 1}")
+    row = max(lend + 3, start + 36)
 
     # index with links
     ws["B9"] = "Jump to  ▸"
@@ -943,16 +1026,16 @@ def build_readme(ws):
         ("yellow", "Yellow cell = a selector you can change (batch, month)."),
         ("h2", "Sheets"),
         ("Dashboard", "Key figures, alerts that need attention, batch comparison, monthly net yield vs sales."),
-        ("Reports", "Bar charts and tables by supplier, month, bed block, customer, category and activity, for up to three batches side by side; Quality comparison of RM, FG, EX, EXRM and EXFG against FCO limits. Every section has a ▲ TOP button."),
+        ("Reports", "Bar charts and tables by supplier, month, bed block, customer, category and activity, for up to three batches side by side; Quality comparison of RM, FG, EXRM and EXFG against FCO limits, and the latest FG result against the latest RM result. Every section has a ▲ TOP button."),
         ("Batches", "One row per batch (B4, B5, …). Batch drop-downs everywhere read from here."),
-        ("RawMaterial", "Excel sheet 1 – purchases, supplier, vehicle, qty, rate, moisture, lab acceptance. Amount is calculated."),
+        ("RawMaterial", "Excel sheet 1 – purchases, supplier, material type (drop-down), vehicle, qty, rate, moisture, lab acceptance. Amount is calculated. Choose Batch = Ancillary for purchases not used in production (e.g. earthworm breeding); they are left out of all production figures and shown separately on the Dashboard."),
         ("PreCompost", "Excel sheet 2 – lots, culture dose, up to three turnings. Peak temperature and days to transfer are calculated."),
         ("Beds", "Excel sheet 3 – bed lifecycle. Net yield (from Harvest), live status (Harvested / Overdue / …) and bed number are calculated."),
         ("Harvest", "Excel sheet 4 – raw and net yield per bed, FG batch, packing. Recovery % is calculated."),
-        ("QualityControl", "Excel sheet 5 – lab reports. Product: RM = raw material / trial, FG = finished goods, EX = export material, EXRM = export raw material / trial, EXFG = export finished goods. FCO check is calculated for FG, EX and EXFG."),
+        ("QualityControl", "Excel sheet 5 – lab reports. Product: RM = raw material / trial, FG = finished goods, EXRM = export raw material / trial, EXFG = export finished goods. FCO check is calculated for FG and EXFG."),
         ("Sales", "Excel sheet 6 – invoices. Revenue is calculated."),
         ("StockLedger", "Excel sheet 7 – stock in / out / loss. Closing stock runs per batch in entry-number order."),
-        ("Expenses", "Excel sheet 8 – expenses by category."),
+        ("Expenses", "Excel sheet 8 – expenses by category. Batch = Ancillary keeps a cost out of production figures."),
         ("DailyLog", "Watering, turning, temperature and moisture checks, feeding, inspections. Example: B5 · 01-10-2026 · Watering · BED-01 to BED-40 · 400 L · Ramesh."),
         ("Lists", "Drop-down values (suppliers and customers collect themselves from the registers) and the FCO reference limits (yellow cells, editable)."),
         ("h2", "Notes on the imported Batch 4 data"),

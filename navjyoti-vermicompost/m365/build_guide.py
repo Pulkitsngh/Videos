@@ -233,14 +233,14 @@ def fig_pbi_report():
         x = 205 + i * 70
         f.rect(x, 350 - a, 22, a, "f-c3", 2).rect(x + 24, 350 - b, 22, b, "f-c2", 2)
     f.line(190, 350, 480, 350)
-    f.rect(505, 118, 195, 257, "f-card", 8).text(517, 138, "Quality: RM · FG · EX", 12, weight=700)
+    f.rect(505, 118, 195, 257, "f-card", 8).text(517, 138, "Quality: RM · FG · EXFG", 12, weight=700)
     for i, (a, b, c) in enumerate([(120, 80, 46), (62, 50, 48), (30, 40, 44)]):
         x = 525 + i * 58
         f.rect(x, 350 - a, 14, a, "f-c1", 2).rect(x + 15, 350 - b, 14, b, "f-c2", 2).rect(x + 30, 350 - c, 14, c, "f-c3", 2)
     f.line(515, 290, 690, 290, "f-ref")
     f.text(690, 285, "FCO", 10, "f-muted", "end")
     f.hi(505, 118, 195, 257, 7)
-    return f.svg("Overview report page with batch slicer, KPI cards, net yield vs sold chart and the RM/FG/EX quality chart")
+    return f.svg("Overview report page with batch slicer, KPI cards, net yield vs sold chart and the RM/FG/EXRM/EXFG quality chart")
 
 
 def fig_pbi_refresh():
@@ -316,7 +316,7 @@ STAGES = [
         "Select <b>Implementation 2.0</b>, tick all 10 lists, then <b>Transform data → Close &amp; apply</b>.",
         "In <b>Model view</b>, drag <b>Batches[BatchCode]</b> onto each list's <b>Batch</b> column. Paste the measures from <i>PowerBI-Measures.dax</i>.",
         "Build the pages with a <b>Batch slicer</b>: Overview, Raw material, Beds &amp; harvest, Quality, Sales &amp; stock, Compare batches.",
-        "For the Quality page, put <b>Product</b> (RM / FG / EX) on the legend and add constant lines at the FCO limits. Turn on tooltips and add a drill-through page for pop-up detail.",
+        "For the Quality page, put <b>Product</b> (RM / FG / EXRM / EXFG) on the legend and add constant lines at the FCO limits. Turn on tooltips and add a drill-through page for pop-up detail.",
         "<b>Publish</b>. In app.powerbi.com open the semantic model <b>Settings</b> and set the credentials to OAuth2.",
         "Turn on <b>scheduled refresh</b> (up to 8 times a day).",
     ], [fig_pbi_getdata(), fig_pbi_model(), fig_pbi_report(), fig_pbi_refresh()], None),
@@ -324,7 +324,7 @@ STAGES = [
         "<b>+ Create → Scheduled cloud flow</b>, every day at 08:00.",
         "Add <b>SharePoint – Get items</b> on <i>Beds</i> with the filter shown.",
         "Add a <b>Condition</b>: number of items greater than 0.",
-        "Add <b>Teams – Post message</b> with the list of overdue beds. Repeat for watering gaps, FG/EX reports outside FCO and unpaid raw material (see <i>PowerAutomate-Flows.md</i>).",
+        "Add <b>Teams – Post message</b> with the list of overdue beds. Repeat for watering gaps, FG/EXFG reports outside FCO and unpaid raw material (see <i>PowerAutomate-Flows.md</i>).",
     ], [fig_flow()], None),
     ("teams", "Put it together in Teams", "Anyone · 10 minutes", [
         "In the Navjyoti Production team, click <b>+</b> on the tab bar.",

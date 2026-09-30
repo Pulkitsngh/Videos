@@ -92,12 +92,12 @@ Notify("Harvest saved", NotificationType.Success);
 ResetForm(frmHarvest)
 ```
 
-## 5. Quality (`scrQC`) – RM trial, FG, EX
+## 5. Quality (`scrQC`) – RM, FG, EXRM, EXFG
 
 | Control | Property | Formula |
 |---|---|---|
 | `frmQC` | DataSource / Item | `QualityControl` / `galQC.Selected` |
-| Product card | Items | `Choices(QualityControl.Product)` (RM, FG, EX) |
+| Product card | Items | `Choices(QualityControl.Product)` (RM, FG, EXRM, EXFG) |
 | `lblFCO` (warning label on the form) | Text | see below |
 | | Color | `If(StartsWith(lblFCO.Text, "Outside"), Color.Red, Color.Green)` |
 
@@ -107,7 +107,7 @@ With({p: DataCardValueProduct.Selected.Value,
       ph: Value(DataCardValuepH.Text), cn: Value(DataCardValueCNRatio.Text),
       ph2: Value(DataCardValuePhosphorus.Text), k: Value(DataCardValuePotassium.Text),
       oc: Value(DataCardValueOrganicCarbon.Text), ec: Value(DataCardValueEC.Text)},
-    If(!(p in ["FG", "EX"]), "RM trial – not checked against FCO",
+    If(!(p in ["FG", "EXFG"]), "Trial (RM / EXRM) – not checked against FCO",
         With({f: Concatenate(
                 If(m < 15 || m > 25, "Moisture ", ""), If(ph < 6.5 || ph > 7.5, "pH ", ""),
                 If(ec > 4, "EC ", ""), If(oc < 18, "OC ", ""), If(n < 1, "N ", ""),
@@ -116,8 +116,8 @@ With({p: DataCardValueProduct.Selected.Value,
 ```
 (The control names `DataCardValue…` differ in each app; pick the text input inside each card.)
 
-**Compare RM / FG / EX** – three labels per parameter:
-`Text(Average(Filter(QualityControl, Batch.Value = varBatch, Product.Value = "EX"), Moisture), "0.00")`
+**Compare RM / FG / EXRM / EXFG** – three labels per parameter:
+`Text(Average(Filter(QualityControl, Batch.Value = varBatch, Product.Value = "EXFG"), Moisture), "0.00")`
 
 ## 6. Raw material, Sales, Expenses, Stock
 

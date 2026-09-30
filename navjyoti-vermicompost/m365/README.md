@@ -77,7 +77,7 @@ Follow `PowerApps-Formulas.md`. In short:
    - **Overview:** cards for RM received, Net yield, Conversion %, Sold, Revenue, Stock on hand, Expenses, Margin; clustered column *Net yield kg* and *Sold kg* by month; bar *Expenses* by category; bar *Beds* by LiveStatus.
    - **Raw material:** bar Quantity by Supplier; column by month; table of lots with lab result.
    - **Beds & harvest:** bar Net yield by BedBlock; column Net yield by month; matrix Beds × status.
-   - **Quality (RM / FG / EX):** clustered column of Avg Moisture, OC, C:N, N, P, K with **Product** as legend; constant lines at the FCO limits; table of lab reports with FCOCheck.
+   - **Quality (RM / FG / EXRM / EXFG):** clustered column of Avg Moisture, OC, C:N, N, P, K with **Product** as legend; constant lines at the FCO limits; table of lab reports with FCOCheck.
    - **Sales & stock:** bar by Customer; revenue by month; stock in / out / loss.
    - **Compare batches:** matrix with Batch on columns and the main measures on rows.
 6. Tooltips and pop-ups: in each visual turn on **Tooltips**; add a **tooltip page** (Format → Page information → Tooltip) showing bed details,
@@ -87,7 +87,7 @@ Follow `PowerApps-Formulas.md`. In short:
 
 ## Stage 5 – Alerts in Power Automate (1 hour)
 
-Follow `PowerAutomate-Flows.md`: overdue beds, watering gap, FG/EX lab report outside FCO, unpaid raw material.
+Follow `PowerAutomate-Flows.md`: overdue beds, watering gap, FG/EXFG lab report outside FCO, unpaid raw material.
 
 ## Stage 6 – Put it together in Teams (10 min)
 

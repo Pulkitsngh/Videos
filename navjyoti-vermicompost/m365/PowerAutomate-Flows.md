@@ -20,13 +20,13 @@ Replace the Teams team/channel and email addresses with your own.
    `if(empty(body('Get_items')?['value']), 99, div(sub(ticks(utcNow()), ticks(first(body('Get_items')?['value'])?['LogDate'])), 864000000000))`
 4. **Condition** · `outputs('Compose')` is greater than `3` → **Post message** to the supervisor: "No watering logged for @{outputs('Compose')} days."
 
-## 3. FG / EX lab report outside FCO – instant
+## 3. FG / EXFG lab report outside FCO – instant
 
 1. **Automated cloud flow** · trigger **SharePoint – When an item is created** · List: *QualityControl*.
 2. **Condition** (Advanced mode):
    ```
    @and(
-     or(equals(triggerBody()?['Product']?['Value'],'FG'), equals(triggerBody()?['Product']?['Value'],'EX')),
+     or(equals(triggerBody()?['Product']?['Value'],'FG'), equals(triggerBody()?['Product']?['Value'],'EXFG')),
      or(
        greater(float(coalesce(triggerBody()?['Moisture'],20)),25), less(float(coalesce(triggerBody()?['Moisture'],20)),15),
        less(float(coalesce(triggerBody()?['Nitrogen'],1)),1),

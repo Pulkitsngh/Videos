@@ -6,7 +6,7 @@ Writes: data/*.csv (list rows), Create-NavjyotiLists.ps1, and copies the guides 
 import csv, os, shutil, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from convert_register import convert
-from build_cloud_workbook import registers, LISTS
+from build_cloud_workbook import registers, LISTS, MATERIALS, ANCILLARY
 
 NOTE_COLS = {"Remarks", "Notes", "Observations", "CultureDose", "Description", "Note", "Remark"}
 TEXT_CHOICE = {"Supplier", "Customer"}   # free text so new names can be typed
@@ -35,7 +35,8 @@ def main(src, out, batch):
     data["batches"].append({"code": "B5", "name": "Batch 5", "site": "Akola", "start": "", "status": "In beds", "notes": "In process"})
     regs = registers()
     os.makedirs(os.path.join(out, "data"), exist_ok=True)
-    choices = dict(LISTS, Batch=sorted({r["code"] for r in data["batches"]}))
+    codes = sorted({r["code"] for r in data["batches"]})
+    choices = dict(LISTS, Batch=codes, BatchAnc=[ANCILLARY] + codes, Material=MATERIALS)
     ps = [PS_HEAD]
     for t, (key, cols) in regs.items():
         rows = data.get(key, [])
