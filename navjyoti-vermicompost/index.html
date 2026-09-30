@@ -7,6 +7,7 @@
   --bg: #f2f5f1; --surface: #ffffff; --surface-2: #e8eee7; --fg: #16201b; --muted: #58685f; --line: #d3ddd4;
   --accent: #1c7148; --accent-fg: #ffffff; --soil: #6b4424;
   --s1: #1e8a5a; --s2: #5b5bd6;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --c6: #008300; --c7: #4a3aa7; --c8: #e34948;
   --good: #1d7443; --good-bg: #dcefe2; --warn: #9a5b00; --warn-bg: #fbecd2; --bad: #b3261e; --bad-bg: #f9dedb; --info-bg: #e3e6fa;
   --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
@@ -17,12 +18,14 @@
   --bg: #0f1512; --surface: #161e1a; --surface-2: #1e2823; --fg: #e2ebe5; --muted: #95a89c; --line: #2b3831;
   --accent: #4dbf8a; --accent-fg: #07130d; --soil: #d19a6a;
   --s1: #3ba877; --s2: #7575e6;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --c8: #e66767;
   --good: #63cf90; --good-bg: #173524; --warn: #e8ad4a; --warn-bg: #3a2a0e; --bad: #f47d73; --bad-bg: #3d1a17; --info-bg: #23264a;
   color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #0f1512; --surface: #161e1a; --surface-2: #1e2823; --fg: #e2ebe5; --muted: #95a89c; --line: #2b3831;
   --accent: #4dbf8a; --accent-fg: #07130d; --soil: #d19a6a;
   --s1: #3ba877; --s2: #7575e6;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --c8: #e66767;
   --good: #63cf90; --good-bg: #173524; --warn: #e8ad4a; --warn-bg: #3a2a0e; --bad: #f47d73; --bad-bg: #3d1a17; --info-bg: #23264a;
   color-scheme: dark }
 
@@ -173,6 +176,37 @@ dialog form { display: grid; grid-template-rows: auto 1fr auto; max-height: calc
 @media (max-width: 560px) { .turn-row { grid-template-columns: 1fr 1fr } }
 .note { font-size: 12.5px; color: var(--muted); grid-column: 1 / -1; margin: 0 }
 
+/* Reports */
+.rep-controls { display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px }
+.ctl-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center }
+.ctl-row .lbl { font-size: 11.5px; font-weight: 600; color: var(--muted); min-width: 76px; text-transform: uppercase; letter-spacing: .06em }
+.seg { display: flex; flex-wrap: wrap; gap: 4px }
+.seg button { border: 1px solid var(--line); background: var(--surface); padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 500 }
+.seg button:hover { border-color: var(--muted) }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg) }
+.tick { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px 4px 9px; cursor: pointer; font-size: 13px; background: var(--surface) }
+.tick input { accent-color: var(--accent); margin: 0 }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none }
+.legend i.sq { width: 10px; height: 10px; border-radius: 3px }
+.hbar { display: grid; gap: 9px }
+.hb-row { display: grid; grid-template-columns: minmax(80px, 170px) minmax(0, 1fr); gap: 10px; align-items: center }
+.hb-lbl { font-size: 13px; overflow-wrap: anywhere; line-height: 1.3 }
+.hb-bars { display: grid; gap: 3px; min-width: 0 }
+.hb-line { display: flex; align-items: center; gap: 8px; min-width: 0 }
+.hb-bar { height: 14px; border-radius: 0 4px 4px 0; min-width: 2px }
+.hb-line:hover .hb-bar { filter: brightness(1.12) }
+.hb-val { font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap }
+.finds { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
+.finds li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start }
+.finds li .sw { margin-top: 5px }
+.finds b { display: block; font-weight: 600 } .finds span:not(.sw) { color: var(--muted); font-size: 12.5px }
+.smalls { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px }
+.small { border: 1px solid var(--line); border-radius: 6px; padding: 10px 10px 4px; display: grid; gap: 2px; align-content: start; min-width: 0 }
+.small h4 { margin: 0; font-size: 13.5px; font-family: var(--f-body); font-weight: 600 }
+.small .ref { font-size: 11.5px; color: var(--muted) }
+.small svg { width: 100%; height: auto; display: block; overflow: visible }
+.chip.ex { background: var(--info-bg); color: var(--fg) }
+.vtip { position: fixed; z-index: 60; pointer-events: none; background: var(--fg); color: var(--bg); padding: 6px 9px; border-radius: 6px; font-size: 12px; max-width: 280px }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 9px 14px; border-radius: 8px; font-size: 13px; z-index: 50; max-width: calc(100vw - 32px) }
 .muted { color: var(--muted) }
 .foot { color: var(--muted); font-size: 12px }
@@ -197,6 +231,7 @@ dialog form { display: grid; grid-template-rows: auto 1fr auto; max-height: calc
 
 <dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
 <div class="toast" id="toast" hidden></div>
+<div class="vtip" id="vtip" hidden></div>
 
 <script>
 (() => {
@@ -273,9 +308,9 @@ const REG = {
     cols: [C('date', 'Date', 'date'), C('bed', 'Bed', 'mono'), C('rawKg', 'Raw kg', 'num'), C('netKg', 'Net kg', 'num'), C('rec', 'Recovery', 'pct', r => r.netKg / r.rawKg),
       C('prodBatch', 'Prod. batch', 'mono'), C('fgBatch', 'FG batch', 'mono'), C('packaging', 'Packing'), C('packets', 'Packets', 'num1'), C('moisture', 'Moist. %', 'num')],
     sums: ['rawKg', 'netKg', 'packets'] },
-  qc: { title: 'Quality control', one: 'lab report', blurb: 'Lab analysis for raw material (RM) and finished goods (FG). FG rows are checked against the FCO vermicompost reference.',
+  qc: { title: 'Quality control', one: 'lab report', blurb: 'Lab analysis for raw material trials (RM), finished goods (FG) and export material (EX). FG and EX rows are checked against the FCO vermicompost reference.',
     sort: ['date', 'asc'],
-    fields: [F('date', 'Sampling date', 'date', { def: () => TODAY }), F('product', 'Product', 'select', { opts: ['FG', 'RM'] }), F('seal', 'Sample seal no.', 'text'), F('lab', 'Lab name & date sent', 'text'),
+    fields: [F('date', 'Sampling date', 'date', { def: () => TODAY }), F('product', 'Product', 'select', { opts: ['RM', 'FG', 'EX'] }), F('seal', 'Sample seal no.', 'text'), F('lab', 'Lab name & date sent', 'text'),
       F('batchNo', 'Batch number', 'text', { list: listOf('qc', 'batchNo') }), F('reportDate', 'Report date', 'date'), F('reportNo', 'Lab report no.', 'text'), F('status', 'FCO status', 'select', { opts: ['Pass (FCO Compliant)', 'Awaiting report', 'Fail'] }),
       F('ph', 'pH', 'num'), F('ec', 'EC (dS/m)', 'num'), F('moisture', 'Moisture %', 'num'), F('oc', 'Organic carbon %', 'num'), F('om', 'Organic matter %', 'num'), F('cn', 'C:N ratio', 'num'),
       F('n', 'Nitrogen %', 'num'), F('p', 'Phosphorus %', 'num'), F('k', 'Potassium %', 'num'), F('ash', 'Ash %', 'num'), F('ca', 'Calcium', 'num'), F('mn', 'Manganese', 'num'), F('fe', 'Iron', 'num'),
@@ -312,7 +347,7 @@ const REG = {
     cols: [C('code', 'Code', 'mono'), C('name', 'Name'), C('site', 'Site'), C('start', 'Started', 'date'), C('status', 'Stage', 'chip'), C('nbeds', 'Beds', 'num', r => all('beds').filter(b => b.batch === r.code).length),
       C('net', 'Net yield kg', 'num', r => sum(all('harvest').filter(h => h.batch === r.code), h => h.netKg)), C('notes', 'Notes', 'wrap')] },
 };
-const TABS = [['overview', 'Overview'], ['logs', 'Daily log'], ['rm', 'Raw material'], ['precompost', 'Pre-compost'], ['beds', 'Beds'], ['harvest', 'Harvest'], ['qc', 'Quality'],
+const TABS = [['overview', 'Overview'], ['reports', 'Reports'], ['logs', 'Daily log'], ['rm', 'Raw material'], ['precompost', 'Pre-compost'], ['beds', 'Beds'], ['harvest', 'Harvest'], ['qc', 'Quality'],
   ['sales', 'Sales'], ['stock', 'Stock'], ['expenses', 'Expenses'], ['trace', 'Traceability'], ['batches', 'Batches']];
 
 const state = { data: {}, loaded: new Set(), db: null, dl: null, conn: 'connecting', canWrite: true, batch: store.get('nv.batch') || 'ALL',
@@ -345,6 +380,7 @@ function bedState(b) {
 }
 const chipClass = v => {
   const s = String(v || '').toLowerCase();
+  if (s === 'ex') return 'ex';
   if (/^(paid|accepted|pass|received|verified|harvested|closed|fg)/.test(s)) return 'good';
   if (/(pending|awaiting|partial|overdue|ready|mismatch)/.test(s)) return 'warn';
   if (/(reject|fail)/.test(s)) return 'bad';
@@ -363,7 +399,7 @@ function render() {
   if (!state.db && state.conn !== 'connecting') { main.innerHTML = offlineView(); return; }
   if (state.conn === 'connecting' && !state.loaded.size) return;
   const t = state.tab;
-  main.innerHTML = t === 'overview' ? overview() : t === 'trace' ? traceView() : t === 'beds' ? bedsView() : registerView(t);
+  main.innerHTML = t === 'overview' ? overview() : t === 'reports' ? reportsView() : t === 'trace' ? traceView() : t === 'beds' ? bedsView() : registerView(t);
   if (t === 'overview') wireChart();
   if (activeId) { const el = document.getElementById(activeId); if (el && el !== active && 'focus' in el) { el.focus(); try { if (caret != null) el.setSelectionRange(caret, caret); } catch {} } }
 }
@@ -436,7 +472,7 @@ function tableHTML(key, list) {
     const arrow = ui.sort === c.k ? (ui.dir === 'asc' ? '▲' : '▼') : '';
     return `<th class="${n ? 'n' : ''}">${def.fixedSort ? esc(c.l) : `<button type="button" data-sort="${key}:${c.k}">${esc(c.l)} <span aria-hidden="true">${arrow}</span></button>`}</th>`;
   };
-  const qcOff = (r, c) => key === 'qc' && r.product === 'FG' && FCO[c.k] && isNum(r[c.k]) && outOfRange(c.k, r[c.k]);
+  const qcOff = (r, c) => key === 'qc' && ['FG', 'EX'].includes(r.product) && FCO[c.k] && isNum(r[c.k]) && outOfRange(c.k, r[c.k]);
   const body = list.map(r => `<tr class="${state.canWrite ? 'click' : ''}" data-edit="${key}:${esc(r._id)}" ${state.canWrite ? 'tabindex="0"' : ''}>${showBatch ? `<td class="mono">${esc(r.batch)}</td>` : ''}${cols.map(c => {
     let h = cell(c, r); if (qcOff(r, c)) h = h.replace('<td class="n">', `<td class="n off" title="Outside FCO reference: ${esc(FCO[c.k][2])}">`); return h;
   }).join('')}</tr>`).join('');
@@ -510,8 +546,8 @@ function alerts() {
   if (unpaid.length) out.push(['warn', `${unpaid.length} raw material payment${unpaid.length > 1 ? 's' : ''} not settled`, inr(sum(unpaid, r => r.qtyKg * r.rate)) + ' outstanding']);
   const lab = rows('rm').filter(r => r.labResult && r.labResult !== 'Accepted');
   if (lab.length) out.push([lab.some(r => r.labResult === 'Rejected') ? 'bad' : 'warn', `${lab.length} raw material lot${lab.length > 1 ? 's' : ''} without lab acceptance`, uniq(lab.map(r => r.lot)).join(', ')]);
-  const qcOff = rows('qc').filter(r => r.product === 'FG').map(r => [r, Object.keys(FCO).filter(k => isNum(r[k]) && outOfRange(k, r[k]))]).filter(x => x[1].length);
-  if (qcOff.length) out.push(['warn', `${qcOff.length} finished-goods report${qcOff.length > 1 ? 's' : ''} outside FCO reference`, qcOff.map(([r, ks]) => `${r.reportNo || fdate(r.date)}: ${ks.map(k => FCO[k][2].split(' ')[0]).join(', ')}`).join(' · ')]);
+  const qcOff = rows('qc').filter(r => ['FG', 'EX'].includes(r.product)).map(r => [r, Object.keys(FCO).filter(k => isNum(r[k]) && outOfRange(k, r[k]))]).filter(x => x[1].length);
+  if (qcOff.length) out.push(['warn', `${qcOff.length} finished or export report${qcOff.length > 1 ? 's' : ''} outside FCO reference`, qcOff.map(([r, ks]) => `${r.reportNo || fdate(r.date)}: ${ks.map(k => FCO[k][2].split(' ')[0]).join(', ')}`).join(' · ')]);
   const cheap = rows('sales').filter(r => isNum(r.qtyKg) && (!isNum(r.price) || r.price < 1));
   if (cheap.length) out.push(['warn', `${cheap.length} sale${cheap.length > 1 ? 's' : ''} priced under ₹1 per kg`, cheap.map(r => r.invoice).join(', ') + ' — confirm the rate or mark as sample.']);
   const neg = uniq(rows('stock').filter(r => r._closing < 0).map(r => r.batch));
@@ -663,6 +699,248 @@ function traceView() {
     + (res || `<div class="tbl-wrap"><div class="empty"><b>Enter a code to trace</b>For example ${esc(codes[0] || 'RM/20251204/SMC')}.</div></div>`);
 }
 
+/* ---------- reports ---------- */
+const PRODUCTS = [['RM', 'RM · raw material / trial', 'var(--c1)'], ['FG', 'FG · finished goods', 'var(--c2)'], ['EX', 'EX · export material', 'var(--c3)']];
+const prodColor = p => (PRODUCTS.find(x => x[0] === p) || [0, 0, 'var(--muted)'])[2];
+const batchColor = code => `var(--c${(Math.max(0, batchCodes().indexOf(code)) % 8) + 1})`;
+const QC_PARAMS = [['ph', 'pH', ''], ['ec', 'EC', 'dS/m'], ['moisture', 'Moisture', '%'], ['oc', 'Organic carbon', '%'], ['om', 'Organic matter', '%'], ['cn', 'C:N ratio', ''],
+  ['n', 'Nitrogen', '%'], ['p', 'Phosphorus', '%'], ['k', 'Potassium', '%'], ['ash', 'Ash', '%']];
+const QC_MICRO = [['ca', 'Calcium', ''], ['mn', 'Manganese', ''], ['fe', 'Iron', ''], ['mn2', 'Manganese (2nd)', ''], ['zn', 'Zinc', ''], ['cu', 'Copper', '']];
+const monthOf = d => isISO(d) ? d.slice(0, 7) : '';
+const monthLbl = m => m ? new Date(m + '-01T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }) : 'No date';
+const avg = (l, f) => { const v = l.map(f).filter(isNum); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+const cnt = l => l.length;
+const bedBlock = b => { const n = parseInt(String(b || '').replace(/\D/g, '')); if (!n) return ''; const s = Math.floor((n - 1) / 10) * 10 + 1; return `BED-${String(s).padStart(2, '0')}–${String(s + 9).padStart(2, '0')}`; };
+const ratio = (l, a, b) => { const x = sum(l, a), y = sum(l, b); return y ? x / y : null; };
+const bedNet = b => harvestFor(b)?.netKg;
+const bedDays = b => { const h = harvestFor(b), end = h && isISO(h.date) ? h.date : b.harvestDone; return isISO(b.fillDate) && isISO(end) ? daysBetween(b.fillDate, end) : null; };
+const peakTemp = p => { const t = (p.turns || []).map(x => x.temp).filter(isNum); return t.length ? Math.max(...t) : null; };
+
+// groups: key -> [label, fn(row) -> category, kind]; measures: key -> [label, fn(rows) -> number, format]
+const REPORTS = {
+  rm: { title: 'Raw material', coll: 'rm', def: ['month', 'qty'], tiles: ['qty', 'amount', 'trucks', 'moisture'],
+    groups: { month: ['Purchase month', r => monthOf(r.date), 'month'], supplier: ['Supplier', r => r.supplier], material: ['Material', r => r.material], lot: ['RM lot', r => r.lot],
+      vehicle: ['Vehicle', r => r.vehicle], payment: ['Payment status', r => r.payment], labResult: ['Lab result', r => r.labResult] },
+    measures: { qty: ['Quantity (kg)', l => sum(l, r => r.qtyKg), 'num'], amount: ['Amount (₹)', l => sum(l, r => r.qtyKg * r.rate), 'inr'], transport: ['Transport (₹)', l => sum(l, r => r.transport), 'inr'],
+      trucks: ['Trucks received', cnt, 'num'], rate: ['Avg rate (₹/kg)', l => ratio(l, r => r.qtyKg * r.rate, r => r.qtyKg), 'num2'], moisture: ['Avg moisture (%)', l => avg(l, r => r.moisture), 'num1'],
+      temp: ['Avg temperature (°C)', l => avg(l, r => r.temp), 'num1'] } },
+  precompost: { title: 'Pre-compost', coll: 'precompost', def: ['lot', 'weight'], tiles: ['weight', 'lots', 'peak', 'days'],
+    groups: { lot: ['Pre-compost lot', r => r.lot], rmLot: ['RM lot', r => r.rmLot], month: ['Start month', r => monthOf(r.start), 'month'] },
+    measures: { weight: ['Weight (MT)', l => sum(l, r => r.weightMT), 'num1'], lots: ['Lots', cnt, 'num'], peak: ['Avg peak temperature (°C)', l => avg(l, peakTemp), 'num1'],
+      moist: ['Avg turning moisture (%)', l => avg(l.flatMap(r => r.turns || []), t => t.moisture), 'num1'], turns: ['Turnings logged', l => sum(l, r => (r.turns || []).length), 'num'],
+      days: ['Avg days to transfer', l => avg(l, r => isISO(r.start) && isISO(r.end) ? daysBetween(r.start, r.end) : null), 'num1'] } },
+  beds: { title: 'Beds', coll: 'beds', def: ['block', 'net'], tiles: ['beds', 'dung', 'net', 'perBed'],
+    groups: { block: ['Bed block (10 beds)', r => bedBlock(r.bed)], status: ['Status', r => bedState(r).key.replace(/^./, c => c.toUpperCase())], species: ['Worm species & source', r => r.species],
+      prodCode: ['Production code', r => r.prodCode], pcLot: ['Pre-compost lot', r => r.pcLot], month: ['Filling month', r => monthOf(r.fillDate), 'month'], bed: ['Bed', r => r.bed] },
+    measures: { net: ['Net yield (kg)', l => sum(l, bedNet), 'num'], beds: ['Beds', cnt, 'num'], dung: ['Dung filled (t)', l => sum(l, r => r.dungT), 'num1'], worms: ['Worms added (kg)', l => sum(l, r => r.wormsKg), 'num'],
+      perBed: ['Avg net per bed (kg)', l => avg(l, bedNet), 'num'], conv: ['Conversion (% of dung)', l => { const d = sum(l, r => r.dungT) * 1000; return d ? sum(l, bedNet) / d * 100 : null; }, 'num1'],
+      days: ['Avg days fill → harvest', l => avg(l, bedDays), 'num'] } },
+  harvest: { title: 'Harvest', coll: 'harvest', def: ['month', 'net'], tiles: ['net', 'raw', 'rec', 'beds'],
+    groups: { month: ['Harvest month', r => monthOf(r.date), 'month'], date: ['Harvest date', r => r.date, 'date'], block: ['Bed block (10 beds)', r => bedBlock(r.bed)], prodBatch: ['Production batch', r => r.prodBatch],
+      fgBatch: ['FG batch', r => r.fgBatch], packaging: ['Packaging', r => r.packaging], bed: ['Bed', r => r.bed] },
+    measures: { net: ['Net yield (kg)', l => sum(l, r => r.netKg), 'num'], raw: ['Raw compost (kg)', l => sum(l, r => r.rawKg), 'num'],
+      rec: ['Recovery (% net of raw)', l => { const w = l.filter(r => isNum(r.netKg)); return ratio(w, r => r.netKg, r => r.rawKg) * 100 || null; }, 'num1'],
+      beds: ['Beds weighed', l => l.filter(r => isNum(r.netKg)).length, 'num'], perBed: ['Avg net per bed (kg)', l => avg(l, r => r.netKg), 'num'],
+      moisture: ['Avg moisture (%)', l => avg(l, r => r.moisture), 'num1'], packets: ['Packets / bags', l => sum(l, r => r.packets), 'num'] } },
+  qc: { title: 'Quality', coll: 'qc' },
+  sales: { title: 'Sales', coll: 'sales', def: ['customer', 'qty'], tiles: ['qty', 'revenue', 'price', 'invoices'],
+    groups: { customer: ['Customer', r => r.customer], month: ['Sale month', r => monthOf(r.date), 'month'], fgBatch: ['FG batch', r => r.fgBatch], payment: ['Payment', r => r.payment], drc: ['Dealer DRC', r => r.drc] },
+    measures: { qty: ['Quantity sold (kg)', l => sum(l, r => r.qtyKg), 'num'], revenue: ['Revenue (₹)', l => sum(l, r => r.qtyKg * r.price), 'inr'],
+      price: ['Avg price (₹/kg)', l => ratio(l, r => r.qtyKg * r.price, r => r.qtyKg), 'num2'], invoices: ['Invoices', cnt, 'num'] } },
+  stock: { title: 'Stock', coll: 'stock', def: ['pack', 'in'], tiles: ['in', 'out', 'loss', 'net'],
+    groups: { pack: ['Packing', r => r.pack], month: ['Entry month', r => monthOf(r.date), 'month'], audit: ['Audit status', r => r.audit] },
+    measures: { in: ['Production in (kg)', l => sum(l, r => r.inKg), 'num'], out: ['Sales out (kg)', l => sum(l, r => r.outKg), 'num'], loss: ['Loss / adjustment (kg)', l => sum(l, r => r.lossKg), 'num'],
+      net: ['Net movement (kg)', l => sum(l, r => (r.inKg || 0) - (r.outKg || 0) - (r.lossKg || 0)), 'num'], entries: ['Entries', cnt, 'num'] } },
+  expenses: { title: 'Expenses', coll: 'expenses', def: ['category', 'amount'], tiles: ['amount', 'count', 'avg'],
+    groups: { category: ['Category', r => r.category], month: ['Month', r => monthOf(r.date), 'month'], mode: ['Payment mode', r => r.mode] },
+    measures: { amount: ['Amount (₹)', l => sum(l, r => r.amount), 'inr'], count: ['Entries', cnt, 'num'], avg: ['Avg per entry (₹)', l => avg(l, r => r.amount), 'inr'] } },
+  logs: { title: 'Daily log', coll: 'logs', def: ['activity', 'entries'], tiles: ['entries', 'temp', 'moisture'],
+    groups: { activity: ['Activity', r => r.activity], month: ['Month', r => monthOf(r.date), 'month'], by: ['Recorded by', r => r.by], area: ['Beds / area', r => r.area] },
+    measures: { entries: ['Entries', cnt, 'num'], temp: ['Avg temperature (°C)', l => avg(l, r => r.temp), 'num1'], moisture: ['Avg moisture (%)', l => avg(l, r => r.moisture), 'num1'], qty: ['Quantity (L / kg)', l => sum(l, r => r.qty), 'num'] } },
+};
+const rep = (() => { let s = {}; try { s = JSON.parse(store.get('nv.rep') || '{}') || {}; } catch {} return { type: 'harvest', group: {}, measure: {}, batches: null, products: ['RM', 'FG', 'EX'], qcBy: 'product', micro: false, ...s }; })();
+const saveRep = () => store.set('nv.rep', JSON.stringify(rep));
+function repBatches() {
+  const codes = batchCodes();
+  let sel = (rep.batches || (state.batch === 'ALL' ? codes : [state.batch])).filter(c => codes.includes(c));
+  return sel.length ? codes.filter(c => sel.includes(c)) : codes;
+}
+const fmtBy = (t, v) => t === 'inr' ? inr(v) : t === 'num1' ? fmt(v, 1) : t === 'num2' ? fmt(v, 2) : fmt(v);
+const barTip = s => esc(s);
+
+function reportsView() {
+  const R = REPORTS[rep.type] || REPORTS.harvest, sel = repBatches(), codes = batchCodes();
+  const types = Object.entries(REPORTS).map(([k, r]) => `<button type="button" data-rtype="${k}" aria-pressed="${k === rep.type}">${esc(r.title)}</button>`).join('');
+  const batchTicks = codes.map(c => `<label class="tick"><input type="checkbox" class="rep-batch" value="${esc(c)}" ${sel.includes(c) ? 'checked' : ''}><span class="sw" style="background:${batchColor(c)}"></span>${esc(all('batches').find(b => b.code === c)?.name || c)}</label>`).join('');
+  let ctl = `<div class="ctl-row"><span class="lbl">Report</span><div class="seg">${types}</div></div>
+    <div class="ctl-row"><span class="lbl">Batches</span>${batchTicks || '<span class="muted">No batches yet</span>'}</div>`;
+  let body;
+  if (rep.type === 'qc') {
+    ctl += `<div class="ctl-row"><span class="lbl">Products</span>${PRODUCTS.map(([p, l, c]) => `<label class="tick"><input type="checkbox" class="rep-prod" value="${p}" ${rep.products.includes(p) ? 'checked' : ''}><span class="sw" style="background:${c}"></span>${esc(l)}</label>`).join('')}</div>
+      <div class="ctl-row"><span class="lbl">Compare</span><div class="seg">${[['product', 'By product type'], ['batch', 'By batch'], ['report', 'Each lab report']].map(([k, l]) => `<button type="button" data-qcby="${k}" aria-pressed="${rep.qcBy === k}">${l}</button>`).join('')}</div>
+      <label class="tick"><input type="checkbox" id="rep_micro" ${rep.micro ? 'checked' : ''}>Include micronutrients</label></div>`;
+    body = qcReport(sel);
+  } else {
+    const g = rep.group[rep.type] in R.groups ? rep.group[rep.type] : R.def[0], m = rep.measure[rep.type] in R.measures ? rep.measure[rep.type] : R.def[1];
+    ctl += `<div class="ctl-row"><span class="lbl">Group by</span><select class="sel" id="rep_group">${Object.entries(R.groups).map(([k, v]) => `<option value="${k}" ${k === g ? 'selected' : ''}>${esc(v[0])}</option>`).join('')}</select>
+      <span class="lbl" style="min-width:0">Chart</span><select class="sel" id="rep_measure">${Object.entries(R.measures).map(([k, v]) => `<option value="${k}" ${k === m ? 'selected' : ''}>${esc(v[0])}</option>`).join('')}</select></div>`;
+    body = genReport(R, g, m, sel);
+  }
+  return head('Reports', 'Choose a register and the batches to compare. The bar chart, findings and table update as you change the selection.',
+    state.dl ? `<button class="btn" type="button" data-act="repxlsx">Download report (Excel)</button>` : '')
+    + `<div class="rep-controls">${ctl}</div>` + body;
+}
+
+function repData(R, g, m, sel) {
+  const list = all(R.coll).filter(r => sel.includes(r.batch));
+  const G = R.groups[g], M = R.measures[m], kind = G[2];
+  const raw = r => { const v = G[1](r); return v == null || v === '' ? '' : String(v); };
+  let cats = [...new Set(list.map(raw))];
+  const total = c => M[1](list.filter(r => raw(r) === c)) || 0;
+  if (kind === 'month' || kind === 'date') cats.sort((a, b) => (a || '9999').localeCompare(b || '9999'));
+  else if (g === 'bed' || g === 'block') cats.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  else cats.sort((a, b) => total(b) - total(a));
+  let key = raw;
+  const cap = kind === 'month' || kind === 'date' || g === 'bed' ? 40 : 14;
+  if (cats.length > cap) { const keep = new Set(cats.slice(0, cap - 1)); key = r => keep.has(raw(r)) ? raw(r) : '\u0000other'; cats = [...cats.slice(0, cap - 1), '\u0000other']; }
+  const label = c => c === '\u0000other' ? 'Other' : kind === 'month' ? monthLbl(c) : kind === 'date' ? fdate(c) : (c || '(blank)');
+  const series = sel.filter(b => list.some(r => r.batch === b));
+  const cell = (c, b) => list.filter(r => key(r) === c && r.batch === b);
+  return { list, G, M, cats, label, series, cell };
+}
+
+function hbars(cats, series, value, label, fmtT, colorOf, tipOf) {
+  const vals = cats.flatMap(c => series.map(s => value(c, s))).filter(isNum);
+  const max = Math.max(1e-9, ...vals.map(Math.abs));
+  return `<div class="hbar">${cats.map(c => `<div class="hb-row"><div class="hb-lbl">${esc(label(c))}</div><div class="hb-bars">${series.map(s => {
+    const v = value(c, s);
+    if (!isNum(v)) return series.length > 1 ? `<div class="hb-line"><span class="hb-val muted">—</span></div>` : '';
+    return `<div class="hb-line" data-tip="${barTip(tipOf(c, s, v))}"><div class="hb-bar" style="width:${(Math.abs(v) / max * 82).toFixed(2)}%;background:${colorOf(s)}"></div><span class="hb-val">${fmtBy(fmtT, v)}</span></div>`;
+  }).join('')}</div></div>`).join('')}</div>`;
+}
+
+function genReport(R, g, m, sel) {
+  const { list, G, M, cats, label, series, cell } = repData(R, g, m, sel);
+  if (!list.length) return `<div class="tbl-wrap"><div class="empty"><b>No ${esc(R.title.toLowerCase())} records in the selected batches</b>Tick another batch, or add records in the ${esc(R.title)} tab.</div></div>`;
+  const measures = Object.entries(R.measures);
+  const tiles = R.tiles.map(k => { const [l, f, t] = R.measures[k]; return `<div class="kpi"><span class="l">${esc(l)}</span><span class="v">${fmtBy(t, f(list))}</span><span class="s">${series.length} batch${series.length === 1 ? '' : 'es'} · ${list.length} records</span></div>`; }).join('');
+  // findings: per batch, total of the chart measure, highest and lowest group
+  const finds = series.map(b => {
+    const bl = list.filter(r => r.batch === b);
+    const vals = cats.map(c => [c, M[1](cell(c, b))]).filter(([c, v]) => isNum(v) && cell(c, b).length);
+    if (!vals.length) return '';
+    const hi = vals.reduce((a, x) => x[1] > a[1] ? x : a), lo = vals.reduce((a, x) => x[1] < a[1] ? x : a);
+    return `<li><span class="sw" style="background:${batchColor(b)}"></span><div><b>${esc(b)} · ${esc(M[0])}: ${fmtBy(M[2], M[1](bl))}</b>
+      <span>Highest: ${esc(label(hi[0]))} (${fmtBy(M[2], hi[1])})${vals.length > 1 ? ` · Lowest: ${esc(label(lo[0]))} (${fmtBy(M[2], lo[1])})` : ''} · ${vals.length} ${esc(G[0].toLowerCase())} group${vals.length === 1 ? '' : 's'}</span></div></li>`;
+  }).join('');
+  const legend = series.length > 1 ? `<div class="legend">${series.map(b => `<span><i class="sq" style="background:${batchColor(b)}"></i>${esc(b)}</span>`).join('')}</div>` : '';
+  const chart = hbars(cats, series, (c, b) => { const l = cell(c, b); return l.length ? M[1](l) : null; }, label, M[2], batchColor, (c, b, v) => `${b} · ${label(c)}: ${fmtBy(M[2], v)}`);
+  const numCols = measures.map(([, v]) => `<th class="n">${esc(v[0])}</th>`).join('');
+  const rowsH = cats.flatMap(c => series.map(b => [c, b, cell(c, b)]).filter(x => x[2].length))
+    .map(([c, b, l]) => `<tr><td>${esc(label(c))}</td><td class="mono">${esc(b)}</td>${measures.map(([, v]) => `<td class="n">${fmtBy(v[2], v[1](l))}</td>`).join('')}</tr>`).join('');
+  const totals = [...series.map(b => [b, list.filter(r => r.batch === b)]), ...(series.length > 1 ? [['All selected', list]] : [])]
+    .map(([b, l]) => `<tr><td>Total</td><td class="mono">${esc(b)}</td>${measures.map(([, v]) => `<td class="n">${fmtBy(v[2], v[1](l))}</td>`).join('')}</tr>`).join('');
+  return `<div class="kpis">${tiles}</div>
+    <div class="grid2"><div class="panel"><h3>${esc(M[0])} by ${esc(G[0].toLowerCase())}</h3>${legend}${chart}</div>
+    <div class="panel"><h3>Key findings</h3><ul class="finds">${finds}</ul></div></div>
+    <div class="panel"><h3>${esc(R.title)} report · by ${esc(G[0].toLowerCase())}</h3><div class="tbl-wrap"><table><thead><tr><th>${esc(G[0])}</th><th>Batch</th>${numCols}</tr></thead><tbody>${rowsH}</tbody><tfoot>${totals}</tfoot></table></div></div>`;
+}
+
+/* quality: RM trials vs FG vs EX, one small chart per parameter */
+function qcGroups(sel) {
+  const list = all('qc').filter(r => sel.includes(r.batch) && rep.products.includes(r.product)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const finished = p => p === 'FG' || p === 'EX';
+  let groups;
+  if (rep.qcBy === 'batch') groups = sel.filter(b => list.some(r => r.batch === b)).map(b => ({ key: b, l1: b, l2: '', color: batchColor(b), rows: list.filter(r => r.batch === b), ref: rep.products.every(finished) }));
+  else if (rep.qcBy === 'report') groups = list.map((r, i) => ({ key: r._id, l1: r.product, l2: isISO(r.date) ? r.date.slice(8) + '/' + r.date.slice(5, 7) : '#' + (i + 1), full: `${r.product} · ${fdate(r.date)} · ${r.reportNo || ''}`, color: prodColor(r.product), rows: [r], ref: finished(r.product) }));
+  else groups = PRODUCTS.map(p => p[0]).filter(p => rep.products.includes(p) && list.some(r => r.product === p)).map(p => ({ key: p, l1: p, l2: `${list.filter(r => r.product === p).length} rep.`, color: prodColor(p), rows: list.filter(r => r.product === p), ref: finished(p) }));
+  groups.forEach(g => { g.full = g.full || (rep.qcBy === 'batch' ? `Batch ${g.key}` : PRODUCTS.find(p => p[0] === g.key)?.[1] || g.key); });
+  return { list, groups };
+}
+function qcSmall([k, name, unit], groups) {
+  const W = 260, H = 168, ml = 6, mr = 6, mt = 20, mb = 32;
+  const vals = groups.map(g => avg(g.rows, r => r[k]));
+  const ref = FCO[k], refs = ref ? [ref[0], ref[1]].filter(v => v != null) : [];
+  const title = `<h4>${esc(name)}${unit ? ` <span class="muted">(${unit})</span>` : ''}</h4><div class="ref">${ref ? 'FCO ' + esc(ref[2].replace(/^[^0-9≤≥]*/, '')) : 'No FCO limit'}</div>`;
+  if (!vals.some(isNum)) return `<div class="small">${title}<div class="empty" style="padding:18px 4px">No values</div></div>`;
+  const ymax = Math.max(...vals.filter(isNum), ...refs) * 1.2 || 1;
+  const slot = (W - ml - mr) / groups.length, bw = Math.min(40, slot * 0.64);
+  const y = v => mt + (1 - v / ymax) * (H - mt - mb), y0 = y(0);
+  const bars = groups.map((g, i) => {
+    const v = vals[i]; if (!isNum(v)) return '';
+    const x = ml + slot * i + (slot - bw) / 2, top = y(Math.max(v, 0)), h = Math.max(1, y0 - top), r = Math.min(4, h, bw / 2);
+    const off = ref && g.ref && outOfRange(k, v);
+    return `<path d="M${x},${y0} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${y0} Z" fill="${g.color}" data-tip="${barTip(`${g.full}: ${name} ${fmt(v, 2)}${unit ? ' ' + unit : ''}${off ? ' · outside FCO' : ''}`)}"/>
+      <text x="${x + bw / 2}" y="${top - 5}" text-anchor="middle" font-size="11" font-weight="600" fill="${off ? 'var(--bad)' : 'var(--fg)'}">${fmt(v, 2)}${off ? ' !' : ''}</text>`;
+  }).join('');
+  const refLines = refs.map(v => `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--muted)" stroke-dasharray="4 3"/>`).join('');
+  const xl = groups.map((g, i) => { const cx = ml + slot * i + slot / 2; return `<text x="${cx}" y="${H - mb + 14}" text-anchor="middle" font-size="10.5" fill="var(--fg)">${esc(g.l1)}</text>${g.l2 ? `<text x="${cx}" y="${H - mb + 26}" text-anchor="middle" font-size="10" fill="var(--muted)">${esc(g.l2)}</text>` : ''}`; }).join('');
+  return `<div class="small">${title}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)}: ${groups.map((g, i) => `${g.full} ${isNum(vals[i]) ? fmt(vals[i], 2) : 'no value'}`).join(', ')}">${refLines}<line x1="${ml}" x2="${W - mr}" y1="${y0}" y2="${y0}" stroke="var(--muted)"/>${bars}${xl}</svg></div>`;
+}
+function qcReport(sel) {
+  const { list, groups } = qcGroups(sel);
+  if (!list.length) return `<div class="tbl-wrap"><div class="empty"><b>No lab reports for the selected batches and products</b>Add lab reports in the Quality tab. Use product RM for raw material trials, FG for finished goods and EX for export material.</div></div>`;
+  const params = [...QC_PARAMS, ...(rep.micro ? QC_MICRO : [])];
+  const byP = p => list.filter(r => r.product === p);
+  const tiles = PRODUCTS.filter(p => rep.products.includes(p[0])).map(([p, l]) => {
+    const l2 = byP(p), fin = p !== 'RM', off = fin ? l2.filter(r => Object.keys(FCO).some(k => isNum(r[k]) && outOfRange(k, r[k]))).length : 0;
+    return `<div class="kpi"><span class="l">${esc(l)}</span><span class="v">${l2.length}<small>report${l2.length === 1 ? '' : 's'}</small></span><span class="s">${l2.length ? (fin ? `${off} outside FCO reference · ` : '') + 'latest ' + fdate(l2[l2.length - 1].date) : 'none recorded yet'}</span></div>`;
+  }).join('');
+  const legend = `<div class="legend">${(rep.qcBy === 'batch' ? groups : PRODUCTS.filter(p => rep.products.includes(p[0])).map(p => ({ full: p[1], color: p[2] }))).map(g => `<span><i class="sq" style="background:${g.color}"></i>${esc(g.full)}</span>`).join('')}<span><i style="background:none;border-top:2px dashed var(--muted);height:0"></i>FCO limit</span></div>`;
+  // comparison table: parameter rows x group columns
+  const th = groups.map(g => `<th class="n" title="${esc(g.full)}">${esc(rep.qcBy === 'report' ? g.full : g.l1)}</th>`).join('');
+  const tr = params.map(([k, name, unit]) => `<tr><td>${esc(name)}${unit ? ' <span class="muted">' + unit + '</span>' : ''}</td>${groups.map(g => {
+    const v = avg(g.rows, r => r[k]); const off = FCO[k] && g.ref && isNum(v) && outOfRange(k, v);
+    return `<td class="n${off ? ' off' : ''}" ${off ? `title="Outside FCO reference: ${esc(FCO[k][2])}"` : ''}>${isNum(v) ? fmt(v, 2) + (off ? ' ✕' : '') : '—'}</td>`;
+  }).join('')}<td class="muted">${FCO[k] ? esc(FCO[k][2]) : ''}</td></tr>`).join('');
+  // RM trial -> FG / EX change, when both are present
+  const deltas = ['FG', 'EX'].filter(p => rep.products.includes('RM') && rep.products.includes(p) && byP('RM').length && byP(p).length).map(p => {
+    const items = QC_PARAMS.map(([k, name]) => { const a = avg(byP('RM'), r => r[k]), b = avg(byP(p), r => r[k]); return isNum(a) && isNum(b) ? `${name} ${b >= a ? '+' : '−'}${fmt(Math.abs(b - a), 2)}` : ''; }).filter(Boolean);
+    return `<li><span class="sw" style="background:${prodColor(p)}"></span><div><b>RM trial → ${p}: average change</b><span>${esc(items.join(' · '))}</span></div></li>`;
+  }).join('');
+  const reportsList = list.map(r => `<tr><td>${fdate(r.date)}</td><td class="mono">${esc(r.batch)}</td><td><span class="chip ${chipClass(r.product)}">${esc(r.product)}</span></td><td class="mono">${esc(r.reportNo)}</td><td>${esc(r.lab)}</td><td>${r.status ? `<span class="chip ${chipClass(r.status)}">${esc(r.status)}</span>` : ''}</td></tr>`).join('');
+  return `<div class="kpis">${tiles}</div>
+    <div class="panel"><h3>Lab parameters · ${rep.qcBy === 'product' ? 'average by product type' : rep.qcBy === 'batch' ? 'average by batch' : 'each lab report'}</h3>
+      <p class="sub">Each chart has its own scale. Dashed lines mark the FCO reference, which applies to FG and EX; values outside it are marked “!”.</p>${legend}
+      <div class="smalls">${params.map(p => qcSmall(p, groups)).join('')}</div></div>
+    ${deltas ? `<div class="panel"><h3>From trial to final material</h3><ul class="finds">${deltas}</ul></div>` : ''}
+    <div class="panel"><h3>Quality comparison report</h3><div class="tbl-wrap"><table><thead><tr><th>Parameter</th>${th}<th>FCO reference</th></tr></thead><tbody>${tr}
+      <tr><td class="muted">Reports included</td>${groups.map(g => `<td class="n muted">${g.rows.length}</td>`).join('')}<td></td></tr></tbody></table></div>
+      <p class="foot">Check whether your lab reports P and K as P₂O₅ and K₂O before comparing with the FCO reference.</p></div>
+    <div class="panel"><h3>Lab reports included</h3><div class="tbl-wrap"><table><thead><tr><th>Sampled</th><th>Batch</th><th>Product</th><th>Report no.</th><th>Lab</th><th>FCO status</th></tr></thead><tbody>${reportsList}</tbody></table></div></div>`;
+}
+
+async function exportReport() {
+  try {
+    toast('Preparing report…');
+    await loadXLSX();
+    const sel = repBatches(), wb = XLSX.utils.book_new();
+    let name;
+    if (rep.type === 'qc') {
+      const { list, groups } = qcGroups(sel);
+      const params = [...QC_PARAMS, ...(rep.micro ? QC_MICRO : [])];
+      const rows = [['Parameter', ...groups.map(g => g.full), 'FCO reference'], ...params.map(([k, n, u]) => [n + (u ? ` (${u})` : ''), ...groups.map(g => { const v = avg(g.rows, r => r[k]); return isNum(v) ? +v.toFixed(3) : ''; }), FCO[k] ? FCO[k][2] : '']),
+        ['Reports included', ...groups.map(g => g.rows.length), '']];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Quality comparison');
+      const keys = [...QC_PARAMS, ...QC_MICRO];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Sampled', 'Batch', 'Product', 'Report no.', 'Lab', 'FCO status', ...keys.map(p => p[1])],
+        ...list.map(r => [r.date, r.batch, r.product, r.reportNo, r.lab, r.status, ...keys.map(p => r[p[0]] ?? '')])]), 'Lab reports');
+      name = 'quality';
+    } else {
+      const R = REPORTS[rep.type], g = rep.group[rep.type] in R.groups ? rep.group[rep.type] : R.def[0], m = rep.measure[rep.type] in R.measures ? rep.measure[rep.type] : R.def[1];
+      const { list, G, cats, label, series, cell } = repData(R, g, m, sel), ms = Object.values(R.measures);
+      const rows = [[G[0], 'Batch', ...ms.map(v => v[0])]];
+      cats.forEach(c => series.forEach(b => { const l = cell(c, b); if (l.length) rows.push([label(c), b, ...ms.map(v => { const x = v[1](l); return isNum(x) ? +x.toFixed(2) : ''; })]); }));
+      series.forEach(b => { const l = list.filter(r => r.batch === b); rows.push(['Total', b, ...ms.map(v => { const x = v[1](l); return isNum(x) ? +x.toFixed(2) : ''; })]); });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), (R.title + ' report').slice(0, 31));
+      name = rep.type + '_by_' + g;
+    }
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    await state.dl.save({ filename: `Navjyoti_report_${name}_${sel.join('-')}_${TODAY}.xlsx`, data: buf });
+    toast('Report ready');
+  } catch (e) { toast(e?.code === 'declined' ? 'Download cancelled' : 'Report failed: ' + (e?.message || 'could not build the workbook')); }
+}
+
 /* ---------- forms ---------- */
 const dlg = $('#dlg'), form = $('#dlgForm');
 let editing = null;
@@ -684,7 +962,7 @@ function openForm(key, rec) {
   const batchSel = def.noBatch ? '' : `<div class="fld"><label for="f__batch">Batch *</label><select id="f__batch">${uniq([...batchCodes(), rec?.batch || defaultBatch()]).map(c => `<option ${c === (rec?.batch || defaultBatch()) ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div>`;
   form.innerHTML = `<div class="dlg-h"><h3>${rec ? 'Edit' : 'Add'} ${esc(def.one)}</h3><button type="button" class="btn small x" data-act="close">Close</button></div>
     <div class="dlg-b">${batchSel}${def.fields.map(f => fieldHTML(f, rec ? rec[f.k] : (f.def ? f.def() : ''))).join('')}
-    ${key === 'harvest' ? '<p class="note">Entering a net weight marks the bed as harvested on the Beds board.</p>' : ''}</div>
+    ${key === 'harvest' ? '<p class="note">Entering a net weight marks the bed as harvested on the Beds board.</p>' : ''}${key === 'qc' ? '<p class="note">Product: RM = raw material or trial before final material, FG = finished goods, EX = export material. Compare them in Reports → Quality.</p>' : ''}</div>
     <div class="dlg-f">${rec ? `<button type="button" class="btn danger" data-act="del">Delete</button>` : ''}<span class="sp"></span><span class="foot" id="dlgMsg"></span><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary" value="save">Save</button></div>`;
   dlg.showModal();
 }
@@ -834,6 +1112,27 @@ document.addEventListener('click', e => {
   else if (t.dataset.act === 'rmturn') t.closest('.turn-row').remove();
   else if (t.dataset.act === 'bulkadd') openBulkAdd();
   else if (t.dataset.act === 'bulkupd') openBulkUpd();
+  else if (t.dataset.act === 'repxlsx') exportReport();
+  else if (t.dataset.rtype) { rep.type = t.dataset.rtype; saveRep(); render(); }
+  else if (t.dataset.qcby) { rep.qcBy = t.dataset.qcby; saveRep(); render(); }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.classList.contains('rep-batch')) { rep.batches = [...document.querySelectorAll('.rep-batch:checked')].map(i => i.value); if (!rep.batches.length) { rep.batches = [el.value]; } }
+  else if (el.classList.contains('rep-prod')) { rep.products = [...document.querySelectorAll('.rep-prod:checked')].map(i => i.value); if (!rep.products.length) rep.products = [el.value]; }
+  else if (el.id === 'rep_micro') rep.micro = el.checked;
+  else if (el.id === 'rep_group') rep.group[rep.type] = el.value;
+  else if (el.id === 'rep_measure') rep.measure[rep.type] = el.value;
+  else return;
+  saveRep(); render();
+});
+const vtip = $('#vtip');
+document.addEventListener('pointermove', e => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (!t) { vtip.hidden = true; return; }
+  vtip.textContent = t.dataset.tip; vtip.hidden = false;
+  const w = vtip.offsetWidth, x = Math.min(e.clientX + 12, window.innerWidth - w - 8);
+  vtip.style.left = Math.max(8, x) + 'px'; vtip.style.top = (e.clientY - vtip.offsetHeight - 10) + 'px';
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('tr[data-edit]')) e.target.click(); });
 document.addEventListener('input', e => {
