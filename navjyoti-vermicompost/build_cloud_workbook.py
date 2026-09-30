@@ -24,6 +24,8 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.hyperlink import Hyperlink
 import re
 
+from openpyxl.worksheet.filters import AutoFilter, FilterColumn
+
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from convert_register import convert
@@ -59,7 +61,7 @@ LISTS = {
     "PaymentMode": ["Online", "UPI", "Cash", "Cheque"],
     "Activity": ["Watering", "Turning", "Temperature check", "Moisture check", "Feeding", "Shuffling", "Worm inoculation",
                  "Pest / ant control", "Shade / cover repair", "Harvest", "Sieving", "Inspection", "Other"],
-    "Stage": ["Planning", "Raw material", "Pre-composting", "In beds", "Harvesting", "Closing", "Closed"],
+    "Stage": ["Planned", "Raw material", "Pre-composting", "In beds", "Harvesting", "Closing", "Closed"],
     "Audit": ["Verified (Match)", "Pending", "Mismatch"],
     "SalePayment": ["Received", "Pending", "Partial"],
     "Packing": ["Bulk / Loose", "Bags"],
@@ -259,6 +261,8 @@ def build(src, out, batch):
         last = ws.cell(1, len(cols)).column_letter
         tab = Table(displayName=tname, ref=f"A1:{last}{cap}")
         tab.tableStyleInfo = TableStyleInfo(name="TableStyleLight9", showRowStripes=True)
+        if tname == "Batches":  # free-text notes: no filter arrow on the heading
+            tab.autoFilter = AutoFilter(ref=f"A1:{last}{cap}", filterColumn=[FilterColumn(colId=len(cols) - 1, hiddenButton=True, showButton=False)])
         ws.add_table(tab)
         # formula columns are pre-filled below the table, so a row typed under the table
         # already calculates when Excel extends the table over it
@@ -606,7 +610,8 @@ def style_chart(ch, n, colors=None, reverse=False):
         s.graphicalProperties = GraphicalProperties(solidFill=colors[i % len(colors)])
         s.graphicalProperties.line.solidFill = colors[i % len(colors)]
     if ch.legend is not None:
-        ch.legend.position = "b"
+        ch.legend.position = "t"      # above the plot, clear of the axis numbers
+        ch.legend.overlay = False
     ch.gapWidth = 50
     ch.overlap = -10 if n > 1 else 0
     ch.y_axis.delete = False
