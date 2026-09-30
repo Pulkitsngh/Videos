@@ -18,7 +18,7 @@ from openpyxl.drawing.line import LineProperties
 from openpyxl.drawing.text import CharacterProperties, Paragraph, ParagraphProperties, RichTextProperties
 from openpyxl.comments import Comment
 from openpyxl.formatting.rule import CellIsRule, FormulaRule
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Protection, Side
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.hyperlink import Hyperlink
@@ -31,6 +31,12 @@ from convert_register import convert
 FONT = "Arial"
 GREEN, SOIL, INK, MUTED = "1C7148", "6B4424", "16201B", "58685F"
 SERIES = ["2A78D6", "EB6834", "1BAF7A"]
+# Quality product types: code, label, colour (RM/EXRM are trials; FG/EX/EXFG are checked against FCO)
+PRODUCTS = [("RM", "RM trial", "2A78D6"), ("FG", "FG finished", "EB6834"), ("EX", "EX export", "1BAF7A"),
+            ("EXRM", "EXRM export trial", "C98500"), ("EXFG", "EXFG export finished", "D55181")]
+FINISHED = ("FG", "EX", "EXFG")
+PASSWORD = "Navjyoti2026"  # sheet protection password (told to the owner; change in Review → Unprotect Sheet)
+CAPACITY = {"Batches": 200, "DailyLog": 5000}  # rows ready for entry per register; others use PREFILL
 F = lambda **k: Font(name=FONT, **{"size": 10, **k})
 FILL = lambda c: PatternFill("solid", start_color=c, end_color=c)
 HDR_IN, HDR_CALC = FILL(GREEN), FILL("5B6B62")
@@ -42,7 +48,7 @@ DATE_FMT, KG_FMT, INR_FMT, PCT_FMT = "dd-mm-yyyy", "#,##0", "₹#,##0", "0.0%"
 
 # Dropdown lists (Lists sheet). Batch codes come from the Batches table.
 LISTS = {
-    "Product": ["RM", "FG", "EX"],
+    "Product": [p[0] for p in PRODUCTS],
     "BedStatus": ["Filled", "Inoculated", "Active", "Ready to harvest", "Harvested", "Empty"],
     "PaymentStatus": ["Paid", "Pending", "Partial"],
     "LabResult": ["Accepted", "Awaiting", "Rejected"],
@@ -149,7 +155,7 @@ def fco_formula(t):
         parts.append(f'IF(AND(ISNUMBER({v}),{cond}),"{label.split(" ")[0]} ","")')
     flags = "&".join(parts)
     p = this(t, "Product")
-    return (f'=IF({this(t, "Batch")}="","",IF(OR({p}="FG",{p}="EX"),IF({flags}="","Within FCO","Outside: "&TRIM({flags})),"Trial (not checked)"))')
+    return (f'=IF({this(t, "Batch")}="","",IF(OR({p}="FG",{p}="EX",{p}="EXFG"),IF({flags}="","Within FCO","Outside: "&TRIM({flags})),"Trial (not checked)"))')
 
 
 def build(src, out, batch):
@@ -169,8 +175,8 @@ def build(src, out, batch):
 
     # ---------- Lists ----------
     lists = dict(LISTS)
-    lists["Supplier"] = sorted({r["supplier"] for r in data["rm"] if r["supplier"]})
-    lists["Customer"] = sorted({r["customer"] for r in data["sales"] if r["customer"]})
+    lists["Supplier"] = [None] * 40   # filled by formula from RawMaterial[Supplier]
+    lists["Customer"] = [None] * 40   # filled by formula from Sales[Customer]
     ws_list["A1"] = "BatchPick"
     ws_list["A2"] = "All"
     for i in range(3, 53):
@@ -179,10 +185,13 @@ def build(src, out, batch):
     list_ranges = {"Batch": "Batches!$A$2:$A$200", "BatchPick": "Lists!$A$2:$A$52"}
     for name, vals in lists.items():
         c = ws_list.cell(1, col, name)
-        n = len(vals) + (15 if name in ("Supplier", "Customer") else 0)
-        for j, v in enumerate(vals):
-            ws_list.cell(j + 2, col, v)
+        n = len(vals)
         L = c.column_letter
+        src = {"Supplier": "RawMaterial!$D$2:$D$5000", "Customer": "Sales!$D$2:$D$5000"}.get(name)
+        for j, v in enumerate(vals):
+            if src:  # distinct names typed in the register, in order of first use
+                v = (f'=IFERROR(INDEX({src},MATCH(0,INDEX(COUNTIF({L}$1:{L}{j + 1},{src})+({src}=""),0),0)),"")')
+            ws_list.cell(j + 2, col, v)
         list_ranges[name] = f"Lists!${L}$2:${L}${n + 1}"
         col += 1
     # FCO table at S:T with labels in R
@@ -203,6 +212,13 @@ def build(src, out, batch):
         ws_list.column_dimensions[L].width = 20
     ws_list.column_dimensions["R"].width = 18
     ws_list["A1"].comment = Comment("Filled automatically from the Batches sheet. Used by the batch selectors.", "Navjyoti")
+    ws_list["P1"].comment = Comment("Filled automatically from the Supplier column of RawMaterial.", "Navjyoti")
+    ws_list["Q1"].comment = Comment("Filled automatically from the Customer column of Sales.", "Navjyoti")
+    for r in range(2, 10):
+        for c in (19, 20):
+            ws_list.cell(r, c).protection = Protection(locked=False)
+            ws_list.cell(r, c).fill = FILL("FFF3B0")
+    protect(ws_list)
 
     # ---------- registers ----------
     calc_cols = {}
@@ -216,6 +232,7 @@ def build(src, out, batch):
             c.alignment = Alignment(vertical="center", wrap_text=True)
             ws.column_dimensions[c.column_letter].width = max(11, min(26, len(h) + 4))
         nrows = max(1, len(rows))
+        cap = CAPACITY.get(tname, PREFILL)
         for ri in range(nrows):
             r = rows[ri] if rows else {}
             # pre-compost turns are nested in the source
@@ -240,20 +257,28 @@ def build(src, out, batch):
                 cell.number_format = {"date": DATE_FMT, "kg": KG_FMT, "inr": INR_FMT, "calc_inr": INR_FMT, "calc_kg": KG_FMT,
                                       "calc_pct": PCT_FMT, "num": "0.##", "calc_num": "0.#"}.get(kind, "General")
         last = ws.cell(1, len(cols)).column_letter
-        tab = Table(displayName=tname, ref=f"A1:{last}{nrows + 1}")
+        tab = Table(displayName=tname, ref=f"A1:{last}{cap}")
         tab.tableStyleInfo = TableStyleInfo(name="TableStyleLight9", showRowStripes=True)
         ws.add_table(tab)
         # formula columns are pre-filled below the table, so a row typed under the table
         # already calculates when Excel extends the table over it
-        for ri in range(nrows + 2, PREFILL + 1):
+        fmts = {"date": DATE_FMT, "kg": KG_FMT, "inr": INR_FMT, "calc_inr": INR_FMT, "calc_kg": KG_FMT, "calc_pct": PCT_FMT, "num": "0.##", "calc_num": "0.#"}
+        for ri in range(nrows + 2, cap + 1):
             for ci, (h, _, kind, extra) in enumerate(cols, 1):
+                c = ws.cell(ri, ci)
+                c.font = F()
+                c.number_format = fmts.get(kind, "General")
                 if kind.startswith("calc"):
                     f = fco_formula(tname) if extra == "FCO" else extra
                     for hh, *_ in cols:
                         f = f.replace("{" + hh + "}", this(tname, hh))
-                    c = ws.cell(ri, ci, f)
-                    c.font = F()
-                    c.number_format = {"calc_inr": INR_FMT, "calc_kg": KG_FMT, "calc_pct": PCT_FMT, "calc_num": "0.#"}.get(kind, "General")
+                    c.value = f
+        # typing cells are open; headers and formula columns stay locked
+        for ci, (h, _, kind, extra) in enumerate(cols, 1):
+            if not kind.startswith("calc"):
+                for ri in range(2, cap + 1):
+                    ws.cell(ri, ci).protection = Protection(locked=False)
+        protect(ws)
         ws.freeze_panes = "C2" if tname != "Batches" else "B2"
         ws.row_dimensions[1].height = 30
         calc_cols[tname] = [h for h, _, kind, _ in cols if kind.startswith("calc")]
@@ -263,14 +288,14 @@ def build(src, out, batch):
                 L = ws.cell(1, ci).column_letter
                 dv = DataValidation(type="list", formula1=f"L_{extra}", allow_blank=True,
                                     showErrorMessage=extra not in ("Supplier", "Customer"),
-                                    errorTitle="Pick from the list", error="Choose a value from the drop-down. Add new options on the Lists sheet.")
-                dv.add(f"{L}2:{L}5000")
+                                    errorTitle="Pick from the list", error="Choose a value from the drop-down list.")
+                dv.add(f"{L}2:{L}{cap}")
                 ws.add_data_validation(dv)
             if kind == "date":
                 L = ws.cell(1, ci).column_letter
                 dv = DataValidation(type="date", operator="greaterThan", formula1="36526", allow_blank=True,
                                     error="Enter a date, for example 14-02-2026.", errorTitle="Date needed")
-                dv.add(f"{L}2:{L}5000")
+                dv.add(f"{L}2:{L}{cap}")
                 ws.add_data_validation(dv)
         # status highlights
         hdr = [h for h, *_ in cols]
@@ -418,7 +443,7 @@ def build(src, out, batch):
         ("Harvest entries without net weight", f'=COUNTIFS(Harvest[Batch],{K},Harvest[BedNo],"<>",Harvest[NetKg],"")', 0),
         ("Raw material payments not settled", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[PaymentStatus],"<>Paid")', 0),
         ("Raw material lots without lab acceptance", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[LabResult],"<>Accepted")', 0),
-        ("FG / EX lab reports outside FCO", f'=COUNTIFS(QualityControl[Batch],{K},QualityControl[FCOCheck],"Outside*")', 0),
+        ("FG / EX / EXFG lab reports outside FCO", f'=COUNTIFS(QualityControl[Batch],{K},QualityControl[FCOCheck],"Outside*")', 0),
         ("Sales priced under ₹1 per kg", f'=COUNTIFS(Sales[Batch],{K},Sales[QtyKg],">0",Sales[PricePerKg],"<1")', 0),
         ("Days since watering was logged", '=IF(' + LASTWATER + '=0,"none logged",TODAY()-' + LASTWATER + ')', 3),
     ]
@@ -428,6 +453,7 @@ def build(src, out, batch):
         ws.cell(r, 5, label).font = F(color=INK)
         c = ws.cell(r, 8, f)
         c.font = F(bold=True, color=INK)
+        c.number_format = "0"
         c.alignment = Alignment(horizontal="right")
         s = ws.cell(r, 9, f'=IF(H{r}="none logged","● Log it",IF(H{r}>{limit},"● Check","● OK"))')
         s.font = F(bold=True)
@@ -441,13 +467,18 @@ def build(src, out, batch):
     # chart data (bottom of sheet)
     D = 82
     subhead(ws, D - 2, 2, 12, "CHART DATA (calculated · feeds the charts above)", "9AA79F")
-    ws.cell(D - 1, 2, "Monthly chart starts from").font = F(color=INK)
-    ms = ws.cell(D - 1, 3, dt.date(2026, 4, 1))
+    ws.cell(D - 1, 2, "Monthly chart starts from (blank = automatic)").font = F(color=INK)
+    ms = ws.cell(D - 1, 3)
     ms.number_format, ms.fill, ms.border, ms.font = "mmm yyyy", FILL("FFF3B0"), BOX, F(bold=True)
+    ms.protection = Protection(locked=False)
+    first = first_date("RawMaterial[PurchaseDate]", '(((SelBatch="All")+(RawMaterial[Batch]=SelBatch))>0)')
+    first2 = first_date("Harvest[HarvestDate]", '(((SelBatch="All")+(Harvest[Batch]=SelBatch))>0)')
+    eff = ws.cell(D - 1, 4, start_month(f"C{D - 1}", first, first2))
+    eff.number_format, eff.font = '"from "mmm yyyy', F(color=MUTED, italic=True)
     hdr_row(ws, D, 2, ["Month", "Net yield (kg)", "Sold (kg)"])
     for i in range(12):
         r = D + 1 + i
-        ws.cell(r, 2, f"=EDATE($C${D - 1},{i})").number_format = "mmm yy"
+        ws.cell(r, 2, f"=EDATE($D${D - 1},{i})").number_format = "mmm yy"
         ws.cell(r, 3, f'=SUMIFS(Harvest[NetKg],Harvest[Batch],{K},Harvest[HarvestDate],">="&B{r},Harvest[HarvestDate],"<"&EDATE(B{r},1))').number_format = KG_FMT
         ws.cell(r, 4, f'=SUMIFS(Sales[QtyKg],Sales[Batch],{K},Sales[SaleDate],">="&B{r},Sales[SaleDate],"<"&EDATE(B{r},1))').number_format = KG_FMT
     hdr_row(ws, D, 6, ["Expense category", "Amount (₹)"])
@@ -524,9 +555,12 @@ def build(src, out, batch):
             c = ws.cell(r, 3 + j, f)
             c.font, c.number_format, c.fill, c.border = F(color=INK), fm, band, Border(bottom=THIN)
     ws.freeze_panes = "A6"
+    ws["C5"].protection = Protection(locked=False)
+    protect(ws)
 
     build_reports(wb, ws_rep, list_ranges, lists["Supplier"], lists["Customer"])
     build_readme(ws_readme)
+    protect(ws_readme)
     for w in wb.worksheets:
         w.sheet_properties.tabColor = {"How to use": SOIL, "Dashboard": GREEN, "Reports": GREEN, "Lists": "9AA79F"}.get(w.title, "C9D6CB")
     for w in wb.worksheets:
@@ -630,13 +664,20 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
     banner(ws, 1, 2, 16, "Reports · Compare Batches",
            "Pick up to three batches in C5:E5 · every table and chart updates live · click a report name to jump to it")
     ws["B5"], ws["B6"], ws["B7"] = "Compare batches  ▸", "Months start from  ▸", "Quality report batch  ▸"
+    ws["F6"] = "leave blank = starts from the first purchase of the chosen batches"
+    ws["F6"].font = F(color=MUTED, italic=True, size=9)
     for c in (ws["B5"], ws["B6"], ws["B7"]):
         c.font = F(bold=True, color=INK)
     ws["C5"], ws["D5"], ws["E5"] = "B4", "B5", None
-    ws["C6"] = dt.date(2025, 12, 1)
     ws["C6"].number_format = "mmm yyyy"
+    rmsel = ('((RawMaterial[Batch]=$C$5)+(RawMaterial[Batch]=$D$5)+(RawMaterial[Batch]=$E$5)>0)')
+    hvsel = ('((Harvest[Batch]=$C$5)+(Harvest[Batch]=$D$5)+(Harvest[Batch]=$E$5)>0)')
+    ws["D6"] = start_month("C6", first_date("RawMaterial[PurchaseDate]", rmsel), first_date("Harvest[HarvestDate]", hvsel))
+    ws["D6"].number_format = '"→ "mmm yyyy'
+    ws["D6"].font = F(color=MUTED, italic=True)
     ws["C7"] = "All"
     for a in ("C5", "D5", "E5", "C6", "C7"):
+        ws[a].protection = Protection(locked=False)
         ws[a].fill = FILL("FFF3B0")
         ws[a].border = BOX
         ws[a].font = F(bold=True, color=INK)
@@ -665,6 +706,7 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
         ws.cell(row, 2).alignment = Alignment(vertical="center", indent=1)
         ws.row_dimensions[row].height = 22
         sections.append((short, row))
+        top_button(ws, row, 6)
         if note:
             ws.cell(row + 1, 2, note).font = F(color=MUTED, italic=True)
         hr = row + 2
@@ -715,13 +757,13 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
         row = max(tr + 3, start + int(ch.height * 2) + 4)
         return hr, end
 
-    months = [f"=EDATE($C$6,{i})" for i in range(12)]
+    months = [f"=EDATE($D$6,{i})" for i in range(18)]
     mrange = lambda tb, dc, r: f'{tb}[{dc}],">="&$B${r},{tb}[{dc}],"<"&EDATE($B${r},1)'
     sup = list_ranges["Supplier"]
     nsup = int(sup.split("$")[-1]) - 1
-    table("Raw material – quantity by supplier (kg)", "RM by supplier", "Supplier", [f"=IF(INDEX(L_Supplier,{i + 1})=\"\",\"\",INDEX(L_Supplier,{i + 1}))" for i in range(min(nsup, len(lists_sup) + 3))],
+    table("Raw material – quantity by supplier (kg)", "RM by supplier", "Supplier", [f"=IF(INDEX(L_Supplier,{i + 1})=\"\",\"\",INDEX(L_Supplier,{i + 1}))" for i in range(10)],
           lambda b, r: f"SUMIFS(RawMaterial[QtyKg],RawMaterial[Batch],{b},RawMaterial[Supplier],$B${r})", KG_FMT,
-          "Supplier names come from the Lists sheet. Add new suppliers there.")
+          "Suppliers are picked up automatically from the RawMaterial register (first 10).")
     table("Raw material – quantity by purchase month (kg)", "RM by month", "Month", months,
           lambda b, r: f"SUMIFS(RawMaterial[QtyKg],RawMaterial[Batch],{b},{mrange('RawMaterial', 'PurchaseDate', r)})", KG_FMT)
     table("Pre-compost – weight decomposed by start month (MT)", "Pre-compost", "Month", months,
@@ -731,8 +773,8 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
           lambda b, r: f'SUMIFS(Beds[NetYieldKg],Beds[Batch],{b},Beds[BedNum],">="&VALUE(MID($B${r},5,2)),Beds[BedNum],"<="&VALUE(MID($B${r},5,2))+9)', KG_FMT)
     table("Harvest – net yield by month (kg)", "Harvest by month", "Month", months,
           lambda b, r: f"SUMIFS(Harvest[NetKg],Harvest[Batch],{b},{mrange('Harvest', 'HarvestDate', r)})", KG_FMT)
-    table("Sales – quantity by customer (kg)", "Sales by customer", "Customer", [f"=IF(INDEX(L_Customer,{i + 1})=\"\",\"\",INDEX(L_Customer,{i + 1}))" for i in range(len(lists_cus) + 3)],
-          lambda b, r: f"SUMIFS(Sales[QtyKg],Sales[Batch],{b},Sales[Customer],$B${r})", KG_FMT, "Customer names come from the Lists sheet.")
+    table("Sales – quantity by customer (kg)", "Sales by customer", "Customer", [f"=IF(INDEX(L_Customer,{i + 1})=\"\",\"\",INDEX(L_Customer,{i + 1}))" for i in range(10)],
+          lambda b, r: f"SUMIFS(Sales[QtyKg],Sales[Batch],{b},Sales[Customer],$B${r})", KG_FMT, "Customers are picked up automatically from the Sales register (first 10).")
     table("Sales – revenue by month (₹)", "Revenue by month", "Month", months,
           lambda b, r: f"SUMIFS(Sales[Revenue],Sales[Batch],{b},{mrange('Sales', 'SaleDate', r)})", INR_FMT)
     table("Stock – movement (kg)", "Stock", "Movement", ["In (production)", "Out (sales)", "Loss / adjustment"],
@@ -743,60 +785,70 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
     table("Daily log – entries by activity", "Daily log", "Activity", [f"=INDEX(L_Activity,{i + 1})" for i in range(len(LISTS['Activity']))],
           lambda b, r: f"COUNTIFS(DailyLog[Batch],{b},DailyLog[Activity],$B${r})", "#,##0")
 
-    # Quality: RM trial vs FG vs EX
+    # Quality: RM / FG / EX / EXRM / EXFG
     start = row
     for cc in range(2, 17):
         ws.cell(row, cc).fill = FILL("E3F1E8")
-    ws.cell(row, 2, "Quality – RM trial vs FG vs EX (average of lab reports)").font = F(bold=True, size=12, color=GREEN)
+    ws.cell(row, 2, "Quality – RM · FG · EX · EXRM · EXFG (average of lab reports)").font = F(bold=True, size=12, color=GREEN)
     ws.cell(row, 2).alignment = Alignment(vertical="center", indent=1)
     ws.row_dimensions[row].height = 22
-    sections.append(("Quality RM / FG / EX", row))
-    ws.cell(row + 1, 2, "Batch chosen in C7 (All = every batch). FCO limits apply to FG and EX; cells in red fall outside them.").font = F(color=MUTED, italic=True)
+    sections.append(("Quality comparison", row))
+    top_button(ws, row, 9)
+    ws.cell(row + 1, 2, "Batch chosen in C7 (All = every batch). FCO limits apply to FG, EX and EXFG (finished material); "
+                        "RM and EXRM are trials. Red = outside the limit.").font = F(color=MUTED, italic=True)
     hr = row + 2
-    for j, h in enumerate(["Parameter", "RM trial", "FG finished", "EX export", "FCO min", "FCO max"]):
+    heads = ["Parameter", *[p[1] for p in PRODUCTS], "FCO min", "FCO max"]
+    for j, h in enumerate(heads):
         c = ws.cell(hr, 2 + j, h)
         c.font = F(bold=True, color="FFFFFF")
-        c.fill = FILL([INK, *SERIES, "5B6B62", "5B6B62"][j])
-        c.alignment = Alignment(horizontal="left" if j == 0 else "right")
+        c.fill = FILL([INK, *[p[2] for p in PRODUCTS], "5B6B62", "5B6B62"][j])
+        c.alignment = Alignment(horizontal="left" if j == 0 else "right", wrap_text=True, vertical="center")
+    ws.row_dimensions[hr].height = 30
     params = [("Moisture", "Moisture %"), ("OrganicCarbon", "Organic carbon %"), ("OrganicMatter", "Organic matter %"), ("Ash", "Ash %"), ("CNRatio", "C:N ratio"),
               ("pH", "pH"), ("EC", "EC dS/m"), ("Nitrogen", "Nitrogen %"), ("Phosphorus", "Phosphorus %"), ("Potassium", "Potassium %"),
               ("Calcium", "Calcium"), ("Manganese", "Manganese"), ("Iron", "Iron"), ("Manganese2", "Manganese (2nd)"), ("Zinc", "Zinc"), ("Copper", "Copper")]
     crit = 'IF($C$7="All","*",$C$7)'
     fco_idx = {c: i for i, (c, *_) in enumerate(FCO)}
+    np_ = len(PRODUCTS)
+    cmin, cmax = 3 + np_, 4 + np_
     for i, (colname, label) in enumerate(params):
         r = hr + 1 + i
         ws.cell(r, 2, label).font = F(color=INK)
-        for j, p in enumerate(("RM", "FG", "EX")):
+        for j, (p, *_x) in enumerate(PRODUCTS):
             c = ws.cell(r, 3 + j, f'=IFERROR(AVERAGEIFS(QualityControl[{colname}],QualityControl[Batch],{crit},QualityControl[Product],"{p}"),"")')
             c.number_format = "0.00"
             c.font = F()
         if colname in fco_idx:
             k = fco_idx[colname] + 2
-            ws.cell(r, 6, f'=IF(Lists!$S${k}="","",Lists!$S${k})').font = F(color=MUTED)
-            ws.cell(r, 7, f'=IF(Lists!$T${k}="","",Lists!$T${k})').font = F(color=MUTED)
-        for j in range(6):
+            ws.cell(r, cmin, f'=IF(Lists!$S${k}="","",Lists!$S${k})').font = F(color=MUTED)
+            ws.cell(r, cmax, f'=IF(Lists!$T${k}="","",Lists!$T${k})').font = F(color=MUTED)
+        for j in range(np_ + 3):
             ws.cell(r, 2 + j).border = Border(bottom=THIN)
             ws.cell(r, 2 + j).fill = FILL("F4F7F3") if i % 2 else FILL("FFFFFF")
     qend = hr + len(params)
     rr = qend + 1
     ws.cell(rr, 2, "Reports included").font = F(color=MUTED)
-    for j, p in enumerate(("RM", "FG", "EX")):
+    for j, (p, *_x) in enumerate(PRODUCTS):
         ws.cell(rr, 3 + j, f'=COUNTIFS(QualityControl[Batch],{crit},QualityControl[Product],"{p}")').font = F(color=MUTED)
-    ws.column_dimensions["G"].width = 10
-    rng = f"D{hr + 1}:E{qend}"
-    ws.conditional_formatting.add(rng, FormulaRule(formula=[f'AND(ISNUMBER(D{hr + 1}),OR(AND(ISNUMBER($F{hr + 1}),D{hr + 1}<$F{hr + 1}),AND(ISNUMBER($G{hr + 1}),D{hr + 1}>$G{hr + 1})))'],
-                                                   fill=BAD_FILL, font=F(bold=True, color="B3261E")))
+    Lmin, Lmax = ws.cell(1, cmin).column_letter, ws.cell(1, cmax).column_letter
+    for j, (p, *_x) in enumerate(PRODUCTS):
+        if p in FINISHED:
+            L = ws.cell(1, 3 + j).column_letter
+            ws.conditional_formatting.add(f"{L}{hr + 1}:{L}{qend}", FormulaRule(
+                formula=[f'AND(ISNUMBER({L}{hr + 1}),OR(AND(ISNUMBER(${Lmin}{hr + 1}),{L}{hr + 1}<${Lmin}{hr + 1}),AND(ISNUMBER(${Lmax}{hr + 1}),{L}{hr + 1}>${Lmax}{hr + 1})))'],
+                fill=BAD_FILL, font=F(bold=True, color="B3261E")))
+    for L in "GHI":
+        ws.column_dimensions[L].width = 13
     for title, a, b, anchor in (("Moisture, carbon, ash, C:N", hr + 1, hr + 5, start + 1), ("pH, EC, N, P, K", hr + 6, hr + 10, start + 18)):
-        ws.cell(anchor, 9, title).font = F(bold=True, color=INK)
+        ws.cell(anchor, 11, title).font = F(bold=True, color=INK)
         ch = BarChart()
         ch.type = "col"
-        for j in range(3):
-            s = Series(Reference(ws, min_col=3 + j, min_row=a, max_row=b), title=["RM trial", "FG finished", "EX export"][j])
-            ch.series.append(s)
+        for j, (p, lab, colr) in enumerate(PRODUCTS):
+            ch.series.append(Series(Reference(ws, min_col=3 + j, min_row=a, max_row=b), title=lab))
         ch.set_categories(Reference(ws, min_col=2, min_row=a, max_row=b))
-        style_chart(ch, 3)
-        ch.height, ch.width = 7.5, 16
-        ws.add_chart(ch, f"I{anchor + 1}")
+        style_chart(ch, np_, colors=[p[2] for p in PRODUCTS])
+        ch.height, ch.width = 7.5, 17
+        ws.add_chart(ch, f"K{anchor + 1}")
     row = max(rr + 3, start + 34)
 
     # index with links
@@ -812,6 +864,42 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
         if col > 6:
             col, r = 3, r + 1
     ws.freeze_panes = "A8"
+    protect(ws)
+
+
+def first_date(dates, cond):
+    """Earliest date in `dates` where `cond` holds, as a formula that works in every Excel version
+    (100000 when there is none). Blank rows are ignored."""
+    return f"(100000-SUMPRODUCT(MAX({cond}*({dates}>0)*(100000-{dates}))))"
+
+
+def start_month(manual, first, first2):
+    """Chosen start month, else the month of the first purchase, else of the first harvest, else 11 months ago."""
+    return (f'=IF({manual}<>"",DATE(YEAR({manual}),MONTH({manual}),1),IF({first}<100000,DATE(YEAR({first}),MONTH({first}),1),'
+            f'IF({first2}<100000,DATE(YEAR({first2}),MONTH({first2}),1),DATE(YEAR(TODAY()),MONTH(TODAY())-11,1))))')
+
+
+def top_button(ws, row, col):
+    """A '▲ TOP' button on a section heading that jumps back to the top of the sheet."""
+    c = ws.cell(row, col, "▲ TOP")
+    c.hyperlink = Hyperlink(ref=c.coordinate, location=f"'{ws.title}'!A1", display="▲ TOP")
+    c.font = F(bold=True, color="FFFFFF", size=9)
+    c.fill = FILL(GREEN)
+    c.alignment = Alignment(horizontal="center", vertical="center")
+    c.border = Border(left=Side(style="thin", color="FFFFFF"), right=Side(style="thin", color="FFFFFF"))
+
+
+def protect(ws):
+    """Lock the sheet: only cells marked unlocked (typing cells, selectors) can be changed."""
+    ws.protection.sheet = True
+    ws.protection.password = PASSWORD
+    ws.protection.autoFilter = False      # filters still work
+    ws.protection.sort = False
+    ws.protection.formatColumns = False   # column widths can be adjusted
+    ws.protection.selectLockedCells = False
+    ws.protection.selectUnlockedCells = False
+    ws.protection.objects = True          # charts cannot be moved or deleted
+    ws.protection.scenarios = True
 
 
 def build_readme(ws):
@@ -829,29 +917,34 @@ def build_readme(ws):
         ("4", "Optional: in Teams, add a tab → Excel → pick this file, so the team finds it in the Navjyoti channel."),
         ("5", "Optional: Power BI (Get data → Excel workbook on SharePoint) and Power Automate (Excel Online (Business) → List rows present in a table) can read every register, because each one is an Excel table."),
         ("h2", "Daily use"),
-        ("•", "Type new records in the first empty row directly under a table. The table grows by itself and grey-header columns fill in their formulas."),
+        ("•", "Type new records in the first empty row of a table. Grey-header columns calculate by themselves."),
         ("•", "Always fill the Batch column (drop-down). Start Batch 5 records with B5."),
-        ("•", "Use drop-downs where they appear. To add a new supplier, customer or category, type it on the Lists sheet."),
+        ("•", "Use drop-downs where they appear. A new supplier or customer can simply be typed; it is added to the lists automatically."),
         ("•", "Dates: type as 14-02-2026 or pick from the date picker."),
         ("•", "Dashboard: choose a batch (or All) in cell C5. Reports: choose up to three batches in C5:E5 to compare, and the quality batch in C7."),
+        ("•", "Every entry you add in any register (including Daily log and new batches) flows into the Dashboard and Reports automatically. New suppliers and customers appear in the reports by themselves; months follow the batch's first purchase unless you set a start month."),
+        ("h2", "Locked cells"),
+        ("•", "Headings, formula columns, the Dashboard, Reports and Lists are locked so nobody changes them by mistake. Only green-header columns and yellow selector cells accept typing."),
+        ("•", f"Sheet password (owner only): {PASSWORD}. Review → Unprotect Sheet to change a layout, then Protect Sheet again."),
+        ("•", "Each register has ready rows for new entries (1,500; Daily log 5,000). Type in the next empty row of the table."),
         ("h2", "Colour legend"),
         ("green", "Green header = you type here."),
         ("grey", "Grey header = formula column. Do not type in it; it calculates by itself."),
         ("yellow", "Yellow cell = a selector you can change (batch, month)."),
         ("h2", "Sheets"),
         ("Dashboard", "Key figures, alerts that need attention, batch comparison, monthly net yield vs sales."),
-        ("Reports", "Bar charts and tables by supplier, month, bed block, customer, category and activity, for up to three batches side by side; Quality RM vs FG vs EX comparison against FCO limits."),
+        ("Reports", "Bar charts and tables by supplier, month, bed block, customer, category and activity, for up to three batches side by side; Quality comparison of RM, FG, EX, EXRM and EXFG against FCO limits. Every section has a ▲ TOP button."),
         ("Batches", "One row per batch (B4, B5, …). Batch drop-downs everywhere read from here."),
         ("RawMaterial", "Excel sheet 1 – purchases, supplier, vehicle, qty, rate, moisture, lab acceptance. Amount is calculated."),
         ("PreCompost", "Excel sheet 2 – lots, culture dose, up to three turnings. Peak temperature and days to transfer are calculated."),
         ("Beds", "Excel sheet 3 – bed lifecycle. Net yield (from Harvest), live status (Harvested / Overdue / …) and bed number are calculated."),
         ("Harvest", "Excel sheet 4 – raw and net yield per bed, FG batch, packing. Recovery % is calculated."),
-        ("QualityControl", "Excel sheet 5 – lab reports. Product: RM = raw material / trial before final material, FG = finished goods, EX = export material. FCO check is calculated for FG and EX."),
+        ("QualityControl", "Excel sheet 5 – lab reports. Product: RM = raw material / trial, FG = finished goods, EX = export material, EXRM = export raw material / trial, EXFG = export finished goods. FCO check is calculated for FG, EX and EXFG."),
         ("Sales", "Excel sheet 6 – invoices. Revenue is calculated."),
         ("StockLedger", "Excel sheet 7 – stock in / out / loss. Closing stock runs per batch in entry-number order."),
         ("Expenses", "Excel sheet 8 – expenses by category."),
         ("DailyLog", "Watering, turning, temperature and moisture checks, feeding, inspections. Example: B5 · 01-10-2026 · Watering · BED-01 to BED-40 · 400 L · Ramesh."),
-        ("Lists", "Drop-down values and the FCO reference limits (editable)."),
+        ("Lists", "Drop-down values (suppliers and customers collect themselves from the registers) and the FCO reference limits (yellow cells, editable)."),
         ("h2", "Notes on the imported Batch 4 data"),
         ("•", "Dates that Excel had read as month/day were corrected (for example 02-09-2026 for bed 51's harvest)."),
         ("•", "Quality values were stored as percentages in the old register; they are now plain numbers (pH 7.22, not 7.22%)."),

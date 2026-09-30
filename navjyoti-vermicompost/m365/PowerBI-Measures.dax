@@ -60,7 +60,7 @@ PreCompost[PeakTempC] = MAX ( MAX ( PreCompost[Turn1TempC], PreCompost[Turn2Temp
 // QualityControl – FCO check for finished (FG) and export (EX) material.
 // Limits: FCO vermicompost spec (P as P2O5, K as K2O). Change here if your export buyer's spec differs.
 QualityControl[FCOCheck] =
-VAR fin = QualityControl[Product] IN { "FG", "EX" }
+VAR fin = QualityControl[Product] IN { "FG", "EX", "EXFG" }
 VAR m = QualityControl[Moisture]
 VAR flags =
     IF ( NOT ISBLANK ( m ) && ( m < 15 || m > 25 ), "Moisture " )
