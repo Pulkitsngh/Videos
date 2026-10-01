@@ -159,63 +159,84 @@ def registers():
     return regs
 
 
-# Reference links: (sheet, column, target sheet, target column, extra key that must also match).
-# Every non-empty cell in `column` becomes a link to the first matching row of the target.
-# The same table drives RefreshLinks.ts (Office Script) so new rows can be linked from Excel for the web.
+# Reference links: (sheet, column shown as link, key columns, target sheet, target key columns, target column to select).
+# A row links to the first target row whose keys match. Bed-level codes (BedNo, ProdCode/ProdBatch) match on
+# Batch + BedNo, so every bed links to its own harvest entry and back even when the two sheets' codes differ.
+# The same table drives RefreshLinks.ts (Office Script) for rows added later.
 LINKS = [
-    ("RawMaterial", "RMLot", "PreCompost", "RMLot", None),
-    ("RawMaterial", "Batch", "Batches", "BatchCode", None),
-    ("PreCompost", "RMLot", "RawMaterial", "RMLot", None),
-    ("PreCompost", "PCLot", "Beds", "PCLot", None),
-    ("PreCompost", "Batch", "Batches", "BatchCode", None),
-    ("Beds", "PCLot", "PreCompost", "PCLot", None),
-    ("Beds", "BedNo", "Harvest", "BedNo", "Batch"),
-    ("Beds", "ProdCode", "Harvest", "ProdBatch", None),
-    ("Beds", "Batch", "Batches", "BatchCode", None),
-    ("Harvest", "BedNo", "Beds", "BedNo", "Batch"),
-    ("Harvest", "ProdBatch", "Beds", "ProdCode", None),
-    ("Harvest", "FGBatch", "Sales", "FGBatch", None),
-    ("Harvest", "Batch", "Batches", "BatchCode", None),
-    ("QualityControl", "Batch", "Batches", "BatchCode", None),
-    ("Sales", "FGBatch", "Harvest", "FGBatch", None),
-    ("Sales", "Batch", "Batches", "BatchCode", None),
-    ("StockLedger", "Batch", "Batches", "BatchCode", None),
-    ("Expenses", "Batch", "Batches", "BatchCode", None),
-    ("Earthworm", "ToBatch", "Batches", "BatchCode", None),
-    ("DailyLog", "Batch", "Batches", "BatchCode", None),
-    ("Batches", "BatchCode", "Beds", "Batch", None),
+    ("RawMaterial", "RMLot", ["RMLot"], "PreCompost", ["RMLot"], "RMLot"),
+    ("RawMaterial", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("PreCompost", "RMLot", ["RMLot"], "RawMaterial", ["RMLot"], "RMLot"),
+    ("PreCompost", "PCLot", ["PCLot"], "Beds", ["PCLot"], "PCLot"),
+    ("PreCompost", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("Beds", "PCLot", ["PCLot"], "PreCompost", ["PCLot"], "PCLot"),
+    ("Beds", "BedNo", ["Batch", "BedNo"], "Harvest", ["Batch", "BedNo"], "BedNo"),
+    ("Beds", "ProdCode", ["Batch", "BedNo"], "Harvest", ["Batch", "BedNo"], "ProdBatch"),
+    ("Beds", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("Harvest", "BedNo", ["Batch", "BedNo"], "Beds", ["Batch", "BedNo"], "BedNo"),
+    ("Harvest", "ProdBatch", ["Batch", "BedNo"], "Beds", ["Batch", "BedNo"], "ProdCode"),
+    ("Harvest", "FGBatch", ["FGBatch"], "Sales", ["FGBatch"], "FGBatch"),
+    ("Harvest", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("QualityControl", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("Sales", "FGBatch", ["FGBatch"], "Harvest", ["FGBatch"], "FGBatch"),
+    ("Sales", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("StockLedger", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("Expenses", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("Earthworm", "ToBatch", ["ToBatch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("DailyLog", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
+    ("Batches", "BatchCode", ["BatchCode"], "Beds", ["Batch"], "Batch"),
 ]
 
 
+def flag_code_mismatch(wb, regs):
+    """Amber highlight where a bed's production code differs between Beds (ProdCode) and Harvest (ProdBatch)."""
+    def L(t, h):
+        return get_column_letter([x[0] for x in regs[t][1]].index(h) + 1)
+    pairs = (("Beds", "ProdCode", "Harvest", "ProdBatch"), ("Harvest", "ProdBatch", "Beds", "ProdCode"))
+    for t, c, tt, tc in pairs:
+        cb, cn, cc = L(t, "Batch"), L(t, "BedNo"), L(t, c)
+        tb, tn, tcc = (f"{tt}!${L(tt, x)}$2:${L(tt, x)}${LAST_ROW}" for x in ("Batch", "BedNo", tc))
+        cap = CAPACITY.get(t, PREFILL)
+        f = (f'AND(${cc}2<>"",COUNTIFS({tb},${cb}2,{tn},${cn}2)>0,'
+             f'COUNTIFS({tb},${cb}2,{tn},${cn}2,{tcc},${cc}2)=0)')
+        wb[t].conditional_formatting.add(f"{cc}2:{cc}{cap}", FormulaRule(formula=[f], fill=WARN_FILL, font=F(bold=True, color="9A5B00")))
+
+
 def link_cells(wb, regs):
-    """Turn every reference cell (lot, bed, batch codes) into a link to its related record."""
+    """Turn every reference cell (lot, bed, batch codes) into a link to its related record.
+    Returns the cells that have a value but no matching record."""
     def col_of(t, h):
         return [x[0] for x in regs[t][1]].index(h) + 1
 
-    index = {}
-    for t, col, tt, tcol, extra in LINKS:
-        key = (tt, tcol, extra)
-        if key not in index:
-            ws, idx = wb[tt], {}
-            c1, c2 = col_of(tt, tcol), col_of(tt, extra) if extra else None
+    def key_of(ws, r, cols):
+        vals = [ws.cell(r, c).value for c in cols]
+        if any(v in (None, "") or (isinstance(v, str) and v.startswith("=")) for v in vals):
+            return None
+        return tuple(str(v).strip() for v in vals)
+
+    missing, index = [], {}
+    for t, col, keys, tt, tkeys, tsel in LINKS:
+        ik = (tt, tuple(tkeys))
+        if ik not in index:
+            ws, idx, cols = wb[tt], {}, [col_of(tt, k) for k in tkeys]
             for r in range(2, ws.max_row + 1):
-                v = ws.cell(r, c1).value
-                if v in (None, "") or (isinstance(v, str) and v.startswith("=")):
-                    continue
-                k = (str(v).strip(), str(ws.cell(r, c2).value).strip()) if extra else str(v).strip()
-                idx.setdefault(k, r)
-            index[key] = idx
-        ws, idx, letter = wb[t], index[key], get_column_letter(col_of(tt, tcol))
-        c1, c2 = col_of(t, col), col_of(t, extra) if extra else None
+                k = key_of(ws, r, cols)
+                if k:
+                    idx.setdefault(k, r)
+            index[ik] = idx
+        ws, idx, letter = wb[t], index[ik], get_column_letter(col_of(tt, tsel))
+        c1, cols = col_of(t, col), [col_of(t, k) for k in keys]
         for r in range(2, ws.max_row + 1):
             cell = ws.cell(r, c1)
-            v = cell.value
-            if v in (None, "") or (isinstance(v, str) and v.startswith("=")):
+            if cell.value in (None, "") or (isinstance(cell.value, str) and cell.value.startswith("=")):
                 continue
-            k = (str(v).strip(), str(ws.cell(r, c2).value).strip()) if extra else str(v).strip()
+            k = key_of(ws, r, cols)
             if k in idx:
                 cell.hyperlink = Hyperlink(ref=cell.coordinate, location=f"'{tt}'!{letter}{idx[k]}", tooltip=f"Open in {tt}")
                 cell.font = F(color="1C5FB8", underline="single")
+            else:
+                missing.append((t, cell.coordinate, cell.value))
+    return missing
 
 
 
@@ -645,7 +666,9 @@ def build(src, out, batch):
         w.sheet_properties.pageSetUpPr.fitToPage = True
         w.page_setup.fitToWidth, w.page_setup.fitToHeight = 1, 0
     to_a1(wb, regs)
-    link_cells(wb, regs)
+    unlinked = link_cells(wb, regs)
+    flag_code_mismatch(wb, regs)
+    print('reference cells without a matching record:', len(unlinked), unlinked[:20])
     wb.calculation.fullCalcOnLoad = True
     wb.active = 1
     wb.save(out)
@@ -1096,7 +1119,7 @@ def build_readme(ws):
         ("StockLedger", "Excel sheet 7 – stock in / out / loss. Closing stock runs per batch in entry-number order."),
         ("Expenses", "Excel sheet 8 – expenses by category."),
         ("Earthworm", "One record sheet for earthworms, kept outside every batch. Entry = Earthworm purchase (supplier, species, kg, cost); Dung / feed added (cow dung used for breeding, kg and cost – not in RawMaterial or Expenses); Worms harvested (kg produced); Worms issued to beds (with ToBatch); Material out (kg, with Destination). When breeding material is mixed and ready, choose 'Stock for sale (after mixing)' and add the same kg as Production in on the StockLedger. The Dashboard shows these totals separately."),
-        ("Links", "Blue underlined codes are links: RM lot, pre-compost lot, bed number, production batch, FG batch and batch codes jump to the related record (RawMaterial ↔ PreCompost ↔ Beds ↔ Harvest ↔ Sales, and every batch to the Batches sheet). For rows added later, press the 'Refresh links' button (Office Script RefreshLinks) – see README. To edit a linked cell, select it with the arrow keys or click and hold."),
+        ("Links", "Blue underlined codes are links: RM lot, pre-compost lot, bed number, production batch, FG batch and batch codes jump to the related record (RawMaterial ↔ PreCompost ↔ Beds ↔ Harvest ↔ Sales, and every batch to the Batches sheet). For rows added later, press the 'Refresh links' button (Office Script RefreshLinks) – see README. To edit a linked cell, select it with the arrow keys or click and hold. An amber ProdCode / ProdBatch means the bed's production code differs between Beds and Harvest – correct one of them."),
         ("DailyLog", "Watering, turning, temperature and moisture checks, feeding, inspections. Example: B5 · 01-10-2026 · Watering · BED-01 to BED-40 · 400 L · Ramesh."),
         ("Lists", "Drop-down values (suppliers and customers collect themselves from the registers) and the FCO reference limits (yellow cells, editable)."),
         ("h2", "Notes on the imported Batch 4 data"),

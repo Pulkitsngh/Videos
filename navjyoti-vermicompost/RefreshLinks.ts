@@ -9,29 +9,30 @@
 function main(workbook: ExcelScript.Workbook) {
   const PASSWORD = "Navjyoti2026";
 
-  // [sheet, column, target sheet, target column, extra column that must also match (or "")]
-  const LINKS: string[][] = [
-    ["RawMaterial", "RMLot", "PreCompost", "RMLot", ""],
-    ["RawMaterial", "Batch", "Batches", "BatchCode", ""],
-    ["PreCompost", "RMLot", "RawMaterial", "RMLot", ""],
-    ["PreCompost", "PCLot", "Beds", "PCLot", ""],
-    ["PreCompost", "Batch", "Batches", "BatchCode", ""],
-    ["Beds", "PCLot", "PreCompost", "PCLot", ""],
-    ["Beds", "BedNo", "Harvest", "BedNo", "Batch"],
-    ["Beds", "ProdCode", "Harvest", "ProdBatch", ""],
-    ["Beds", "Batch", "Batches", "BatchCode", ""],
-    ["Harvest", "BedNo", "Beds", "BedNo", "Batch"],
-    ["Harvest", "ProdBatch", "Beds", "ProdCode", ""],
-    ["Harvest", "FGBatch", "Sales", "FGBatch", ""],
-    ["Harvest", "Batch", "Batches", "BatchCode", ""],
-    ["QualityControl", "Batch", "Batches", "BatchCode", ""],
-    ["Sales", "FGBatch", "Harvest", "FGBatch", ""],
-    ["Sales", "Batch", "Batches", "BatchCode", ""],
-    ["StockLedger", "Batch", "Batches", "BatchCode", ""],
-    ["Expenses", "Batch", "Batches", "BatchCode", ""],
-    ["Earthworm", "ToBatch", "Batches", "BatchCode", ""],
-    ["DailyLog", "Batch", "Batches", "BatchCode", ""],
-    ["Batches", "BatchCode", "Beds", "Batch", ""],
+  // [sheet, column shown as link, key columns, target sheet, target key columns, target column to select]
+  // Generated from LINKS in build_cloud_workbook.py – keep the two in step.
+  const LINKS: [string, string, string[], string, string[], string][] = [
+    ["RawMaterial", "RMLot", ["RMLot"], "PreCompost", ["RMLot"], "RMLot"],
+    ["RawMaterial", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["PreCompost", "RMLot", ["RMLot"], "RawMaterial", ["RMLot"], "RMLot"],
+    ["PreCompost", "PCLot", ["PCLot"], "Beds", ["PCLot"], "PCLot"],
+    ["PreCompost", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["Beds", "PCLot", ["PCLot"], "PreCompost", ["PCLot"], "PCLot"],
+    ["Beds", "BedNo", ["Batch", "BedNo"], "Harvest", ["Batch", "BedNo"], "BedNo"],
+    ["Beds", "ProdCode", ["Batch", "BedNo"], "Harvest", ["Batch", "BedNo"], "ProdBatch"],
+    ["Beds", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["Harvest", "BedNo", ["Batch", "BedNo"], "Beds", ["Batch", "BedNo"], "BedNo"],
+    ["Harvest", "ProdBatch", ["Batch", "BedNo"], "Beds", ["Batch", "BedNo"], "ProdCode"],
+    ["Harvest", "FGBatch", ["FGBatch"], "Sales", ["FGBatch"], "FGBatch"],
+    ["Harvest", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["QualityControl", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["Sales", "FGBatch", ["FGBatch"], "Harvest", ["FGBatch"], "FGBatch"],
+    ["Sales", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["StockLedger", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["Expenses", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["Earthworm", "ToBatch", ["ToBatch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["DailyLog", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
+    ["Batches", "BatchCode", ["BatchCode"], "Beds", ["Batch"], "Batch"]
   ];
 
   const cache: { [sheet: string]: (string | number | boolean)[][] } = {};
@@ -56,28 +57,29 @@ function main(workbook: ExcelScript.Workbook) {
     if (p.getProtected()) p.unprotect(PASSWORD);
   });
 
-  let linked = 0;
-  for (const [sheet, col, target, tcol, extra] of LINKS) {
+  let linked = 0, unmatched = 0;
+  for (const [sheet, col, keys, target, tkeys, tsel] of LINKS) {
     const src = rowsOf(sheet), tgt = rowsOf(target);
-    const c = colIndex(src, col), tc = colIndex(tgt, tcol);
-    if (c < 0 || tc < 0) continue;
-    const ce = extra ? colIndex(src, extra) : -1, tce = extra ? colIndex(tgt, extra) : -1;
+    const c = colIndex(src, col), ts = colIndex(tgt, tsel);
+    const kc = keys.map(k => colIndex(src, k)), tkc = tkeys.map(k => colIndex(tgt, k));
+    if (c < 0 || ts < 0 || kc.indexOf(-1) >= 0 || tkc.indexOf(-1) >= 0) continue;
+    const keyOf = (row: (string | number | boolean)[], cols: number[]) => {
+      const parts = cols.map(i => String(row[i]).trim());
+      return parts.some(p => p === "") ? "" : parts.join("|");
+    };
     const index: { [key: string]: number } = {};
     for (let r = 1; r < tgt.length; r++) {
-      const v = String(tgt[r][tc]).trim();
-      if (!v) continue;
-      const k = extra ? v + "|" + String(tgt[r][tce]).trim() : v;
-      if (!(k in index)) index[k] = r + 1;
+      const k = keyOf(tgt[r], tkc);
+      if (k && !(k in index)) index[k] = r + 1;
     }
     const ws = workbook.getWorksheet(sheet);
     for (let r = 1; r < src.length; r++) {
       const v = String(src[r][c]).trim();
       if (!v) continue;
-      const k = extra ? v + "|" + String(src[r][ce]).trim() : v;
-      const row = index[k];
-      if (!row) continue;
+      const row = index[keyOf(src[r], kc)];
+      if (!row) { unmatched++; continue; }
       const cell = ws.getCell(r, c);
-      cell.setHyperlink({ documentReference: `'${target}'!${letter(tc)}${row}`, textToDisplay: v, screenTip: `Open in ${target}` });
+      cell.setHyperlink({ documentReference: `'${target}'!${letter(ts)}${row}`, textToDisplay: v, screenTip: `Open in ${target}` });
       cell.getFormat().getFont().setColor("#1C5FB8");
       cell.getFormat().getFont().setUnderline(ExcelScript.RangeUnderlineStyle.single);
       linked++;
@@ -91,5 +93,5 @@ function main(workbook: ExcelScript.Workbook) {
       selectionMode: ExcelScript.ProtectionSelectionMode.normal,
     }, PASSWORD);
   });
-  console.log(`Links refreshed: ${linked} reference cells linked.`);
+  console.log(`Links refreshed: ${linked} reference cells linked, ${unmatched} without a matching record yet.`);
 }

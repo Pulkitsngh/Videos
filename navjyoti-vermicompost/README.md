@@ -40,11 +40,17 @@ In `Navjyoti_Vermicompost_Cloud_Tracker.xlsx` every reference code is a link to 
 RM lot ↔ pre-compost lot ↔ beds (bed number, production batch) ↔ harvest ↔ FG batch ↔ sales, and every
 batch code → the Batches sheet. The pairs are listed once in `LINKS` in `build_cloud_workbook.py`.
 
+Bed-level codes (BedNo, ProdCode / ProdBatch) link on Batch + BedNo, so every bed links to its own harvest row and back.
+An amber ProdCode / ProdBatch means the two sheets disagree on that bed's production code.
+
 Rows added later are linked by the Office Script `RefreshLinks.ts` (uses the same pairs):
 
 1. Open the workbook in Excel for the web → **Automate** tab → **New script**.
 2. Delete the sample code, paste the contents of `RefreshLinks.ts`, rename it **Refresh links**, **Save**.
 3. Click **…** → **Add in workbook** to place a **Refresh links** button on the sheet, or simply **Run** it after entering data.
-4. Optional: Power Automate → scheduled flow → *Excel Online (Business) – Run script* → this workbook, script *Refresh links*, to relink every night.
+4. **Automatic linking (recommended):** make.powerautomate.com → **+ Create → Scheduled cloud flow** → repeat every **15 minutes**
+   (or every hour) → add action **Excel Online (Business) – Run script** → Location: your SharePoint site, Document library,
+   File: the tracker, Script: *Refresh links* → **Save**. New lots, beds, FG batches and batches are then linked within
+   15 minutes of being typed, with nobody pressing anything.
 
 The script unlocks each register with the sheet password, updates the links and locks it again.
