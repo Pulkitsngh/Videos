@@ -33,3 +33,18 @@ button downloads the selected batch as a workbook with one sheet per register.
 - `convert_register.py` – converts a register workbook in the Batch 4 layout into JSON records
   (`python3 convert_register.py register.xlsx B4 seed.json`). It fixes dates that Excel read as mm/dd
   and converts QC cells that were formatted as percentages back to their values.
+
+## Excel tracker – reference links
+
+In `Navjyoti_Vermicompost_Cloud_Tracker.xlsx` every reference code is a link to its related record:
+RM lot ↔ pre-compost lot ↔ beds (bed number, production batch) ↔ harvest ↔ FG batch ↔ sales, and every
+batch code → the Batches sheet. The pairs are listed once in `LINKS` in `build_cloud_workbook.py`.
+
+Rows added later are linked by the Office Script `RefreshLinks.ts` (uses the same pairs):
+
+1. Open the workbook in Excel for the web → **Automate** tab → **New script**.
+2. Delete the sample code, paste the contents of `RefreshLinks.ts`, rename it **Refresh links**, **Save**.
+3. Click **…** → **Add in workbook** to place a **Refresh links** button on the sheet, or simply **Run** it after entering data.
+4. Optional: Power Automate → scheduled flow → *Excel Online (Business) – Run script* → this workbook, script *Refresh links*, to relink every night.
+
+The script unlocks each register with the sheet password, updates the links and locks it again.

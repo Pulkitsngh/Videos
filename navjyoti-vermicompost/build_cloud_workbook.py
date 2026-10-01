@@ -156,41 +156,67 @@ def registers():
             ("BedsArea", "area", "text", None), ("TempC", "temp", "num", None), ("MoisturePct", "moisture", "num", None), ("Qty", "qty", "num", None),
             ("RecordedBy", "by", "text", None), ("Observations", "notes", "text", None)]),
     }
-    add_links(regs)
     return regs
 
 
-# "Go to" link columns: (table, new column, key columns in this table, target table, target key columns)
+# Reference links: (sheet, column, target sheet, target column, extra key that must also match).
+# Every non-empty cell in `column` becomes a link to the first matching row of the target.
+# The same table drives RefreshLinks.ts (Office Script) so new rows can be linked from Excel for the web.
 LINKS = [
-    ("RawMaterial", "GoToPreCompost", ["RMLot"], "PreCompost", ["RMLot"]),
-    ("PreCompost", "GoToRMLot", ["RMLot"], "RawMaterial", ["RMLot"]),
-    ("PreCompost", "GoToBeds", ["PCLot"], "Beds", ["PCLot"]),
-    ("Beds", "GoToPCLot", ["PCLot"], "PreCompost", ["PCLot"]),
-    ("Beds", "GoToHarvest", ["Batch", "BedNo"], "Harvest", ["Batch", "BedNo"]),
-    ("Beds", "GoToBatch", ["Batch"], "Batches", ["BatchCode"]),
-    ("Harvest", "GoToBed", ["Batch", "BedNo"], "Beds", ["Batch", "BedNo"]),
-    ("Harvest", "GoToSale", ["FGBatch"], "Sales", ["FGBatch"]),
-    ("Sales", "GoToHarvest", ["FGBatch"], "Harvest", ["FGBatch"]),
-    ("Sales", "GoToBatch", ["Batch"], "Batches", ["BatchCode"]),
-    ("QualityControl", "GoToBatch", ["Batch"], "Batches", ["BatchCode"]),
-    ("Earthworm", "GoToBatch", ["ToBatch"], "Batches", ["BatchCode"]),
-    ("Batches", "GoToBeds", ["BatchCode"], "Beds", ["Batch"]),
+    ("RawMaterial", "RMLot", "PreCompost", "RMLot", None),
+    ("RawMaterial", "Batch", "Batches", "BatchCode", None),
+    ("PreCompost", "RMLot", "RawMaterial", "RMLot", None),
+    ("PreCompost", "PCLot", "Beds", "PCLot", None),
+    ("PreCompost", "Batch", "Batches", "BatchCode", None),
+    ("Beds", "PCLot", "PreCompost", "PCLot", None),
+    ("Beds", "BedNo", "Harvest", "BedNo", "Batch"),
+    ("Beds", "ProdCode", "Harvest", "ProdBatch", None),
+    ("Beds", "Batch", "Batches", "BatchCode", None),
+    ("Harvest", "BedNo", "Beds", "BedNo", "Batch"),
+    ("Harvest", "ProdBatch", "Beds", "ProdCode", None),
+    ("Harvest", "FGBatch", "Sales", "FGBatch", None),
+    ("Harvest", "Batch", "Batches", "BatchCode", None),
+    ("QualityControl", "Batch", "Batches", "BatchCode", None),
+    ("Sales", "FGBatch", "Harvest", "FGBatch", None),
+    ("Sales", "Batch", "Batches", "BatchCode", None),
+    ("StockLedger", "Batch", "Batches", "BatchCode", None),
+    ("Expenses", "Batch", "Batches", "BatchCode", None),
+    ("Earthworm", "ToBatch", "Batches", "BatchCode", None),
+    ("DailyLog", "Batch", "Batches", "BatchCode", None),
+    ("Batches", "BatchCode", "Beds", "Batch", None),
 ]
 
 
-def add_links(regs):
-    """Append locked formula columns whose cells are clickable links to the related record."""
-    letters = {t: {h: get_column_letter(i + 1) for i, (h, *_) in enumerate(spec)} for t, (_, spec) in regs.items()}
-    for t, name, keys, target, tkeys in LINKS:
-        key = "{" + keys[-1] + "}"
-        L = letters[target][tkeys[-1]]
-        if len(keys) == 1:
-            pos = f"MATCH({key},{target}[{tkeys[0]}],0)"
-        else:
-            cond = "*".join(f"({target}[{tk}]={{{k}}})" for k, tk in zip(keys, tkeys))
-            pos = f"MATCH(1,INDEX({cond},0),0)"
-        f = (f'=IF({key}="","",IFERROR(HYPERLINK("#\'{target}\'!{L}"&({pos}+1),"▸ {target}: "&{key}),"– not in {target}"))')
-        regs[t][1].append((name, None, "calc_link", f))
+def link_cells(wb, regs):
+    """Turn every reference cell (lot, bed, batch codes) into a link to its related record."""
+    def col_of(t, h):
+        return [x[0] for x in regs[t][1]].index(h) + 1
+
+    index = {}
+    for t, col, tt, tcol, extra in LINKS:
+        key = (tt, tcol, extra)
+        if key not in index:
+            ws, idx = wb[tt], {}
+            c1, c2 = col_of(tt, tcol), col_of(tt, extra) if extra else None
+            for r in range(2, ws.max_row + 1):
+                v = ws.cell(r, c1).value
+                if v in (None, "") or (isinstance(v, str) and v.startswith("=")):
+                    continue
+                k = (str(v).strip(), str(ws.cell(r, c2).value).strip()) if extra else str(v).strip()
+                idx.setdefault(k, r)
+            index[key] = idx
+        ws, idx, letter = wb[t], index[key], get_column_letter(col_of(tt, tcol))
+        c1, c2 = col_of(t, col), col_of(t, extra) if extra else None
+        for r in range(2, ws.max_row + 1):
+            cell = ws.cell(r, c1)
+            v = cell.value
+            if v in (None, "") or (isinstance(v, str) and v.startswith("=")):
+                continue
+            k = (str(v).strip(), str(ws.cell(r, c2).value).strip()) if extra else str(v).strip()
+            if k in idx:
+                cell.hyperlink = Hyperlink(ref=cell.coordinate, location=f"'{tt}'!{letter}{idx[k]}", tooltip=f"Open in {tt}")
+                cell.font = F(color="1C5FB8", underline="single")
+
 
 
 def fco_formula(t):
@@ -300,8 +326,7 @@ def build(src, out, batch):
                     for hh, *_ in cols:
                         f = f.replace("{" + hh + "}", this(tname, hh))
                     cell.value = f
-                    if kind == "calc_link":
-                        cell.font = F(color="1C5FB8", underline="single")
+
                 elif h.startswith("Turn") and turns:
                     i = int(h[4]) - 1
                     if i < len(turns):
@@ -332,8 +357,7 @@ def build(src, out, batch):
                     for hh, *_ in cols:
                         f = f.replace("{" + hh + "}", this(tname, hh))
                     c.value = f
-                    if kind == "calc_link":
-                        c.font = F(color="1C5FB8", underline="single")
+
         # typing cells are open; headers and formula columns stay locked
         for ci, (h, _, kind, extra) in enumerate(cols, 1):
             if not kind.startswith("calc"):
@@ -621,6 +645,7 @@ def build(src, out, batch):
         w.sheet_properties.pageSetUpPr.fitToPage = True
         w.page_setup.fitToWidth, w.page_setup.fitToHeight = 1, 0
     to_a1(wb, regs)
+    link_cells(wb, regs)
     wb.calculation.fullCalcOnLoad = True
     wb.active = 1
     wb.save(out)
@@ -1071,7 +1096,7 @@ def build_readme(ws):
         ("StockLedger", "Excel sheet 7 – stock in / out / loss. Closing stock runs per batch in entry-number order."),
         ("Expenses", "Excel sheet 8 – expenses by category."),
         ("Earthworm", "One record sheet for earthworms, kept outside every batch. Entry = Earthworm purchase (supplier, species, kg, cost); Dung / feed added (cow dung used for breeding, kg and cost – not in RawMaterial or Expenses); Worms harvested (kg produced); Worms issued to beds (with ToBatch); Material out (kg, with Destination). When breeding material is mixed and ready, choose 'Stock for sale (after mixing)' and add the same kg as Production in on the StockLedger. The Dashboard shows these totals separately."),
-        ("Go to links", "Grey 'GoTo…' columns at the end of the registers are links: click one to jump to and select the related record (RM lot ↔ pre-compost lot ↔ beds ↔ harvest ↔ sales, and each batch)."),
+        ("Links", "Blue underlined codes are links: RM lot, pre-compost lot, bed number, production batch, FG batch and batch codes jump to the related record (RawMaterial ↔ PreCompost ↔ Beds ↔ Harvest ↔ Sales, and every batch to the Batches sheet). For rows added later, press the 'Refresh links' button (Office Script RefreshLinks) – see README. To edit a linked cell, select it with the arrow keys or click and hold."),
         ("DailyLog", "Watering, turning, temperature and moisture checks, feeding, inspections. Example: B5 · 01-10-2026 · Watering · BED-01 to BED-40 · 400 L · Ramesh."),
         ("Lists", "Drop-down values (suppliers and customers collect themselves from the registers) and the FCO reference limits (yellow cells, editable)."),
         ("h2", "Notes on the imported Batch 4 data"),
