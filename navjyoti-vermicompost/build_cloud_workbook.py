@@ -133,11 +133,6 @@ def registers():
             ("QtyKg", "qtyKg", "kg", None), ("PricePerKg", "price", "num", None),
             ("Revenue", None, "calc_inr", "=IF(OR({QtyKg}=\"\",{PricePerKg}=\"\"),\"\",{QtyKg}*{PricePerKg})"),
             ("Payment", "payment", "text", "SalePayment")]),
-        "StockLedger": ("stock", [("Batch", "batch", "text", "Batch"), ("EntryNo", "seq", "num", None), ("EntryDate", "date", "date", None),
-            ("Product", "product", "text", None), ("Packing", "pack", "text", "Packing"), ("InKg", "inKg", "kg", None), ("OutKg", "outKg", "kg", None),
-            ("LossKg", "lossKg", "kg", None),
-            ("ClosingKg", None, "calc_kg", "=IF({Batch}=\"\",\"\",SUMIFS(StockLedger[InKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo})-SUMIFS(StockLedger[OutKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo})-SUMIFS(StockLedger[LossKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo}))"),
-            ("Audit", "audit", "text", "Audit"), ("Note", "note", "text", None)]),
         "Expenses": ("expenses", [("Batch", "batch", "text", "Batch"), ("ExpenseDate", "date", "date", None), ("Category", "category", "text", "ExpenseCategory"),
             ("Description", "desc", "text", None), ("PaymentMode", "mode", "text", "PaymentMode"), ("Amount", "amount", "inr", None), ("Note", "note", "text", None)]),
         "Earthworm": ("earthworm", [("PurchaseDate", "date", "date", None), ("InvoiceNo", "invoice", "text", None), ("Supplier", "supplier", "text", None),
@@ -169,7 +164,6 @@ LINKS = [
     ("QualityControl", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
     ("Sales", "FGBatch", ["FGBatch"], "Harvest", ["FGBatch"], "FGBatch"),
     ("Sales", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
-    ("StockLedger", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
     ("Expenses", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
     ("Batches", "BatchCode", ["BatchCode"], "Beds", ["Batch"], "Batch"),
 ]
@@ -459,7 +453,7 @@ def build(src, out, batch):
         ("sold", "Sold (kg)", f"=SUMIFS(Sales[QtyKg],Sales[Batch],{K})", KG_FMT),
         ("rev", "Revenue", f"=SUMIFS(Sales[Revenue],Sales[Batch],{K})", INR_FMT),
         ("price", "Average price (₹/kg)", '=IFERROR(C{rev}/C{sold},"")', "₹#,##0.00"),
-        ("stock", "Stock on hand (kg, stock ledger)", f"=SUMIFS(StockLedger[InKg],StockLedger[Batch],{K})-SUMIFS(StockLedger[OutKg],StockLedger[Batch],{K})-SUMIFS(StockLedger[LossKg],StockLedger[Batch],{K})", KG_FMT),
+        ("stock", "Stock on hand (kg, net yield − sold)", "=C{net}-C{sold}", KG_FMT),
         ("exp", "Expenses", f"=SUMIFS(Expenses[Amount],Expenses[Batch],{K})", INR_FMT),
         ("cpk", "Expense per kg produced (₹)", '=IFERROR(C{exp}/C{net},"")', "₹#,##0.00"),
         ("margin", "Revenue − expenses", "=C{rev}-C{exp}", '₹#,##0;[Red]-₹#,##0'),
@@ -862,9 +856,6 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
           lambda b, r: f"SUMIFS(Sales[QtyKg],Sales[Batch],{b},Sales[Customer],$B${r})", KG_FMT, "Customers are picked up automatically from the Sales register (first 10).")
     table("Sales – revenue by month (₹)", "Revenue by month", "Month", months,
           lambda b, r: f"SUMIFS(Sales[Revenue],Sales[Batch],{b},{mrange('Sales', 'SaleDate', r)})", INR_FMT)
-    table("Stock – movement (kg)", "Stock", "Movement", ["In (production)", "Out (sales)", "Loss / adjustment"],
-          lambda b, r: f'SUMIFS(CHOOSE(MATCH($B${r},{{"In (production)","Out (sales)","Loss / adjustment"}},0),StockLedger[InKg],StockLedger[OutKg],StockLedger[LossKg]),StockLedger[Batch],{b})', KG_FMT,
-          total=("Closing stock", "=N({L}{a})-N({L}{b})-N({L}{c})"))
     table("Expenses by category (₹)", "Expenses", "Category", [f"=INDEX(L_ExpenseCategory,{i + 1})" for i in range(len(LISTS['ExpenseCategory']))],
           lambda b, r: f"SUMIFS(Expenses[Amount],Expenses[Batch],{b},Expenses[Category],$B${r})", INR_FMT)
 
@@ -1098,7 +1089,6 @@ def build_readme(ws):
         ("Harvest", "Excel sheet 4 – raw and net yield per bed, FG batch, packing. Recovery % is calculated."),
         ("QualityControl", "Excel sheet 5 – lab reports. Product: RM = raw material / trial, FG = finished goods, EXRM = export raw material / trial, EXFG = export finished goods. FCO check is calculated for FG and EXFG."),
         ("Sales", "Excel sheet 6 – invoices. Revenue is calculated."),
-        ("StockLedger", "Excel sheet 7 – stock in / out / loss. Closing stock runs per batch in entry-number order."),
         ("Expenses", "Excel sheet 8 – expenses by category."),
         ("Earthworm", "Earthworm purchase register, kept outside every batch: date, invoice, supplier, species, kg, rate per kg, transport and payment status. Amount is calculated. These costs are not in any batch's expenses; the Dashboard shows them separately."),
         ("Links", "Blue underlined codes are links: RM lot, pre-compost lot, bed number, production batch, FG batch and batch codes jump to the related record (RawMaterial ↔ PreCompost ↔ Beds ↔ Harvest ↔ Sales, and every batch to the Batches sheet). For rows added later, press the 'Refresh links' button (Office Script RefreshLinks) – see README. To edit a linked cell, select it with the arrow keys or click and hold. An amber ProdCode / ProdBatch means the bed's production code differs between Beds and Harvest – correct one of them."),

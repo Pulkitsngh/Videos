@@ -10,13 +10,13 @@ Total effort: about 1–2 days for one person who knows Microsoft 365 basics.
 
 | File | Use |
 |---|---|
-| `Create-NavjyotiLists.ps1` | Creates the 10 SharePoint lists with the right column types and loads the Batch 4 data |
+| `Create-NavjyotiLists.ps1` | Creates the 9 SharePoint lists with the right column types and loads the Batch 4 data |
 | `data/*.csv` | Batch 4 records, one file per list (read by the script) |
 | `PowerBI-Measures.dax` | Calculated columns and measures to paste into Power BI |
 | `PowerApps-Formulas.md` | Screens and formulas for the data-entry app, including pop-up detail panels |
 | `PowerAutomate-Flows.md` | The three alert flows, step by step |
 
-The 10 lists: **Batches, RawMaterial, PreCompost, Beds, Harvest, QualityControl, Sales, StockLedger, Expenses, Earthworm** (earthworm purchases, outside every batch).
+The 9 lists: **Batches, RawMaterial, PreCompost, Beds, Harvest, QualityControl, Sales, Expenses, Earthworm** (earthworm purchases, outside every batch).
 Column names are the same as in the Excel tracker, so reports and formulas line up.
 
 ---
@@ -43,7 +43,7 @@ On a Windows PC:
 5. Run (replace `yourcompany` and `PASTE-CLIENT-ID-HERE` with your values; no < > brackets):
    `./Create-NavjyotiLists.ps1 -SiteUrl https://yourcompany.sharepoint.com/sites/NavjyotiProduction -ClientId PASTE-CLIENT-ID-HERE`
 6. Check the counts on the site (Site contents): RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6,
-   Sales 6, StockLedger 63, Expenses 30, Batches 2 (B4, B5), Earthworm 0.
+   Sales 6, Expenses 30, Batches 2 (B4, B5), Earthworm 0.
 
 The script can be run again safely: it keeps existing lists, adds missing columns, and never loads data into a list that already has rows.
 
@@ -51,7 +51,7 @@ No PowerShell available? Create each list with **+ New → List → From CSV** u
 column types by hand: dates → *Date and time (date only)*, quantities → *Number*, and the drop-down columns → *Choice*.
 
 **Calculated in SharePoint:** RawMaterial *Amount*, Sales *Revenue*, Harvest *RecoveryPct*, PreCompost *DaysToTransfer*.
-Figures that need another list (bed net yield, live bed status, closing stock, FCO check) are calculated in Power BI and the app.
+Figures that need another list (bed net yield, live bed status, stock on hand, FCO check) are calculated in Power BI and the app.
 
 ## Stage 3 – Data-entry app in Power Apps (2–3 hours)
 
@@ -59,7 +59,7 @@ Follow `PowerApps-Formulas.md`. In short:
 
 1. **make.powerapps.com → + Create → Start with data → SharePoint →** your site → **Beds**. Power Apps builds a
    working phone app with list, detail and edit screens.
-2. **Data → + Add data → SharePoint →** add Harvest, QualityControl, Earthworm, RawMaterial, Sales, Expenses, StockLedger, PreCompost, Batches.
+2. **Data → + Add data → SharePoint →** add Harvest, QualityControl, Earthworm, RawMaterial, Sales, Expenses, PreCompost, Batches.
 3. Add the Home screen (batch picker plus one tile per register), the bed board, the harvest and quality forms, and the
    pop-up detail panels, using the formulas in the guide.
 4. **File → Save → Publish → Share** with the Navjyoti Production members group.
@@ -67,7 +67,7 @@ Follow `PowerApps-Formulas.md`. In short:
 
 ## Stage 4 – Reports in Power BI (3–4 hours)
 
-1. **Power BI Desktop → Get data → SharePoint Online list →** site URL → **Implementation 2.0** → tick all 10 lists → **Transform data**.
+1. **Power BI Desktop → Get data → SharePoint Online list →** site URL → **Implementation 2.0** → tick all 9 lists → **Transform data**.
 2. In Power Query, for each list keep the columns shown in the Excel tracker and set types (dates → Date, quantities → Decimal number).
    If a choice column arrives as a record, expand it to its *Value*.
 3. **Close & apply.** In Model view link **Batches[BatchCode] → *every list*[Batch]** (one-to-many).
@@ -78,7 +78,7 @@ Follow `PowerApps-Formulas.md`. In short:
    - **Raw material:** bar Quantity by Supplier; column by month; table of lots with lab result.
    - **Beds & harvest:** bar Net yield by BedBlock; column Net yield by month; matrix Beds × status.
    - **Quality (RM / FG / EXRM / EXFG):** clustered column of Avg Moisture, OC, C:N, N, P, K with **Product** as legend; constant lines at the FCO limits; table of lab reports with FCOCheck.
-   - **Sales & stock:** bar by Customer; revenue by month; stock in / out / loss.
+   - **Sales & stock:** bar by Customer; revenue by month; stock on hand (net yield − sold).
    - **Compare batches:** matrix with Batch on columns and the main measures on rows.
 6. Tooltips and pop-ups: in each visual turn on **Tooltips**; add a **tooltip page** (Format → Page information → Tooltip) showing bed details,
    and a **drill-through page** so right-click → *Drill through* on a batch or bed opens its full detail.

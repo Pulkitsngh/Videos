@@ -43,17 +43,6 @@ VAR h = CALCULATE ( MAX ( Harvest[HarvestDate] ),
     FILTER ( ALL ( Harvest ), Harvest[Batch] = Beds[Batch] && Harvest[BedNo] = Beds[BedNo] ) )
 RETURN IF ( ISBLANK ( h ) || ISBLANK ( Beds[FillDate] ), BLANK (), DATEDIFF ( Beds[FillDate], h, DAY ) )
 
-// StockLedger – running closing balance per batch in entry order
-StockLedger[ClosingKg] =
-CALCULATE (
-    SUM ( StockLedger[InKg] ) - SUM ( StockLedger[OutKg] ) - SUM ( StockLedger[LossKg] ),
-    FILTER (
-        ALL ( StockLedger ),
-        StockLedger[Batch] = EARLIER ( StockLedger[Batch] )
-            && StockLedger[EntryNo] <= EARLIER ( StockLedger[EntryNo] )
-    )
-)
-
 // PreCompost
 PreCompost[PeakTempC] = MAX ( MAX ( PreCompost[Turn1TempC], PreCompost[Turn2TempC] ), PreCompost[Turn3TempC] )
 
@@ -102,8 +91,7 @@ Avg Price per kg = DIVIDE ( [Revenue], [Sold kg] )
 Invoices = COUNTROWS ( Sales )
 Low Price Sales = CALCULATE ( COUNTROWS ( Sales ), Sales[PricePerKg] < 1 )
 
-Stock On Hand kg = SUM ( StockLedger[InKg] ) - SUM ( StockLedger[OutKg] ) - SUM ( StockLedger[LossKg] )
-Harvested minus Sold kg = [Net Yield kg] - [Sold kg]
+Stock On Hand kg = [Net Yield kg] - [Sold kg]   // no stock ledger: stock = net yield − sold
 
 Expenses = SUM ( Expenses[Amount] )
 Expense per kg = DIVIDE ( [Expenses], [Net Yield kg] )

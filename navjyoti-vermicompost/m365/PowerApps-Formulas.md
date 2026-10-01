@@ -1,6 +1,6 @@
 # Navjyoti app – Power Apps screens and formulas
 
-Canvas app, **phone layout**, data sources: the 10 SharePoint lists.
+Canvas app, **phone layout**, data sources: the 9 SharePoint lists.
 Choice columns (Batch, Status, Product, PaymentStatus …) are records in Power Apps, so compare with `.Value`.
 
 ## App
@@ -122,12 +122,11 @@ With({p: DataCardValueProduct.Selected.Value,
 **Compare RM / FG / EXRM / EXFG** – three labels per parameter:
 `Text(Average(Filter(QualityControl, Batch.Value = varBatch, Product.Value = "EXFG"), Moisture), "0.00")`
 
-## 6. Raw material, Sales, Expenses, Stock
+## 6. Raw material, Sales, Expenses
 
 Use **+ New screen → Form** or the generated browse/edit screens. For each, set:
 - Gallery Items: `Sort(Filter(<List>, Batch.Value = varBatch), <DateColumn>, SortOrder.Descending)`
 - Batch card Default: `If(<Form>.Mode = FormMode.New, {Value: varBatch}, ThisItem.Batch)`
-- StockLedger EntryNo Default: `If(frmStock.Mode = FormMode.New, Max(Filter(StockLedger, Batch.Value = varBatch), EntryNo) + 1, ThisItem.EntryNo)`
 
 ## 7. Share
 

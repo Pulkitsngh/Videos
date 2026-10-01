@@ -68,7 +68,7 @@ def fig_overview():
     boxes = [
         (30, 70, "Supervisors", "phone / PC", "f-panel"),
         (200, 70, "Power Apps", "data-entry app", "f-c1"),
-        (390, 70, "SharePoint lists", "10 registers · the data", "f-c2"),
+        (390, 70, "SharePoint lists", "9 registers · the data", "f-c2"),
         (560, 70, "Power BI", "dashboards & reports", "f-c3"),
         (390, 210, "Power Automate", "alerts: overdue beds, FCO…", "f-c4"),
         (560, 210, "Microsoft Teams", "one place for all of it", "f-panel"),
@@ -132,13 +132,13 @@ def fig_site_contents():
     f = Fig("Navjyoti Production › Site contents")
     f.text(30, 70, "Site contents", 16, weight=700)
     rows = [("Batches", 2), ("RawMaterial", 15), ("PreCompost", 3), ("Beds", 80), ("Harvest", 80),
-            ("QualityControl", 6), ("Sales", 6), ("StockLedger", 63), ("Expenses", 30), ("Earthworm", 0)]
+            ("QualityControl", 6), ("Sales", 6), ("Expenses", 30), ("Earthworm", 0)]
     f.rect(30, 85, 660, 28, "f-head", 4).text(44, 104, "Name", 12, "f-t-inv", weight=700).text(520, 104, "Items", 12, "f-t-inv", weight=700)
     for i, (n, c) in enumerate(rows):
         y = 116 + i * 27
         f.rect(30, y, 660, 26, "f-row" if i % 2 else "f-win", 0).text(44, y + 18, "▦  " + n, 12).text(520, y + 18, str(c), 12, "f-t", weight=600)
-    f.hi(30, 116, 660, 26 * 10 + 4, 4)
-    return f.svg("Site contents lists the 10 registers with their item counts")
+    f.hi(30, 116, 660, 26 * 9 + 4, 4)
+    return f.svg("Site contents lists the 9 registers with their item counts")
 
 
 def fig_pa_start():
@@ -210,7 +210,7 @@ def fig_pbi_model():
     f = Fig("Power BI – Model view")
     f.rect(290, 165, 140, 70, "f-c1", 10).text(360, 196, "Batches", 14, "f-t", "middle", 700).text(360, 216, "BatchCode", 11, "f-muted", "middle")
     tables = [(40, 60, "RawMaterial"), (270, 50, "Beds"), (500, 60, "Harvest"), (40, 175, "PreCompost"), (560, 175, "QualityControl"),
-              (40, 290, "Sales"), (215, 305, "StockLedger"), (400, 305, "Expenses")]
+              (40, 290, "Sales"), (300, 305, "Expenses")]
     for x, y, t in tables:
         f.rect(x, y, 130, 46, "f-card", 8).text(x + 65, y + 22, t, 12, "f-t", "middle", 700).text(x + 65, y + 38, "Batch", 10, "f-muted", "middle")
         f.line(360, 200, x + 65, y + 23, "f-rel")
@@ -294,11 +294,11 @@ STAGES = [
         "Name it <b>Navjyoti Production</b>. Note the site address.",
         "Add supervisors as <b>Members</b> (can edit) and managers as <b>Visitors</b> (view only).",
     ], [fig_create_site(), fig_site_name()], None),
-    ("lists", "Create the 10 lists and load Batch 4", "IT admin · 20 minutes", [
+    ("lists", "Create the 9 lists and load Batch 4", "IT admin · 20 minutes", [
         "Install <b>PowerShell 7</b> from the Microsoft Store, open it, and run the install command.",
         "A Microsoft 365 admin registers the PnP app once. Replace <b>yourcompany</b> with the name in your SharePoint address (<i>https://<b>yourcompany</b>.sharepoint.com</i>). A browser window opens to sign in and approve; then copy the <b>Client ID</b> it shows.",
         "Unzip the kit, then in PowerShell go to that folder with <b>cd</b> (not C:\\Windows\\System32). Run the Navjyoti script, replacing <b>yourcompany</b> with your own SharePoint name and <b>PASTE-CLIENT-ID-HERE</b> with the Client ID from step 2.",
-        "Open <b>Site contents</b> and check the item counts: RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6, Sales 6, StockLedger 63, Expenses 30, Batches 2, Earthworm 0.",
+        "Open <b>Site contents</b> and check the item counts: RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6, Sales 6, Expenses 30, Batches 2, Earthworm 0.",
     ], [fig_powershell(), fig_site_contents()], "ps"),
     ("app", "Build the data-entry app in Power Apps", "Power user · 2–3 hours", [
         "Go to <b>make.powerapps.com</b> → <b>+ Create</b>.",
@@ -313,7 +313,7 @@ STAGES = [
         "Open <b>Power BI Desktop</b> → <b>Get data</b>.",
         "Choose <b>SharePoint Online list</b>.",
         "Paste the site address.",
-        "Select <b>Implementation 2.0</b>, tick all 10 lists, then <b>Transform data → Close &amp; apply</b>.",
+        "Select <b>Implementation 2.0</b>, tick all 9 lists, then <b>Transform data → Close &amp; apply</b>.",
         "In <b>Model view</b>, drag <b>Batches[BatchCode]</b> onto each list's <b>Batch</b> column. Paste the measures from <i>PowerBI-Measures.dax</i>.",
         "Build the pages with a <b>Batch slicer</b>: Overview, Raw material, Beds &amp; harvest, Quality, Sales &amp; stock, Compare batches.",
         "For the Quality page, put <b>Product</b> (RM / FG / EXRM / EXFG) on the legend and add constant lines at the FCO limits. Turn on tooltips and add a drill-through page for pop-up detail.",
@@ -458,7 +458,7 @@ figure { margin: 0; min-width: 0 }
   <section class="stage" aria-label="What is in the kit">
     <header class="stage-h"><span class="stage-n">Before you start</span><h2>What is in the Navjyoti kit</h2><span class="who">Navjyoti_M365_Kit.zip</span></header>
     <div class="kit">
-      <div><code>Create-NavjyotiLists.ps1</code><br>Creates the 10 lists with the right column types and loads Batch 4.</div>
+      <div><code>Create-NavjyotiLists.ps1</code><br>Creates the 9 lists with the right column types and loads Batch 4.</div>
       <div><code>data/*.csv</code><br>Batch 4 records, one file per list.</div>
       <div><code>PowerApps-Formulas.md</code><br>Screens and formulas, including pop-up panels.</div>
       <div><code>PowerBI-Measures.dax</code><br>Calculated columns and measures for the reports.</div>

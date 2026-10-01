@@ -28,7 +28,6 @@ function main(workbook: ExcelScript.Workbook) {
     ["QualityControl", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
     ["Sales", "FGBatch", ["FGBatch"], "Harvest", ["FGBatch"], "FGBatch"],
     ["Sales", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
-    ["StockLedger", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
     ["Expenses", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
     ["Batches", "BatchCode", ["BatchCode"], "Beds", ["Batch"], "Batch"]
   ];
