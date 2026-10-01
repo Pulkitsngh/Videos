@@ -1,5 +1,27 @@
 # YouTube Short: flydubai FZ1073, 174 जानें बचाने वाले असली हीरो (~42 s, Hindi)
 
+**✅ Final video:** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/ab48abd4-9729-4cc6-a24e-3470eec82242.mp4
+**Specs:** 720×1280, 24 fps, H.264 + AAC, 41.4 s, −14 LUFS · **Seedance 2.0 Mini** (5 clips, 39 s generated) + 4 real CC-licensed photos · **no captions** (only small "प्रतीकात्मक दृश्य" / "फ़ाइल फ़ोटो" corner labels) · Like + Subscribe buttons from 8.7 s · tense pulse music that resolves to a warm chord at "बच गईं" · cost ≈ 41 credits
+
+**Final edit timeline**
+
+| Time | Shot |
+|---|---|
+| 0–8.7 s | AI: cockpit struggle and dive |
+| 8.7–11.4 s | 📷 flydubai 737-8 MAX A6-FMG (pan) |
+| 11.4–13.6 s | 📷 flydubai 737 MAX cabin |
+| 13.6–20.1 s | AI: wounded captain opens the door |
+| 20.1–30.5 s | AI: passengers storm in and tie up the attacker |
+| 30.5–33.2 s | AI: off-duty pilots level the plane |
+| 33.2–36.5 s | AI: landing |
+| 36.5–38.7 s | 📷 Tabuk airport |
+| 38.7–41.4 s | 📷 flydubai 737-8 MAX (zoom, fade) |
+
+**Real photos used: credits (put these in the YouTube description).** These are **file photos of the same airline, aircraft type and airports, not photos of the incident aircraft or the incident itself.** No free-licensed photos of the incident exist yet.
+1. "Flydubai Boeing 737 A6-FMG Krakow 2024 (01)" and "(02)" by **Bahnfrend**, CC BY-SA 4.0: https://commons.wikimedia.org/wiki/File:Flydubai_Boeing_737_A6-FMG_Krakow_2024_(01).jpg
+2. "Economy class cabin interior of Boeing 737 MAX aircraft of Flydubai, 2022" by **Kgbo**, CC BY-SA 4.0: https://commons.wikimedia.org/wiki/File:Economy_class_cabin_interior_of_Boeing_737_MAX_aircraft_of_Flydubai,_2022.jpg
+3. "Tabuk airport" (Prince Sultan bin Abdulaziz Airport terminal) by **م سعود العنزي**, CC BY-SA 4.0: https://commons.wikimedia.org/wiki/File:Tabuk_airport.jpg
+
 **Channel:** World Unscripted · **Format:** 9:16, about 42 s · faceless narrator (ElevenLabs "Gideon" Hindi voice) · burned-in Hindi captions · tense, low background music · Like + Subscribe buttons from about 8 s
 
 > ⚠️ **This is a breaking news story, one day old.** Details are still emerging and outlets differ on some numbers. Re-check the facts in the "Fact notes" section below right before you post, and update anything that has changed.
@@ -103,7 +125,13 @@ flydubai की फ़्लाइट FZ1073 (दुबई → तेल अव�
 
 👍 Like करें और World Unscripted को Subscribe करें 🔔
 
-⚠️ वीडियो के दृश्य AI द्वारा बनाए गए प्रतीकात्मक चित्रण (dramatization) हैं, असली फ़ुटेज नहीं। जानकारी 30 सितंबर – 1 अक्टूबर 2026 की न्यूज़ रिपोर्ट्स पर आधारित है।
+⚠️ वीडियो में घटना के दृश्य AI द्वारा बनाए गए प्रतीकात्मक चित्रण (dramatization) हैं, असली फ़ुटेज नहीं। विमान, केबिन और तबूक एयरपोर्ट की तस्वीरें फ़ाइल फ़ोटो हैं (घटना वाले विमान की नहीं)। जानकारी 30 सितंबर – 1 अक्टूबर 2026 की न्यूज़ रिपोर्ट्स पर आधारित है।
+
+📷 Photo credits (Wikimedia Commons, CC BY-SA 4.0):
+• Flydubai Boeing 737-8 MAX A6-FMG — Bahnfrend
+• Flydubai 737 MAX economy cabin — Kgbo
+• Tabuk (Prince Sultan bin Abdulaziz) Airport — م سعود العنزي
+https://creativecommons.org/licenses/by-sa/4.0/
 
 #flydubai #FZ1073 #shorts #CaptainSmitMachchhar #IndianPilot #RealHeroes #AviationNews #Dubai #TelAviv #Tabuk #BreakingNews #WorldUnscripted
 ```
