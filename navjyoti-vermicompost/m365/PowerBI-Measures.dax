@@ -75,10 +75,8 @@ RETURN
     IF ( NOT fin, "Trial (not checked)", IF ( flags = "", "Within FCO", "Outside: " & TRIM ( flags ) ) )
 
 // ---------- Measures (create a blank table called _Measures to hold them) ----------
-// Batch = "Ancillary" marks purchases/expenses not used in production (e.g. earthworm breeding)
-RM Received t = DIVIDE ( CALCULATE ( SUM ( RawMaterial[QtyKg] ), RawMaterial[Batch] <> "Ancillary" ), 1000 )
-RM Cost = SUMX ( FILTER ( RawMaterial, RawMaterial[Batch] <> "Ancillary" ), RawMaterial[QtyKg] * RawMaterial[RatePerKg] )
-Ancillary Spend = SUMX ( FILTER ( RawMaterial, RawMaterial[Batch] = "Ancillary" ), RawMaterial[QtyKg] * RawMaterial[RatePerKg] ) + CALCULATE ( SUM ( Expenses[Amount] ), Expenses[Batch] = "Ancillary" )
+RM Received t = DIVIDE ( SUM ( RawMaterial[QtyKg] ), 1000 )
+RM Cost = SUMX ( RawMaterial, RawMaterial[QtyKg] * RawMaterial[RatePerKg] )
 RM Transport = SUM ( RawMaterial[TransportCost] )
 RM Trucks = COUNTROWS ( RawMaterial )
 RM Avg Moisture % = AVERAGE ( RawMaterial[MoisturePct] )
@@ -94,7 +92,7 @@ Dung Filled t = SUM ( Beds[DungT] )
 Raw Harvest kg = SUM ( Harvest[RawKg] )
 Net Yield kg = SUM ( Harvest[NetKg] )
 Recovery % = DIVIDE ( [Net Yield kg], CALCULATE ( SUM ( Harvest[RawKg] ), NOT ISBLANK ( Harvest[NetKg] ) ) )
-Conversion % = DIVIDE ( [Net Yield kg], [Dung Filled t] * 1000 )
+Conversion % = DIVIDE ( [Net Yield kg], [RM Received t] * 1000 )   // net yield as a share of raw material received
 Harvest Missing Net = CALCULATE ( COUNTROWS ( Harvest ), ISBLANK ( Harvest[NetKg] ) )
 Avg Net per Bed kg = AVERAGE ( Harvest[NetKg] )
 
@@ -107,7 +105,7 @@ Low Price Sales = CALCULATE ( COUNTROWS ( Sales ), Sales[PricePerKg] < 1 )
 Stock On Hand kg = SUM ( StockLedger[InKg] ) - SUM ( StockLedger[OutKg] ) - SUM ( StockLedger[LossKg] )
 Harvested minus Sold kg = [Net Yield kg] - [Sold kg]
 
-Expenses = CALCULATE ( SUM ( Expenses[Amount] ), Expenses[Batch] <> "Ancillary" )
+Expenses = SUM ( Expenses[Amount] )
 Expense per kg = DIVIDE ( [Expenses], [Net Yield kg] )
 Revenue minus Expenses = [Revenue] - [Expenses]
 
@@ -129,3 +127,9 @@ Days Since Watering =
 VAR last = CALCULATE ( MAX ( DailyLog[LogDate] ), DailyLog[Activity] = "Watering" )
 RETURN IF ( ISBLANK ( last ), BLANK (), DATEDIFF ( last, TODAY (), DAY ) )
 Log Entries = COUNTROWS ( DailyLog )
+
+// ---------- Worm breeding unit (outside every batch) ----------
+Breeding Dung kg = CALCULATE ( SUM ( WormBreeding[QtyKg] ), WormBreeding[Entry] = "Dung / feed added" )
+Breeding Cost = SUM ( WormBreeding[CostRs] )
+Worms Produced kg = SUM ( WormBreeding[WormsKg] )
+Breeding Material For Sale kg = CALCULATE ( SUM ( WormBreeding[MaterialOutKg] ), WormBreeding[Destination] = "Stock for sale (after mixing)" )

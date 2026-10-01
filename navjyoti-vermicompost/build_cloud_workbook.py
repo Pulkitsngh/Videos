@@ -38,7 +38,11 @@ PRODUCTS = [("RM", "RM trial", "2A78D6"), ("FG", "FG finished", "EB6834"),
             ("EXRM", "EXRM export trial", "1BAF7A"), ("EXFG", "EXFG export finished", "C98500")]
 FINISHED = ("FG", "EXFG")
 MATERIALS = ["SMC", "Cow Dung", "Cow Dung Slurry", "Coco Peat", "FOM", "Press Mud", "Crop Residue", "Others"]
-ANCILLARY = "Ancillary"  # raw material / expenses not used in production (e.g. earthworm breeding)
+# Worm breeding unit: dung used to multiply earthworms is booked here, not to any batch
+BREED_ENTRY = ["Dung / feed added", "Worms harvested", "Material out"]
+BREED_DEST = ["Stock for sale (after mixing)", "Mixed into a batch", "New beds / worm stock", "Discarded"]
+KG_AXIS = '[>=1000000]#,##0.0,,"M";[>=1000]#,##0,"k";0'
+INR_AXIS = '[>=10000000]"₹"#,##0.0,,,"Cr";[>=100000]"₹"#,##0.0,,"L";[>=1000]"₹"#,##0,"k";"₹"0'
 PASSWORD = "Navjyoti2026"  # sheet protection password (told to the owner; change in Review → Unprotect Sheet)
 CAPACITY = {"Batches": 200, "DailyLog": 5000}  # rows ready for entry per register; others use PREFILL
 F = lambda **k: Font(name=FONT, **{"size": 10, **k})
@@ -63,6 +67,8 @@ LISTS = {
     "PaymentMode": ["Online", "UPI", "Cash", "Cheque"],
     "Activity": ["Watering", "Turning", "Temperature check", "Moisture check", "Feeding", "Shuffling", "Worm inoculation",
                  "Pest / ant control", "Shade / cover repair", "Harvest", "Sieving", "Inspection", "Other"],
+    "BreedEntry": BREED_ENTRY,
+    "BreedDest": BREED_DEST,
     "Stage": ["Planned", "Raw material", "Pre-composting", "In beds", "Harvesting", "Closing", "Closed"],
     "Audit": ["Verified (Match)", "Pending", "Mismatch"],
     "SalePayment": ["Received", "Pending", "Partial"],
@@ -91,7 +97,7 @@ def registers():
     return {
         "Batches": ("batches", [("BatchCode", "code", "text", None), ("BatchName", "name", "text", None), ("Site", "site", "text", None),
                     ("StartDate", "start", "date", None), ("Stage", "status", "text", "Stage"), ("Notes", "notes", "text", None)]),
-        "RawMaterial": ("rm", [("Batch", "batch", "text", "BatchAnc"), ("PurchaseDate", "date", "date", None), ("RMLot", "lot", "text", None),
+        "RawMaterial": ("rm", [("Batch", "batch", "text", "Batch"), ("PurchaseDate", "date", "date", None), ("RMLot", "lot", "text", None),
             ("Supplier", "supplier", "text", "Supplier"), ("Material", "material", "text", "Material"), ("VehicleNo", "vehicle", "text", None),
             ("InvoiceRef", "invoice", "text", None), ("QtyKg", "qtyKg", "kg", None), ("RatePerKg", "rate", "num", None),
             ("Amount", None, "calc_inr", "=IF(OR({QtyKg}=\"\",{RatePerKg}=\"\"),\"\",{QtyKg}*{RatePerKg})"),
@@ -138,8 +144,12 @@ def registers():
             ("LossKg", "lossKg", "kg", None),
             ("ClosingKg", None, "calc_kg", "=IF({Batch}=\"\",\"\",SUMIFS(StockLedger[InKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo})-SUMIFS(StockLedger[OutKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo})-SUMIFS(StockLedger[LossKg],StockLedger[Batch],{Batch},StockLedger[EntryNo],\"<=\"&{EntryNo}))"),
             ("Audit", "audit", "text", "Audit"), ("Note", "note", "text", None)]),
-        "Expenses": ("expenses", [("Batch", "batch", "text", "BatchAnc"), ("ExpenseDate", "date", "date", None), ("Category", "category", "text", "ExpenseCategory"),
+        "Expenses": ("expenses", [("Batch", "batch", "text", "Batch"), ("ExpenseDate", "date", "date", None), ("Category", "category", "text", "ExpenseCategory"),
             ("Description", "desc", "text", None), ("PaymentMode", "mode", "text", "PaymentMode"), ("Amount", "amount", "inr", None), ("Note", "note", "text", None)]),
+        "WormBreeding": ("breeding", [("EntryDate", "date", "date", None), ("Unit", "unit", "text", None), ("Entry", "entry", "text", "BreedEntry"),
+            ("Material", "material", "text", "Material"), ("QtyKg", "qtyKg", "kg", None), ("CostRs", "cost", "inr", None),
+            ("WormsKg", "wormsKg", "num", None), ("MaterialOutKg", "outKg", "kg", None), ("Destination", "dest", "text", "BreedDest"),
+            ("ToBatch", "toBatch", "text", "Batch"), ("Notes", "notes", "text", None)]),
         "DailyLog": ("logs", [("Batch", "batch", "text", "Batch"), ("LogDate", "date", "date", None), ("Activity", "activity", "text", "Activity"),
             ("BedsArea", "area", "text", None), ("TempC", "temp", "num", None), ("MoisturePct", "moisture", "num", None), ("Qty", "qty", "num", None),
             ("RecordedBy", "by", "text", None), ("Observations", "notes", "text", None)]),
@@ -205,16 +215,10 @@ def build(src, out, batch):
         ws_list.cell(i + 2, 19, lo)
         ws_list.cell(i + 2, 20, hi)
         ws_list.cell(i + 2, 21, colname)
-    ws_list["V1"], ws_list["W1"] = "Material", "BatchOrAncillary"
+    ws_list["V1"] = "Material"
     for j, m in enumerate(MATERIALS):
         ws_list.cell(j + 2, 22, m)
-    ws_list["W2"] = ANCILLARY
-    for i in range(3, 53):
-        ws_list[f"W{i}"] = f'=A{i}'
-    list_ranges["Material"] = f"Lists!$V$2:$V${len(MATERIALS) + 1}"
-    list_ranges["BatchAnc"] = "Lists!$W$2:$W$52"
     ws_list["V1"].comment = Comment("Material types for the RawMaterial drop-down.", "Navjyoti")
-    ws_list["W1"].comment = Comment("Batch drop-down for RawMaterial and Expenses: every batch plus Ancillary (not used in production).", "Navjyoti")
     ws_list["R11"] = "Source: FCO 1985 vermicompost specification (P as P2O5, K as K2O). Edit Min / Max if your buyer's export spec differs."
     for name, ref in list_ranges.items():
         wb.defined_names[f"L_{name}"] = DefinedName(f"L_{name}", attr_text=ref)
@@ -364,7 +368,7 @@ def build(src, out, batch):
     ws["K5"].number_format = "dd mmm yyyy"
     ws["K5"].font = F(bold=True)
     wb.defined_names["SelBatch"] = DefinedName("SelBatch", attr_text='Dashboard!$C$5')
-    K = f'IF(SelBatch="All","<>{ANCILLARY}",SelBatch)'  # All = every batch, never the Ancillary purchases
+    K = 'IF(SelBatch="All","*",SelBatch)'  # SUMIFS criterion: * matches every batch
 
     # detailed figures (B:C) — the tiles above read from these cells
     R = 18
@@ -377,7 +381,7 @@ def build(src, out, batch):
         ("dung", "Dung / compost filled in beds (t)", f"=SUMIFS(Beds[DungT],Beds[Batch],{K})", "#,##0.0"),
         ("raw", "Raw harvest (kg)", f"=SUMIFS(Harvest[RawKg],Harvest[Batch],{K})", KG_FMT),
         ("net", "Net yield after sieving (kg)", f"=SUMIFS(Harvest[NetKg],Harvest[Batch],{K})", KG_FMT),
-        ("conv", "Conversion (net ÷ dung filled)", '=IFERROR(C{net}/(C{dung}*1000),"")', PCT_FMT),
+        ("conv", "Conversion (net yield ÷ raw material)", '=IFERROR(C{net}/(C{rm}*1000),"")', PCT_FMT),
         ("sold", "Sold (kg)", f"=SUMIFS(Sales[QtyKg],Sales[Batch],{K})", KG_FMT),
         ("rev", "Revenue", f"=SUMIFS(Sales[Revenue],Sales[Batch],{K})", INR_FMT),
         ("price", "Average price (₹/kg)", '=IFERROR(C{rev}/C{sold},"")', "₹#,##0.00"),
@@ -386,8 +390,6 @@ def build(src, out, batch):
         ("exp", "Expenses", f"=SUMIFS(Expenses[Amount],Expenses[Batch],{K})", INR_FMT),
         ("cpk", "Expense per kg produced (₹)", '=IFERROR(C{exp}/C{net},"")', "₹#,##0.00"),
         ("margin", "Revenue − expenses", "=C{rev}-C{exp}", '₹#,##0;[Red]-₹#,##0'),
-        ("anc", "Ancillary purchases & expenses (not in production)",
-         f'=SUMIFS(RawMaterial[Amount],RawMaterial[Batch],"{ANCILLARY}")+SUMIFS(Expenses[Amount],Expenses[Batch],"{ANCILLARY}")', INR_FMT),
     ]
     at = {k: R + i for i, (k, *_) in enumerate(kpis)}
     subhead(ws, R - 2, 2, 3, "DETAILED FIGURES", GREEN)
@@ -405,7 +407,7 @@ def build(src, out, batch):
     # KPI tiles: (label, value cell, format, sub-line formula, accent, tint)
     tiles = [
         ("RAW MATERIAL IN", f"=C{at['rm']}", '#,##0.0" t"', f'=TEXT(C{at["rmcost"]},"₹#,##0")&" cost"', "2A78D6", "E6F0FB"),
-        ("NET YIELD", f"=C{at['net']}", '#,##0" kg"', f'=IF(C{at["conv"]}="","",TEXT(C{at["conv"]},"0.0%")&" of dung filled")', GREEN, "E3F1E8"),
+        ("NET YIELD", f"=C{at['net']}", '#,##0" kg"', f'=IF(C{at["conv"]}="","",TEXT(C{at["conv"]},"0.0%")&" of raw material")', GREEN, "E3F1E8"),
         ("BEDS HARVESTED", f'=C{at["harv"]}&" / "&C{at["beds"]}', "General", f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],"Overdue")&" overdue"', "7A4FB5", "EFE9F8"),
         ("SOLD", f"=C{at['sold']}", '#,##0" kg"', f'=IF(C{at["price"]}="","no sales yet","avg ₹"&TEXT(C{at["price"]},"0.00")&" / kg")', "EB6834", "FDEDE5"),
         ("REVENUE", f"=C{at['rev']}", INR_FMT, f'=TEXT(C{at["exp"]},"₹#,##0")&" expenses"', "138A60", "E1F4EC"),
@@ -482,14 +484,38 @@ def build(src, out, batch):
     ws.conditional_formatting.add(rng, CellIsRule(operator="equal", formula=['"● OK"'], fill=OK_FILL, font=F(bold=True, color="1D7443")))
     ws.conditional_formatting.add(rng, CellIsRule(operator="notEqual", formula=['"● OK"'], fill=WARN_FILL, font=F(bold=True, color="9A5B00")))
 
-    # chart data (bottom of sheet)
-    D = 82
+    # worm breeding unit (kept outside every batch figure)
+    B0 = R + len(alerts) + 2
+    subhead(ws, B0, 5, 9, "WORM BREEDING UNIT  (not counted in any batch)", "7A4FB5")
+    breed = [
+        ("Dung / feed added to breeding (kg)", '=SUMIFS(WormBreeding[QtyKg],WormBreeding[Entry],"Dung / feed added")', KG_FMT),
+        ("Breeding cost (₹)", "=SUM(WormBreeding[CostRs])", INR_FMT),
+        ("Earthworms produced (kg)", "=SUM(WormBreeding[WormsKg])", KG_FMT),
+        ("Material sent for sale after mixing (kg)", f'=SUMIFS(WormBreeding[MaterialOutKg],WormBreeding[Destination],"{BREED_DEST[0]}")', KG_FMT),
+    ]
+    for i, (label, f, fmt) in enumerate(breed):
+        r = B0 + 1 + i
+        ws.merge_cells(start_row=r, start_column=5, end_row=r, end_column=7)
+        ws.cell(r, 5, label).font = F(color=INK)
+        c = ws.cell(r, 8, f)
+        c.font, c.number_format, c.alignment = F(bold=True, color=INK), fmt, Alignment(horizontal="right")
+        for cc in range(5, 10):
+            ws.cell(r, cc).border = Border(bottom=THIN)
+            ws.cell(r, cc).fill = FILL("F3EEFA")
+
+    # charts
+    T = 37
+    subhead(ws, T, 2, 12, "TRENDS", GREEN)
+    r0 = 56          # batch comparison table
+    BC = 10          # batch rows (new batches fill in automatically)
+    G0 = r0 + BC + 4  # batch comparison chart
+    D = G0 + 20      # chart data
     subhead(ws, D - 2, 2, 12, "CHART DATA (calculated · feeds the charts above)", "9AA79F")
     ws.cell(D - 1, 2, "Monthly chart starts from (blank = automatic)").font = F(color=INK)
     ms = ws.cell(D - 1, 3)
     ms.number_format, ms.fill, ms.border, ms.font = "mmm yyyy", FILL("FFF3B0"), BOX, F(bold=True)
     ms.protection = Protection(locked=False)
-    first = first_date("RawMaterial[PurchaseDate]", f'((((SelBatch="All")*(RawMaterial[Batch]<>"{ANCILLARY}"))+(RawMaterial[Batch]=SelBatch))>0)')
+    first = first_date("RawMaterial[PurchaseDate]", '(((SelBatch="All")+(RawMaterial[Batch]=SelBatch))>0)')
     first2 = first_date("Harvest[HarvestDate]", '(((SelBatch="All")+(Harvest[Batch]=SelBatch))>0)')
     eff = ws.cell(D - 1, 4, start_month(f"C{D - 1}", first, first2))
     eff.number_format, eff.font = '"from "mmm yyyy', F(color=MUTED, italic=True)
@@ -505,54 +531,36 @@ def build(src, out, batch):
         r = D + 1 + i
         ws.cell(r, 6, cat)
         ws.cell(r, 7, f"=SUMIFS(Expenses[Amount],Expenses[Batch],{K},Expenses[Category],F{r})").number_format = INR_FMT
-    hdr_row(ws, D, 9, ["Bed status", "Beds"])
-    stat = ["Harvested", "Active", "Inoculated", "Filled", "Ready to harvest", "Overdue"]
-    for i, st in enumerate(stat):
-        r = D + 1 + i
-        ws.cell(r, 9, st)
-        ws.cell(r, 10, f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],I{r})')
-    for row in ws.iter_rows(min_row=D + 1, max_row=D + 12, min_col=2, max_col=10):
+    for row in ws.iter_rows(min_row=D + 1, max_row=D + 12, min_col=2, max_col=7):
         for c in row:
             c.font = F(color=INK)
 
-    # charts
-    subhead(ws, 37, 2, 12, "TRENDS", GREEN)
     ch = BarChart()
     ch.type = "col"
     ch.add_data(Reference(ws, min_col=3, max_col=4, min_row=D, max_row=D + 12), titles_from_data=True)
     ch.set_categories(Reference(ws, min_col=2, min_row=D + 1, max_row=D + 12))
     style_chart(ch, 2, colors=[GREEN, "EB6834"])
-    ch.y_axis.numFmt = "#,##0"
+    ch.y_axis.numFmt = KG_AXIS
     ch.height, ch.width = 7.5, 15.5
-    ws.cell(38, 2, "Net yield vs sold per month (kg)").font = F(bold=True, color=INK)
-    ws.add_chart(ch, "B39")
+    ws.cell(T + 1, 2, "Net yield vs sold per month (kg)").font = F(bold=True, color=INK)
+    ws.add_chart(ch, f"B{T + 2}")
     ch2 = BarChart()
     ch2.type = "bar"
     ch2.add_data(Reference(ws, min_col=7, min_row=D, max_row=D + len(cats)), titles_from_data=True)
     ch2.set_categories(Reference(ws, min_col=6, min_row=D + 1, max_row=D + len(cats)))
     style_chart(ch2, 1, colors=["D14B3B"], reverse=True)
     ch2.legend = None
-    ch2.y_axis.numFmt = "₹#,##0"
-    ch2.height, ch2.width = 7.5, 12
-    ws.cell(38, 6, "Where the money went (₹)").font = F(bold=True, color=INK)
-    ws.add_chart(ch2, "F39")
-    ch3 = BarChart()
-    ch3.type = "bar"
-    ch3.add_data(Reference(ws, min_col=10, min_row=D, max_row=D + len(stat)), titles_from_data=True)
-    ch3.set_categories(Reference(ws, min_col=9, min_row=D + 1, max_row=D + len(stat)))
-    style_chart(ch3, 1, colors=["7A4FB5"], reverse=True)
-    ch3.legend = None
-    ch3.height, ch3.width = 7.5, 8.2
-    ws.cell(38, 10, "Beds by status").font = F(bold=True, color=INK)
-    ws.add_chart(ch3, "J39")
+    ch2.y_axis.numFmt = INR_AXIS
+    ch2.height, ch2.width = 7.5, 20.5
+    ws.cell(T + 1, 6, "Where the money went (₹)").font = F(bold=True, color=INK)
+    ws.add_chart(ch2, f"F{T + 2}")
 
-    # batch comparison
-    r0 = 56
-    subhead(ws, r0, 2, 11, "BATCH COMPARISON", "2A78D6")
-    heads = ["Batch", "Stage", "Beds harvested / filled", "RM received (t)", "Net yield (kg)", "Conversion", "Sold (kg)", "Revenue", "Expenses", "Revenue − expenses"]
+    # batch comparison (every batch in the Batches sheet appears here by itself)
+    subhead(ws, r0, 2, 11, "BATCH COMPARISON  (new batches appear automatically)", "2A78D6")
+    heads = ["Batch", "Stage", "Beds harvested / filled", "RM received (t)", "Net yield (kg)", "Conversion (net ÷ RM)", "Sold (kg)", "Revenue", "Expenses", "Revenue − expenses"]
     hdr_row(ws, r0 + 1, 2, heads, fill="2A78D6")
     ws.row_dimensions[r0 + 1].height = 30
-    for i in range(10):
+    for i in range(BC):
         r = r0 + 2 + i
         b = f"B{r}"
         ws[b] = f"=Lists!A{3 + i}"
@@ -560,7 +568,7 @@ def build(src, out, batch):
                 f'=IF({b}="","",COUNTIFS(Beds[Batch],{b},Beds[LiveStatus],"Harvested")&" / "&COUNTIFS(Beds[Batch],{b},Beds[BedNo],"<>"))',
                 f'=IF({b}="","",SUMIFS(RawMaterial[QtyKg],RawMaterial[Batch],{b})/1000)',
                 f'=IF({b}="","",SUMIFS(Harvest[NetKg],Harvest[Batch],{b}))',
-                f'=IF({b}="","",IFERROR(F{r}/(SUMIFS(Beds[DungT],Beds[Batch],{b})*1000),""))',
+                f'=IF({b}="","",IFERROR(F{r}/(E{r}*1000),""))',
                 f'=IF({b}="","",SUMIFS(Sales[QtyKg],Sales[Batch],{b}))',
                 f'=IF({b}="","",SUMIFS(Sales[Revenue],Sales[Batch],{b}))',
                 f'=IF({b}="","",SUMIFS(Expenses[Amount],Expenses[Batch],{b}))',
@@ -572,6 +580,16 @@ def build(src, out, batch):
         for j, (f, fm) in enumerate(zip(vals, fmts)):
             c = ws.cell(r, 3 + j, f)
             c.font, c.number_format, c.fill, c.border = F(color=INK), fm, band, Border(bottom=THIN)
+    ws.cell(G0, 2, "Net yield and sold by batch (kg)").font = F(bold=True, color=INK)
+    ch4 = BarChart()
+    ch4.type = "col"
+    for col, title in ((6, "Net yield (kg)"), (8, "Sold (kg)")):
+        ch4.series.append(Series(Reference(ws, min_col=col, min_row=r0 + 2, max_row=r0 + 1 + BC), title=title))
+    ch4.set_categories(Reference(ws, min_col=2, min_row=r0 + 2, max_row=r0 + 1 + BC))
+    style_chart(ch4, 2, colors=[GREEN, "EB6834"])
+    ch4.y_axis.numFmt = KG_AXIS
+    ch4.height, ch4.width = 7.5, 36
+    ws.add_chart(ch4, f"B{G0 + 1}")
     ws.freeze_panes = "A6"
     ws["C5"].protection = Protection(locked=False)
     protect(ws)
@@ -768,7 +786,7 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
         ch.type = "bar"
         ch.add_data(Reference(ws, min_col=3, max_col=5, min_row=hr, max_row=end), titles_from_data=True)
         ch.set_categories(Reference(ws, min_col=2, min_row=hr + 1, max_row=end))
-        ch.y_axis.numFmt = "#,##0"
+        ch.y_axis.numFmt = INR_AXIS if fmt == INR_FMT else KG_AXIS
         style_chart(ch, 3, reverse=True)
         ch.height = max(6.5, 0.5 * len(cats) + 2.5)
         ch.width = 16
@@ -1028,14 +1046,15 @@ def build_readme(ws):
         ("Dashboard", "Key figures, alerts that need attention, batch comparison, monthly net yield vs sales."),
         ("Reports", "Bar charts and tables by supplier, month, bed block, customer, category and activity, for up to three batches side by side; Quality comparison of RM, FG, EXRM and EXFG against FCO limits, and the latest FG result against the latest RM result. Every section has a ▲ TOP button."),
         ("Batches", "One row per batch (B4, B5, …). Batch drop-downs everywhere read from here."),
-        ("RawMaterial", "Excel sheet 1 – purchases, supplier, material type (drop-down), vehicle, qty, rate, moisture, lab acceptance. Amount is calculated. Choose Batch = Ancillary for purchases not used in production (e.g. earthworm breeding); they are left out of all production figures and shown separately on the Dashboard."),
+        ("RawMaterial", "Excel sheet 1 – purchases, supplier, material type (drop-down), vehicle, qty, rate, moisture, lab acceptance. Amount is calculated."),
         ("PreCompost", "Excel sheet 2 – lots, culture dose, up to three turnings. Peak temperature and days to transfer are calculated."),
         ("Beds", "Excel sheet 3 – bed lifecycle. Net yield (from Harvest), live status (Harvested / Overdue / …) and bed number are calculated."),
         ("Harvest", "Excel sheet 4 – raw and net yield per bed, FG batch, packing. Recovery % is calculated."),
         ("QualityControl", "Excel sheet 5 – lab reports. Product: RM = raw material / trial, FG = finished goods, EXRM = export raw material / trial, EXFG = export finished goods. FCO check is calculated for FG and EXFG."),
         ("Sales", "Excel sheet 6 – invoices. Revenue is calculated."),
         ("StockLedger", "Excel sheet 7 – stock in / out / loss. Closing stock runs per batch in entry-number order."),
-        ("Expenses", "Excel sheet 8 – expenses by category. Batch = Ancillary keeps a cost out of production figures."),
+        ("Expenses", "Excel sheet 8 – expenses by category."),
+        ("WormBreeding", "Earthworm multiplication unit, kept outside every batch. Book here the cow dung / feed used to breed earthworms (Entry = Dung / feed added, with its cost) instead of RawMaterial or Expenses. Record worms harvested (WormsKg) and the material taken out (MaterialOutKg) with its Destination. When the material is mixed and ready, choose 'Stock for sale (after mixing)' and add the same kg as Production in on the StockLedger. The Dashboard shows the unit's totals separately."),
         ("DailyLog", "Watering, turning, temperature and moisture checks, feeding, inspections. Example: B5 · 01-10-2026 · Watering · BED-01 to BED-40 · 400 L · Ramesh."),
         ("Lists", "Drop-down values (suppliers and customers collect themselves from the registers) and the FCO reference limits (yellow cells, editable)."),
         ("h2", "Notes on the imported Batch 4 data"),
