@@ -91,6 +91,68 @@ Add to every prompt: *"cinematic dramatized reenactment, tense, dark blue and re
 
 ---
 
+## ⭐ Final upload package (v2, tuned to what's going viral, 1 Oct 2026)
+
+**What's driving the buzz right now (from news/search results):**
+- **PM Narendra Modi** posted on X: *"Captain Smit Machchhar is a HERO"*.
+- **Benjamin Netanyahu** called him a *"true hero"* who saved 174 lives.
+- EAM **S. Jaishankar** also praised him.
+- An **old podcast clip** of Capt. Smit ("Who's going to save you?") has resurfaced and is being widely shared on X.
+- People search **in English** ("Smit Machchhar", "flydubai FZ1073") as well as in Hindi, so the title and tags mix both.
+
+**Title (recommended):**
+```
+PM मोदी ने कहा "HERO"! 🇮🇳 Captain Smit Machchhar ने बचाईं 174 जानें #shorts
+```
+Alternates:
+```
+को-पायलट ने चाकू मारा… फिर भी नहीं हारे Captain Smit! 🫡 flydubai FZ1073 #shorts
+```
+```
+34,000 फ़ीट पर कॉकपिट में हमला! भारतीय पायलट बना असली HERO 🇮🇳 #shorts
+```
+
+**Description (v2):**
+```
+PM मोदी ने कहा — "Captain Smit Machchhar is a HERO" 🇮🇳🫡
+
+flydubai की फ़्लाइट FZ1073 (दुबई → तेल अवीव) में कॉकपिट के अंदर को-पायलट ने भारतीय कैप्टन स्मित मच्छर पर चाकू से हमला कर दिया और विमान हज़ारों फ़ीट नीचे गिरने लगा। गंभीर रूप से घायल होने के बावजूद कैप्टन स्मित लड़ते रहे और कॉकपिट का दरवाज़ा खोल दिया — जिसके बाद यात्रियों, क्रू और दो ऑफ़-ड्यूटी पायलटों ने विमान को सऊदी अरब के तबूक में सुरक्षित उतारा। 174 ज़िंदगियाँ बच गईं! ✈️
+
+🦸 असली हीरोज़:
+🇮🇳 Captain Smit Machchhar (कैप्टन स्मित मच्छर) — मुंबई, पूर्व SpiceJet कमांडर
+👊 Yaniv Chayon — हमलावर को कंट्रोल से खींचा
+💪 Assaf Rajuan — हमलावर को काबू करने में मदद की
+🩺 Dr. Shota Musev — हमलावर को बाँधा, कैप्टन का इलाज किया
+👨‍✈️ 2 ऑफ़-ड्यूटी पायलट + केबिन क्रू — सुरक्षित लैंडिंग
+
+🗣️ PM मोदी, विदेश मंत्री जयशंकर और इज़राइली PM नेतन्याहू ने कैप्टन स्मित की बहादुरी को सलाम किया है।
+हमले की वजह की आधिकारिक जाँच जारी है।
+
+आप इनमें से किसे सबसे बड़ा हीरो मानते हैं? कमेंट करें 👇
+👍 Like | 🔁 Share | 🔔 Subscribe — World Unscripted
+
+Flydubai FZ1073 | Captain Smit Machchhar | Indian pilot hero | Dubai Tel Aviv flight | Tabuk emergency landing | co-pilot attack
+
+⚠️ घटना के दृश्य AI द्वारा बनाए गए प्रतीकात्मक चित्रण हैं; विमान, केबिन व तबूक एयरपोर्ट की तस्वीरें फ़ाइल फ़ोटो हैं (घटना वाले विमान की नहीं)। जानकारी 30 सितंबर – 1 अक्टूबर 2026 की न्यूज़ रिपोर्ट्स पर आधारित।
+📷 Photos (Wikimedia Commons, CC BY-SA 4.0): Flydubai 737-8 MAX A6-FMG — Bahnfrend · Flydubai 737 MAX cabin — Kgbo · Tabuk Airport — م سعود العنزي · https://creativecommons.org/licenses/by-sa/4.0/
+
+#SmitMachchhar #CaptainSmitMachchhar #shorts #flydubai #FZ1073 #IndianPilot #RealHero #ProudIndian #IndianHero #AviationNews #BreakingNews #Dubai #Tabuk #WorldUnscripted
+```
+
+**Hashtags (14, under YouTube's 15 limit):**
+- The **first three show above the title**: `#SmitMachchhar #CaptainSmitMachchhar #shorts`. The person's name is the biggest search driver right now.
+- The rest cover the story keywords (`#flydubai #FZ1073`) and the pride and hero angle Indian audiences are sharing (`#ProudIndian #RealHero #IndianHero`).
+- Hashtags like #Modi or #Netanyahu were left out on purpose. They aren't the video's topic, and YouTube can treat off-topic hashtags as misleading metadata. The Modi quote in the title and description already captures that search traffic legitimately.
+
+**Tags (v2):** `smit machchhar, captain smit machchhar, smit machchhar flydubai, flydubai fz1073, flydubai incident, flydubai hijack, flydubai pilot stabbed, indian pilot hero, modi smit machchhar, dubai tel aviv flight, tabuk emergency landing, co pilot attack, कैप्टन स्मित मच्छर, स्मित मच्छर, फ्लाईदुबई, भारतीय पायलट हीरो, yaniv chayon, assaf rajuan, shota musev, aviation news hindi, shorts`
+
+**Posting tips for maximum reach:**
+- **Post today.** News Shorts get most of their views in the first 24–48 hours of a story.
+- Pin the comment and reply to early comments in the first hour.
+- Share to your Community tab and other platforms (WhatsApp, Instagram Reels) with the same hook.
+
+---
+
 ## Short package
 
 **Title options** (#1 recommended)
