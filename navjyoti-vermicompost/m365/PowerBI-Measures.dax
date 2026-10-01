@@ -123,15 +123,11 @@ QC Avg K = AVERAGE ( QualityControl[Potassium] )
 QC Avg Ash = AVERAGE ( QualityControl[Ash] )
 // Put QualityControl[Product] (RM / FG / EXRM / EXFG) on the legend to compare trial, finished and export material.
 
-Days Since Watering =
-VAR last = CALCULATE ( MAX ( DailyLog[LogDate] ), DailyLog[Activity] = "Watering" )
-RETURN IF ( ISBLANK ( last ), BLANK (), DATEDIFF ( last, TODAY (), DAY ) )
-Log Entries = COUNTROWS ( DailyLog )
-
-// ---------- Earthworm purchases & breeding (outside every batch) ----------
-Breeding Dung kg = CALCULATE ( SUM ( Earthworm[QtyKg] ), Earthworm[Entry] = "Dung / feed added" )
-Breeding Cost = CALCULATE ( SUM ( Earthworm[CostRs] ), Earthworm[Entry] <> "Earthworm purchase" )
-Worms Produced kg = CALCULATE ( SUM ( Earthworm[WormsKg] ), Earthworm[Entry] = "Worms harvested" )
-Breeding Material For Sale kg = CALCULATE ( SUM ( Earthworm[MaterialOutKg] ), Earthworm[Destination] = "Stock for sale (after mixing)" )
-Earthworms Purchased kg = CALCULATE ( SUM ( Earthworm[WormsKg] ), Earthworm[Entry] = "Earthworm purchase" )
-Earthworm Purchase Cost = CALCULATE ( SUM ( Earthworm[CostRs] ), Earthworm[Entry] = "Earthworm purchase" )
+// ---------- Earthworm purchases (outside every batch) ----------
+Earthworms Purchased kg = SUM ( Earthworm[WormsKg] )
+Earthworm Purchase Amount = SUMX ( Earthworm, Earthworm[WormsKg] * Earthworm[RatePerKg] )
+Earthworm Transport = SUM ( Earthworm[TransportCost] )
+Earthworm Total Cost = [Earthworm Purchase Amount] + [Earthworm Transport]
+Earthworm Purchases = COUNTROWS ( Earthworm )
+Earthworm Avg Rate per kg = DIVIDE ( [Earthworm Purchase Amount], [Earthworms Purchased kg] )
+Earthworm Unpaid = CALCULATE ( COUNTROWS ( Earthworm ), Earthworm[PaymentStatus] <> "Paid" )

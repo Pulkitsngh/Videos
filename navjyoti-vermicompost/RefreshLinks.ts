@@ -30,8 +30,6 @@ function main(workbook: ExcelScript.Workbook) {
     ["Sales", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
     ["StockLedger", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
     ["Expenses", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
-    ["Earthworm", "ToBatch", ["ToBatch"], "Batches", ["BatchCode"], "BatchCode"],
-    ["DailyLog", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"],
     ["Batches", "BatchCode", ["BatchCode"], "Beds", ["Batch"], "Batch"]
   ];
 

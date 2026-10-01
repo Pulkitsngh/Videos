@@ -12,15 +12,7 @@ Replace the Teams team/channel and email addresses with your own.
 4. If yes: **Data Operations – Create HTML table** · From: `body('Get_items')?['value']` · Custom columns: Batch = `item()?['Batch']?['Value']`, Bed = `item()?['BedNo']`, Expected = `item()?['ExpectedHarvest']`.
 5. **Microsoft Teams – Post message in a chat or channel** · "⚠ Beds past expected harvest" + the HTML table.
 
-## 2. Watering gap – daily 9:00
-
-1. **Scheduled cloud flow** · daily 09:00.
-2. **Get items** · List: *DailyLog* · Filter Query: `Activity eq 'Watering'` · Order By: `LogDate desc` · Top Count: `1`.
-3. **Compose** (DaysSince):
-   `if(empty(body('Get_items')?['value']), 99, div(sub(ticks(utcNow()), ticks(first(body('Get_items')?['value'])?['LogDate'])), 864000000000))`
-4. **Condition** · `outputs('Compose')` is greater than `3` → **Post message** to the supervisor: "No watering logged for @{outputs('Compose')} days."
-
-## 3. FG / EXFG lab report outside FCO – instant
+## 2. FG / EXFG lab report outside FCO – instant
 
 1. **Automated cloud flow** · trigger **SharePoint – When an item is created** · List: *QualityControl*.
 2. **Condition** (Advanced mode):
@@ -39,7 +31,7 @@ Replace the Teams team/channel and email addresses with your own.
    Subject `Lab report outside FCO – @{triggerBody()?['Product']?['Value']} @{triggerBody()?['ReportNo']}`,
    body listing Moisture, N, P, K, C:N, pH and a link `@{triggerBody()?['{Link}']}`.
 
-## 4. Unpaid raw material – weekly Monday 10:00
+## 3. Unpaid raw material – weekly Monday 10:00
 
 1. **Scheduled cloud flow** · weekly, Monday 10:00.
 2. **Get items** · *RawMaterial* · Filter Query: `PaymentStatus ne 'Paid'`.

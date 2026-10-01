@@ -1,7 +1,7 @@
 # Navjyoti app – Power Apps screens and formulas
 
 Canvas app, **phone layout**, data sources: the 10 SharePoint lists.
-Choice columns (Batch, Status, Product, Activity …) are records in Power Apps, so compare with `.Value`.
+Choice columns (Batch, Status, Product, PaymentStatus …) are records in Power Apps, so compare with `.Value`.
 
 ## App
 
@@ -20,32 +20,35 @@ Set(varShowDetail, false)
 | | OnChange | `Set(varBatch, ddBatch.Selected.BatchCode)` |
 | `lblBedsSummary` (Label) | Text | `CountRows(Filter(Beds, Batch.Value = varBatch)) & " beds · " & CountRows(Filter(Beds, Batch.Value = varBatch, Status.Value = "Harvested")) & " harvested"` |
 | `lblNet` (Label) | Text | `"Net yield: " & Text(Sum(Filter(Harvest, Batch.Value = varBatch), NetKg), "#,##0") & " kg"` |
-| Tile buttons | OnSelect | `Navigate(scrLog)`, `Navigate(scrBeds)`, `Navigate(scrHarvest)`, `Navigate(scrQC)`, `Navigate(scrRM)`, `Navigate(scrSales)`, `Navigate(scrExpenses)` |
+| Tile buttons | OnSelect | `Navigate(scrWorms)`, `Navigate(scrBeds)`, `Navigate(scrHarvest)`, `Navigate(scrQC)`, `Navigate(scrRM)`, `Navigate(scrSales)`, `Navigate(scrExpenses)` |
 
 `Sum` and `CountRows` on SharePoint are limited to the first 2 000 rows per batch (delegation). That is ample for one batch.
 
-## 2. Daily log (`scrLog`) – quick entry
+## 2. Earthworm purchases (`scrWorms`) – quick entry
+
+Earthworm purchases are kept outside every batch (no Batch column).
 
 | Control | Property | Formula |
 |---|---|---|
-| `ddActivity` | Items | `Choices(DailyLog.Activity)` |
-| `txtArea`, `txtTemp`, `txtMoist`, `txtQty` | — | text inputs (numbers: Format = Number) |
+| `txtInvoice`, `txtSupplier`, `txtSpecies`, `txtKg`, `txtRate`, `txtTransport` | — | text inputs (numbers: Format = Number) |
+| `ddPay` | Items | `Choices(Earthworm.PaymentStatus)` |
 | `btnSave` | OnSelect | see below |
-| `galLog` | Items | `Sort(Filter(DailyLog, Batch.Value = varBatch), LogDate, SortOrder.Descending)` |
+| `galWorms` | Items | `Sort(Earthworm, PurchaseDate, SortOrder.Descending)` |
+| `lblWormTotal` | Text | `Text(Sum(Earthworm, WormsKg), "#,##0") & " kg · ₹" & Text(Sum(Earthworm, WormsKg * RatePerKg) + Sum(Earthworm, TransportCost), "#,##0")` |
 
 ```
-Patch(DailyLog, Defaults(DailyLog), {
-    Batch: {Value: varBatch},
-    LogDate: Today(),
-    Activity: ddActivity.Selected,
-    BedsArea: txtArea.Text,
-    TempC: Value(txtTemp.Text),
-    MoisturePct: Value(txtMoist.Text),
-    Qty: Value(txtQty.Text),
-    RecordedBy: User().FullName
+Patch(Earthworm, Defaults(Earthworm), {
+    PurchaseDate: Today(),
+    InvoiceNo: txtInvoice.Text,
+    Supplier: txtSupplier.Text,
+    Species: txtSpecies.Text,
+    WormsKg: Value(txtKg.Text),
+    RatePerKg: Value(txtRate.Text),
+    TransportCost: Value(txtTransport.Text),
+    PaymentStatus: ddPay.Selected
 });
-Reset(txtArea); Reset(txtTemp); Reset(txtMoist); Reset(txtQty);
-Notify(ddActivity.Selected.Value & " logged", NotificationType.Success)
+Reset(txtInvoice); Reset(txtKg); Reset(txtRate); Reset(txtTransport);
+Notify("Earthworm purchase saved", NotificationType.Success)
 ```
 
 ## 3. Bed board (`scrBeds`) with pop-up detail

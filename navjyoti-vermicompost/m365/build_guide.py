@@ -132,7 +132,7 @@ def fig_site_contents():
     f = Fig("Navjyoti Production › Site contents")
     f.text(30, 70, "Site contents", 16, weight=700)
     rows = [("Batches", 2), ("RawMaterial", 15), ("PreCompost", 3), ("Beds", 80), ("Harvest", 80),
-            ("QualityControl", 6), ("Sales", 6), ("StockLedger", 63), ("Expenses", 30), ("DailyLog", 0)]
+            ("QualityControl", 6), ("Sales", 6), ("StockLedger", 63), ("Expenses", 30), ("Earthworm", 0)]
     f.rect(30, 85, 660, 28, "f-head", 4).text(44, 104, "Name", 12, "f-t-inv", weight=700).text(520, 104, "Items", 12, "f-t-inv", weight=700)
     for i, (n, c) in enumerate(rows):
         y = 116 + i * 27
@@ -154,10 +154,10 @@ def fig_pa_start():
     f.rect(195, 205, 500, 170, "f-panel", 10).text(215, 232, "Connect to data", 14, weight=700)
     f.rect(215, 245, 150, 36, "f-card").text(290, 268, "SharePoint", 13, "f-t", "middle", 600).hi(215, 245, 150, 36, 3)
     f.rect(385, 245, 290, 115, "f-card").text(400, 268, "Site: NavjyotiProduction", 12, "f-muted")
-    for i, s in enumerate(["☐ Beds", "☐ Harvest", "☑ DailyLog"]):
+    for i, s in enumerate(["☑ Beds", "☐ Harvest", "☐ QualityControl"]):
         f.text(400, 292 + i * 20, s, 12)
-    f.hi(395, 318, 110, 22, 4)
-    return f.svg("Power Apps: Create, Start with data, SharePoint, pick the Navjyoti site and the DailyLog list")
+    f.hi(395, 278, 110, 22, 4)
+    return f.svg("Power Apps: Create, Start with data, SharePoint, pick the Navjyoti site and the Beds list")
 
 
 def fig_pa_studio():
@@ -210,7 +210,7 @@ def fig_pbi_model():
     f = Fig("Power BI – Model view")
     f.rect(290, 165, 140, 70, "f-c1", 10).text(360, 196, "Batches", 14, "f-t", "middle", 700).text(360, 216, "BatchCode", 11, "f-muted", "middle")
     tables = [(40, 60, "RawMaterial"), (270, 50, "Beds"), (500, 60, "Harvest"), (40, 175, "PreCompost"), (560, 175, "QualityControl"),
-              (40, 290, "Sales"), (215, 305, "StockLedger"), (400, 305, "Expenses"), (560, 290, "DailyLog")]
+              (40, 290, "Sales"), (215, 305, "StockLedger"), (400, 305, "Expenses")]
     for x, y, t in tables:
         f.rect(x, y, 130, 46, "f-card", 8).text(x + 65, y + 22, t, 12, "f-t", "middle", 700).text(x + 65, y + 38, "Batch", 10, "f-muted", "middle")
         f.line(360, 200, x + 65, y + 23, "f-rel")
@@ -298,13 +298,13 @@ STAGES = [
         "Install <b>PowerShell 7</b> from the Microsoft Store, open it, and run the install command.",
         "A Microsoft 365 admin registers the PnP app once. Replace <b>yourcompany</b> with the name in your SharePoint address (<i>https://<b>yourcompany</b>.sharepoint.com</i>). A browser window opens to sign in and approve; then copy the <b>Client ID</b> it shows.",
         "Unzip the kit, then in PowerShell go to that folder with <b>cd</b> (not C:\\Windows\\System32). Run the Navjyoti script, replacing <b>yourcompany</b> with your own SharePoint name and <b>PASTE-CLIENT-ID-HERE</b> with the Client ID from step 2.",
-        "Open <b>Site contents</b> and check the item counts: RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6, Sales 6, StockLedger 63, Expenses 30, Batches 2, DailyLog 0.",
+        "Open <b>Site contents</b> and check the item counts: RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6, Sales 6, StockLedger 63, Expenses 30, Batches 2, Earthworm 0.",
     ], [fig_powershell(), fig_site_contents()], "ps"),
     ("app", "Build the data-entry app in Power Apps", "Power user · 2–3 hours", [
         "Go to <b>make.powerapps.com</b> → <b>+ Create</b>.",
         "Choose <b>Start with data</b>.",
         "Pick <b>SharePoint</b> and your Navjyoti Production site.",
-        "Tick <b>DailyLog</b> → <b>Create</b>. Power Apps builds a working phone app. Then add the other lists under <b>Data → + Add data</b>.",
+        "Tick <b>Beds</b> → <b>Create</b>. Power Apps builds a working phone app. Then add the other lists under <b>Data → + Add data</b>.",
         "Add the bed board: a gallery with the Items formula shown, coloured by status. All formulas are in <i>PowerApps-Formulas.md</i> in the kit.",
         "Supervisors tap a bed…",
         "…and a pop-up panel opens with its details and a Save button. Publish and share the app with the team.",
@@ -324,7 +324,7 @@ STAGES = [
         "<b>+ Create → Scheduled cloud flow</b>, every day at 08:00.",
         "Add <b>SharePoint – Get items</b> on <i>Beds</i> with the filter shown.",
         "Add a <b>Condition</b>: number of items greater than 0.",
-        "Add <b>Teams – Post message</b> with the list of overdue beds. Repeat for watering gaps, FG/EXFG reports outside FCO and unpaid raw material (see <i>PowerAutomate-Flows.md</i>).",
+        "Add <b>Teams – Post message</b> with the list of overdue beds. Repeat for FG/EXFG reports outside FCO and unpaid raw material (see <i>PowerAutomate-Flows.md</i>).",
     ], [fig_flow()], None),
     ("teams", "Put it together in Teams", "Anyone · 10 minutes", [
         "In the Navjyoti Production team, click <b>+</b> on the tab bar.",
@@ -462,7 +462,7 @@ figure { margin: 0; min-width: 0 }
       <div><code>data/*.csv</code><br>Batch 4 records, one file per list.</div>
       <div><code>PowerApps-Formulas.md</code><br>Screens and formulas, including pop-up panels.</div>
       <div><code>PowerBI-Measures.dax</code><br>Calculated columns and measures for the reports.</div>
-      <div><code>PowerAutomate-Flows.md</code><br>The four alert flows, click by click.</div>
+      <div><code>PowerAutomate-Flows.md</code><br>The three alert flows, click by click.</div>
       <div><code>README.md</code><br>The same steps as this page, as text.</div>
     </div>
     <p class="foot">Licences: most business plans (Business Standard or Premium, E3, E5) include SharePoint, Power Apps and Power Automate for SharePoint data. Sharing Power BI reports needs Power BI Pro for each viewer (included in E5). Check with your IT admin.</p>
@@ -472,7 +472,7 @@ figure { margin: 0; min-width: 0 }
     <header class="stage-h"><span class="stage-n">Stage 7</span><h2>Go live with Batch 5</h2><span class="who">Whole team · 1–2 weeks</span></header>
     <ol class="steps">
       <li><span>Fill in Batch 5's start date and stage in the <b>Batches</b> list.</span></li>
-      <li><span>From now on, supervisors enter daily logs, beds, harvests, lab reports and sales in the app.</span></li>
+      <li><span>From now on, supervisors enter beds, harvests, lab reports and sales in the app.</span></li>
       <li><span>Keep the Excel tracker running alongside for 1–2 weeks and compare the totals with Power BI.</span></li>
       <li><span>Once they match, use Microsoft 365 as the main system.</span></li>
     </ol>

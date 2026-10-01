@@ -39,13 +39,10 @@ PRODUCTS = [("RM", "RM trial", "2A78D6"), ("FG", "FG finished", "EB6834"),
             ("EXRM", "EXRM export trial", "1BAF7A"), ("EXFG", "EXFG export finished", "C98500")]
 FINISHED = ("FG", "EXFG")
 MATERIALS = ["SMC", "Cow Dung", "Cow Dung Slurry", "Coco Peat", "FOM", "Press Mud", "Crop Residue", "Others"]
-# Worm breeding unit: dung used to multiply earthworms is booked here, not to any batch
-BREED_ENTRY = ["Earthworm purchase", "Dung / feed added", "Worms harvested", "Worms issued to beds", "Material out"]
-BREED_DEST = ["Stock for sale (after mixing)", "Mixed into a batch", "New beds / worm stock", "Discarded"]
 KG_AXIS = '[>=1000000]#,##0.0,,"M";[>=1000]#,##0,"k";0'
 INR_AXIS = '[>=10000000]"₹"#,##0.0,,,"Cr";[>=100000]"₹"#,##0.0,,"L";[>=1000]"₹"#,##0,"k";"₹"0'
 PASSWORD = "Navjyoti2026"  # sheet protection password (told to the owner; change in Review → Unprotect Sheet)
-CAPACITY = {"Batches": 200, "DailyLog": 5000}  # rows ready for entry per register; others use PREFILL
+CAPACITY = {"Batches": 200}  # rows ready for entry per register; others use PREFILL
 F = lambda **k: Font(name=FONT, **{"size": 10, **k})
 FILL = lambda c: PatternFill("solid", start_color=c, end_color=c)
 HDR_IN, HDR_CALC = FILL(GREEN), FILL("5B6B62")
@@ -66,10 +63,6 @@ LISTS = {
     "ExpenseCategory": ["Raw material", "Culture & inputs", "Bed setup", "Labour", "Sieving", "Transport", "Machinery",
                         "Packaging", "Lab testing", "Sales & dispatch", "Utilities", "Other"],
     "PaymentMode": ["Online", "UPI", "Cash", "Cheque"],
-    "Activity": ["Watering", "Turning", "Temperature check", "Moisture check", "Feeding", "Shuffling", "Worm inoculation",
-                 "Pest / ant control", "Shade / cover repair", "Harvest", "Sieving", "Inspection", "Other"],
-    "BreedEntry": BREED_ENTRY,
-    "BreedDest": BREED_DEST,
     "Stage": ["Planned", "Raw material", "Pre-composting", "In beds", "Harvesting", "Closing", "Closed"],
     "Audit": ["Verified (Match)", "Pending", "Mismatch"],
     "SalePayment": ["Received", "Pending", "Partial"],
@@ -147,14 +140,10 @@ def registers():
             ("Audit", "audit", "text", "Audit"), ("Note", "note", "text", None)]),
         "Expenses": ("expenses", [("Batch", "batch", "text", "Batch"), ("ExpenseDate", "date", "date", None), ("Category", "category", "text", "ExpenseCategory"),
             ("Description", "desc", "text", None), ("PaymentMode", "mode", "text", "PaymentMode"), ("Amount", "amount", "inr", None), ("Note", "note", "text", None)]),
-        "Earthworm": ("earthworm", [("EntryDate", "date", "date", None), ("Unit", "unit", "text", None), ("Entry", "entry", "text", "BreedEntry"),
-            ("Supplier", "supplier", "text", None), ("Species", "species", "text", None), ("WormsKg", "wormsKg", "num", None),
-            ("Material", "material", "text", "Material"), ("QtyKg", "qtyKg", "kg", None), ("CostRs", "cost", "inr", None),
-            ("MaterialOutKg", "outKg", "kg", None), ("Destination", "dest", "text", "BreedDest"),
-            ("ToBatch", "toBatch", "text", "Batch"), ("Notes", "notes", "text", None)]),
-        "DailyLog": ("logs", [("Batch", "batch", "text", "Batch"), ("LogDate", "date", "date", None), ("Activity", "activity", "text", "Activity"),
-            ("BedsArea", "area", "text", None), ("TempC", "temp", "num", None), ("MoisturePct", "moisture", "num", None), ("Qty", "qty", "num", None),
-            ("RecordedBy", "by", "text", None), ("Observations", "notes", "text", None)]),
+        "Earthworm": ("earthworm", [("PurchaseDate", "date", "date", None), ("InvoiceNo", "invoice", "text", None), ("Supplier", "supplier", "text", None),
+            ("Species", "species", "text", None), ("WormsKg", "wormsKg", "kg", None), ("RatePerKg", "rate", "num", None),
+            ("Amount", None, "calc_inr", "=IF(OR({WormsKg}=\"\",{RatePerKg}=\"\"),\"\",{WormsKg}*{RatePerKg})"),
+            ("TransportCost", "transport", "inr", None), ("PaymentStatus", "payment", "text", "PaymentStatus"), ("Notes", "notes", "text", None)]),
     }
     return regs
 
@@ -182,8 +171,6 @@ LINKS = [
     ("Sales", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
     ("StockLedger", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
     ("Expenses", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
-    ("Earthworm", "ToBatch", ["ToBatch"], "Batches", ["BatchCode"], "BatchCode"),
-    ("DailyLog", "Batch", ["Batch"], "Batches", ["BatchCode"], "BatchCode"),
     ("Batches", "BatchCode", ["BatchCode"], "Beds", ["Batch"], "Batch"),
 ]
 
@@ -258,7 +245,6 @@ def fco_formula(t):
 
 def build(src, out, batch):
     data = convert(src, batch)
-    data["logs"] = []
     # B5 is in process: add it to Batches so it can be selected
     data["batches"].append({"code": "B5", "name": "Batch 5", "site": "Akola", "start": "", "status": "In beds",
                             "notes": "In process – add dates and records as they happen"})
@@ -292,6 +278,8 @@ def build(src, out, batch):
             ws_list.cell(j + 2, col, v)
         list_ranges[name] = f"Lists!${L}$2:${L}${n + 1}"
         col += 1
+    assert col <= 18, "drop-down lists would run into the FCO table at column R"
+    sup_L, cus_L = (get_column_letter(list(lists).index(n) + 2) for n in ("Supplier", "Customer"))
     # FCO table at S:T with labels in R
     ws_list["R1"], ws_list["S1"], ws_list["T1"], ws_list["U1"] = "FCO parameter", "Min", "Max", "Column"
     for i, (colname, label, lo, hi) in enumerate(FCO):
@@ -314,8 +302,8 @@ def build(src, out, batch):
         ws_list.column_dimensions[L].width = 20
     ws_list.column_dimensions["R"].width = 18
     ws_list["A1"].comment = Comment("Filled automatically from the Batches sheet. Used by the batch selectors.", "Navjyoti")
-    ws_list["P1"].comment = Comment("Filled automatically from the Supplier column of RawMaterial.", "Navjyoti")
-    ws_list["Q1"].comment = Comment("Filled automatically from the Customer column of Sales.", "Navjyoti")
+    ws_list[f"{sup_L}1"].comment = Comment("Filled automatically from the Supplier column of RawMaterial.", "Navjyoti")
+    ws_list[f"{cus_L}1"].comment = Comment("Filled automatically from the Customer column of Sales.", "Navjyoti")
     for r in range(2, 10):
         for c in (19, 20):
             ws_list.cell(r, c).protection = Protection(locked=False)
@@ -541,18 +529,17 @@ def build(src, out, batch):
             ws.cell(r, c1).alignment = Alignment(horizontal="left", vertical="center", indent=1)
     ws.row_dimensions[13].height = 22
 
-    # earthworm purchases and breeding (kept outside every batch figure)
+    # earthworm purchases (kept outside every batch figure)
     B0 = R - 2
-    subhead(ws, B0, 5, 9, "EARTHWORM  ·  purchases & breeding (not counted in any batch)", "7A4FB5")
+    subhead(ws, B0, 5, 9, "EARTHWORM PURCHASES  (not counted in any batch)", "7A4FB5")
     breed = [
-        ("Earthworms purchased (kg)", '=SUMIFS(Earthworm[WormsKg],Earthworm[Entry],"Earthworm purchase")', KG_FMT),
-        ("Earthworm purchase cost (₹)", '=SUMIFS(Earthworm[CostRs],Earthworm[Entry],"Earthworm purchase")', INR_FMT),
-        ("Dung / feed added for breeding (kg)", '=SUMIFS(Earthworm[QtyKg],Earthworm[Entry],"Dung / feed added")', KG_FMT),
-        ("Breeding cost (₹)", '=SUMIFS(Earthworm[CostRs],Earthworm[Entry],"<>Earthworm purchase")', INR_FMT),
-        ("Earthworms produced by breeding (kg)", '=SUMIFS(Earthworm[WormsKg],Earthworm[Entry],"Worms harvested")', KG_FMT),
-        ("Earthworms issued to beds (kg)", '=SUMIFS(Earthworm[WormsKg],Earthworm[Entry],"Worms issued to beds")', KG_FMT),
-        ("Material sent for sale after mixing (kg)", f'=SUMIFS(Earthworm[MaterialOutKg],Earthworm[Destination],"{BREED_DEST[0]}")', KG_FMT),
-        ("Total earthworm spend (₹)", "=SUM(Earthworm[CostRs])", INR_FMT),
+        ("Earthworms purchased (kg)", "=SUM(Earthworm[WormsKg])", KG_FMT),
+        ("Purchase amount (₹)", "=SUM(Earthworm[Amount])", INR_FMT),
+        ("Transport (₹)", "=SUM(Earthworm[TransportCost])", INR_FMT),
+        ("Total earthworm cost (₹)", "=SUM(Earthworm[Amount])+SUM(Earthworm[TransportCost])", INR_FMT),
+        ("Number of purchases", '=COUNTIFS(Earthworm[PurchaseDate],">0")', "#,##0"),
+        ("Average rate (₹/kg)", '=IFERROR(SUM(Earthworm[Amount])/SUM(Earthworm[WormsKg]),"")', "₹#,##0.00"),
+        ("Payments not settled", '=COUNTIFS(Earthworm[PurchaseDate],">0",Earthworm[PaymentStatus],"<>Paid")', "#,##0"),
     ]
     for i, (label, f, fmt) in enumerate(breed):
         r = B0 + 1 + i
@@ -673,9 +660,6 @@ def build(src, out, batch):
     wb.active = 1
     wb.save(out)
 
-
-LASTWATER = ('SUMPRODUCT(MAX(DailyLog[LogDate]*(DailyLog[Activity]="Watering")'
-             '*(((SelBatch="All")+(DailyLog[Batch]=SelBatch))>0)))')
 
 
 def to_a1(wb, regs):
@@ -883,8 +867,6 @@ def build_reports(wb, ws, list_ranges, lists_sup, lists_cus):
           total=("Closing stock", "=N({L}{a})-N({L}{b})-N({L}{c})"))
     table("Expenses by category (₹)", "Expenses", "Category", [f"=INDEX(L_ExpenseCategory,{i + 1})" for i in range(len(LISTS['ExpenseCategory']))],
           lambda b, r: f"SUMIFS(Expenses[Amount],Expenses[Batch],{b},Expenses[Category],$B${r})", INR_FMT)
-    table("Daily log – entries by activity", "Daily log", "Activity", [f"=INDEX(L_Activity,{i + 1})" for i in range(len(LISTS['Activity']))],
-          lambda b, r: f"COUNTIFS(DailyLog[Batch],{b},DailyLog[Activity],$B${r})", "#,##0")
 
     # Quality: RM / FG / EX / EXRM / EXFG
     start = row
@@ -1118,9 +1100,8 @@ def build_readme(ws):
         ("Sales", "Excel sheet 6 – invoices. Revenue is calculated."),
         ("StockLedger", "Excel sheet 7 – stock in / out / loss. Closing stock runs per batch in entry-number order."),
         ("Expenses", "Excel sheet 8 – expenses by category."),
-        ("Earthworm", "One record sheet for earthworms, kept outside every batch. Entry = Earthworm purchase (supplier, species, kg, cost); Dung / feed added (cow dung used for breeding, kg and cost – not in RawMaterial or Expenses); Worms harvested (kg produced); Worms issued to beds (with ToBatch); Material out (kg, with Destination). When breeding material is mixed and ready, choose 'Stock for sale (after mixing)' and add the same kg as Production in on the StockLedger. The Dashboard shows these totals separately."),
+        ("Earthworm", "Earthworm purchase register, kept outside every batch: date, invoice, supplier, species, kg, rate per kg, transport and payment status. Amount is calculated. These costs are not in any batch's expenses; the Dashboard shows them separately."),
         ("Links", "Blue underlined codes are links: RM lot, pre-compost lot, bed number, production batch, FG batch and batch codes jump to the related record (RawMaterial ↔ PreCompost ↔ Beds ↔ Harvest ↔ Sales, and every batch to the Batches sheet). For rows added later, press the 'Refresh links' button (Office Script RefreshLinks) – see README. To edit a linked cell, select it with the arrow keys or click and hold. An amber ProdCode / ProdBatch means the bed's production code differs between Beds and Harvest – correct one of them."),
-        ("DailyLog", "Watering, turning, temperature and moisture checks, feeding, inspections. Example: B5 · 01-10-2026 · Watering · BED-01 to BED-40 · 400 L · Ramesh."),
         ("Lists", "Drop-down values (suppliers and customers collect themselves from the registers) and the FCO reference limits (yellow cells, editable)."),
         ("h2", "Notes on the imported Batch 4 data"),
         ("•", "Dates that Excel had read as month/day were corrected (for example 02-09-2026 for bed 51's harvest)."),

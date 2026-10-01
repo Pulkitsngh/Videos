@@ -14,9 +14,9 @@ Total effort: about 1–2 days for one person who knows Microsoft 365 basics.
 | `data/*.csv` | Batch 4 records, one file per list (read by the script) |
 | `PowerBI-Measures.dax` | Calculated columns and measures to paste into Power BI |
 | `PowerApps-Formulas.md` | Screens and formulas for the data-entry app, including pop-up detail panels |
-| `PowerAutomate-Flows.md` | The four alert flows, step by step |
+| `PowerAutomate-Flows.md` | The three alert flows, step by step |
 
-The 10 lists: **Batches, RawMaterial, PreCompost, Beds, Harvest, QualityControl, Sales, StockLedger, Expenses, DailyLog**.
+The 10 lists: **Batches, RawMaterial, PreCompost, Beds, Harvest, QualityControl, Sales, StockLedger, Expenses, Earthworm** (earthworm purchases, outside every batch).
 Column names are the same as in the Excel tracker, so reports and formulas line up.
 
 ---
@@ -43,7 +43,7 @@ On a Windows PC:
 5. Run (replace `yourcompany` and `PASTE-CLIENT-ID-HERE` with your values; no < > brackets):
    `./Create-NavjyotiLists.ps1 -SiteUrl https://yourcompany.sharepoint.com/sites/NavjyotiProduction -ClientId PASTE-CLIENT-ID-HERE`
 6. Check the counts on the site (Site contents): RawMaterial 15, PreCompost 3, Beds 80, Harvest 80, QualityControl 6,
-   Sales 6, StockLedger 63, Expenses 30, Batches 2 (B4, B5), DailyLog 0.
+   Sales 6, StockLedger 63, Expenses 30, Batches 2 (B4, B5), Earthworm 0.
 
 The script can be run again safely: it keeps existing lists, adds missing columns, and never loads data into a list that already has rows.
 
@@ -57,9 +57,9 @@ Figures that need another list (bed net yield, live bed status, closing stock, F
 
 Follow `PowerApps-Formulas.md`. In short:
 
-1. **make.powerapps.com → + Create → Start with data → SharePoint →** your site → **DailyLog**. Power Apps builds a
+1. **make.powerapps.com → + Create → Start with data → SharePoint →** your site → **Beds**. Power Apps builds a
    working phone app with list, detail and edit screens.
-2. **Data → + Add data → SharePoint →** add Beds, Harvest, QualityControl, RawMaterial, Sales, Expenses, StockLedger, PreCompost, Batches.
+2. **Data → + Add data → SharePoint →** add Harvest, QualityControl, Earthworm, RawMaterial, Sales, Expenses, StockLedger, PreCompost, Batches.
 3. Add the Home screen (batch picker plus one tile per register), the bed board, the harvest and quality forms, and the
    pop-up detail panels, using the formulas in the guide.
 4. **File → Save → Publish → Share** with the Navjyoti Production members group.
@@ -72,7 +72,7 @@ Follow `PowerApps-Formulas.md`. In short:
    If a choice column arrives as a record, expand it to its *Value*.
 3. **Close & apply.** In Model view link **Batches[BatchCode] → *every list*[Batch]** (one-to-many).
 4. **New table → Calendar** and the calculated columns and measures from `PowerBI-Measures.dax`; link Calendar[Date] to
-   Harvest[HarvestDate], Sales[SaleDate], RawMaterial[PurchaseDate], Expenses[ExpenseDate] and DailyLog[LogDate].
+   Harvest[HarvestDate], Sales[SaleDate], RawMaterial[PurchaseDate], Expenses[ExpenseDate] and Earthworm[PurchaseDate].
 5. Build the pages (all with a **Batch slicer** that syncs across pages):
    - **Overview:** cards for RM received, Net yield, Conversion %, Sold, Revenue, Stock on hand, Expenses, Margin; clustered column *Net yield kg* and *Sold kg* by month; bar *Expenses* by category; bar *Beds* by LiveStatus.
    - **Raw material:** bar Quantity by Supplier; column by month; table of lots with lab result.
@@ -87,7 +87,7 @@ Follow `PowerApps-Formulas.md`. In short:
 
 ## Stage 5 – Alerts in Power Automate (1 hour)
 
-Follow `PowerAutomate-Flows.md`: overdue beds, watering gap, FG/EXFG lab report outside FCO, unpaid raw material.
+Follow `PowerAutomate-Flows.md`: overdue beds, FG/EXFG lab report outside FCO, unpaid raw material.
 
 ## Stage 6 – Put it together in Teams (10 min)
 
