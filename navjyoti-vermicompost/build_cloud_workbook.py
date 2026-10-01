@@ -26,6 +26,7 @@ import re
 
 from openpyxl.worksheet.filters import AutoFilter, FilterColumn
 
+from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from convert_register import convert
@@ -39,7 +40,7 @@ PRODUCTS = [("RM", "RM trial", "2A78D6"), ("FG", "FG finished", "EB6834"),
 FINISHED = ("FG", "EXFG")
 MATERIALS = ["SMC", "Cow Dung", "Cow Dung Slurry", "Coco Peat", "FOM", "Press Mud", "Crop Residue", "Others"]
 # Worm breeding unit: dung used to multiply earthworms is booked here, not to any batch
-BREED_ENTRY = ["Dung / feed added", "Worms harvested", "Material out"]
+BREED_ENTRY = ["Earthworm purchase", "Dung / feed added", "Worms harvested", "Worms issued to beds", "Material out"]
 BREED_DEST = ["Stock for sale (after mixing)", "Mixed into a batch", "New beds / worm stock", "Discarded"]
 KG_AXIS = '[>=1000000]#,##0.0,,"M";[>=1000]#,##0,"k";0'
 INR_AXIS = '[>=10000000]"₹"#,##0.0,,,"Cr";[>=100000]"₹"#,##0.0,,"L";[>=1000]"₹"#,##0,"k";"₹"0'
@@ -94,7 +95,7 @@ def this(t, c):
 # Register definitions: (header, source key or None, kind, extra)
 # kind: text | date | kg | num | inr | pct | calc ; extra: dropdown list name, or formula for calc
 def registers():
-    return {
+    regs = {
         "Batches": ("batches", [("BatchCode", "code", "text", None), ("BatchName", "name", "text", None), ("Site", "site", "text", None),
                     ("StartDate", "start", "date", None), ("Stage", "status", "text", "Stage"), ("Notes", "notes", "text", None)]),
         "RawMaterial": ("rm", [("Batch", "batch", "text", "Batch"), ("PurchaseDate", "date", "date", None), ("RMLot", "lot", "text", None),
@@ -146,14 +147,50 @@ def registers():
             ("Audit", "audit", "text", "Audit"), ("Note", "note", "text", None)]),
         "Expenses": ("expenses", [("Batch", "batch", "text", "Batch"), ("ExpenseDate", "date", "date", None), ("Category", "category", "text", "ExpenseCategory"),
             ("Description", "desc", "text", None), ("PaymentMode", "mode", "text", "PaymentMode"), ("Amount", "amount", "inr", None), ("Note", "note", "text", None)]),
-        "WormBreeding": ("breeding", [("EntryDate", "date", "date", None), ("Unit", "unit", "text", None), ("Entry", "entry", "text", "BreedEntry"),
+        "Earthworm": ("earthworm", [("EntryDate", "date", "date", None), ("Unit", "unit", "text", None), ("Entry", "entry", "text", "BreedEntry"),
+            ("Supplier", "supplier", "text", None), ("Species", "species", "text", None), ("WormsKg", "wormsKg", "num", None),
             ("Material", "material", "text", "Material"), ("QtyKg", "qtyKg", "kg", None), ("CostRs", "cost", "inr", None),
-            ("WormsKg", "wormsKg", "num", None), ("MaterialOutKg", "outKg", "kg", None), ("Destination", "dest", "text", "BreedDest"),
+            ("MaterialOutKg", "outKg", "kg", None), ("Destination", "dest", "text", "BreedDest"),
             ("ToBatch", "toBatch", "text", "Batch"), ("Notes", "notes", "text", None)]),
         "DailyLog": ("logs", [("Batch", "batch", "text", "Batch"), ("LogDate", "date", "date", None), ("Activity", "activity", "text", "Activity"),
             ("BedsArea", "area", "text", None), ("TempC", "temp", "num", None), ("MoisturePct", "moisture", "num", None), ("Qty", "qty", "num", None),
             ("RecordedBy", "by", "text", None), ("Observations", "notes", "text", None)]),
     }
+    add_links(regs)
+    return regs
+
+
+# "Go to" link columns: (table, new column, key columns in this table, target table, target key columns)
+LINKS = [
+    ("RawMaterial", "GoToPreCompost", ["RMLot"], "PreCompost", ["RMLot"]),
+    ("PreCompost", "GoToRMLot", ["RMLot"], "RawMaterial", ["RMLot"]),
+    ("PreCompost", "GoToBeds", ["PCLot"], "Beds", ["PCLot"]),
+    ("Beds", "GoToPCLot", ["PCLot"], "PreCompost", ["PCLot"]),
+    ("Beds", "GoToHarvest", ["Batch", "BedNo"], "Harvest", ["Batch", "BedNo"]),
+    ("Beds", "GoToBatch", ["Batch"], "Batches", ["BatchCode"]),
+    ("Harvest", "GoToBed", ["Batch", "BedNo"], "Beds", ["Batch", "BedNo"]),
+    ("Harvest", "GoToSale", ["FGBatch"], "Sales", ["FGBatch"]),
+    ("Sales", "GoToHarvest", ["FGBatch"], "Harvest", ["FGBatch"]),
+    ("Sales", "GoToBatch", ["Batch"], "Batches", ["BatchCode"]),
+    ("QualityControl", "GoToBatch", ["Batch"], "Batches", ["BatchCode"]),
+    ("Earthworm", "GoToBatch", ["ToBatch"], "Batches", ["BatchCode"]),
+    ("Batches", "GoToBeds", ["BatchCode"], "Beds", ["Batch"]),
+]
+
+
+def add_links(regs):
+    """Append locked formula columns whose cells are clickable links to the related record."""
+    letters = {t: {h: get_column_letter(i + 1) for i, (h, *_) in enumerate(spec)} for t, (_, spec) in regs.items()}
+    for t, name, keys, target, tkeys in LINKS:
+        key = "{" + keys[-1] + "}"
+        L = letters[target][tkeys[-1]]
+        if len(keys) == 1:
+            pos = f"MATCH({key},{target}[{tkeys[0]}],0)"
+        else:
+            cond = "*".join(f"({target}[{tk}]={{{k}}})" for k, tk in zip(keys, tkeys))
+            pos = f"MATCH(1,INDEX({cond},0),0)"
+        f = (f'=IF({key}="","",IFERROR(HYPERLINK("#\'{target}\'!{L}"&({pos}+1),"▸ {target}: "&{key}),"– not in {target}"))')
+        regs[t][1].append((name, None, "calc_link", f))
 
 
 def fco_formula(t):
@@ -263,6 +300,8 @@ def build(src, out, batch):
                     for hh, *_ in cols:
                         f = f.replace("{" + hh + "}", this(tname, hh))
                     cell.value = f
+                    if kind == "calc_link":
+                        cell.font = F(color="1C5FB8", underline="single")
                 elif h.startswith("Turn") and turns:
                     i = int(h[4]) - 1
                     if i < len(turns):
@@ -278,7 +317,7 @@ def build(src, out, batch):
         tab = Table(displayName=tname, ref=f"A1:{last}{cap}")
         tab.tableStyleInfo = TableStyleInfo(name="TableStyleLight9", showRowStripes=True)
         if tname == "Batches":  # free-text notes: no filter arrow on the heading
-            tab.autoFilter = AutoFilter(ref=f"A1:{last}{cap}", filterColumn=[FilterColumn(colId=len(cols) - 1, hiddenButton=True, showButton=False)])
+            tab.autoFilter = AutoFilter(ref=f"A1:{last}{cap}", filterColumn=[FilterColumn(colId=[h for h, *_ in cols].index("Notes"), hiddenButton=True, showButton=False)])
         ws.add_table(tab)
         # formula columns are pre-filled below the table, so a row typed under the table
         # already calculates when Excel extends the table over it
@@ -293,6 +332,8 @@ def build(src, out, batch):
                     for hh, *_ in cols:
                         f = f.replace("{" + hh + "}", this(tname, hh))
                     c.value = f
+                    if kind == "calc_link":
+                        c.font = F(color="1C5FB8", underline="single")
         # typing cells are open; headers and formula columns stay locked
         for ci, (h, _, kind, extra) in enumerate(cols, 1):
             if not kind.startswith("calc"):
@@ -386,7 +427,6 @@ def build(src, out, batch):
         ("rev", "Revenue", f"=SUMIFS(Sales[Revenue],Sales[Batch],{K})", INR_FMT),
         ("price", "Average price (₹/kg)", '=IFERROR(C{rev}/C{sold},"")', "₹#,##0.00"),
         ("stock", "Stock on hand (kg, stock ledger)", f"=SUMIFS(StockLedger[InKg],StockLedger[Batch],{K})-SUMIFS(StockLedger[OutKg],StockLedger[Batch],{K})-SUMIFS(StockLedger[LossKg],StockLedger[Batch],{K})", KG_FMT),
-        ("hs", "Harvested − sold (kg)", "=C{net}-C{sold}", KG_FMT),
         ("exp", "Expenses", f"=SUMIFS(Expenses[Amount],Expenses[Batch],{K})", INR_FMT),
         ("cpk", "Expense per kg produced (₹)", '=IFERROR(C{exp}/C{net},"")', "₹#,##0.00"),
         ("margin", "Revenue − expenses", "=C{rev}-C{exp}", '₹#,##0;[Red]-₹#,##0'),
@@ -411,7 +451,7 @@ def build(src, out, batch):
         ("BEDS HARVESTED", f'=C{at["harv"]}&" / "&C{at["beds"]}', "General", f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],"Overdue")&" overdue"', "7A4FB5", "EFE9F8"),
         ("SOLD", f"=C{at['sold']}", '#,##0" kg"', f'=IF(C{at["price"]}="","no sales yet","avg ₹"&TEXT(C{at["price"]},"0.00")&" / kg")', "EB6834", "FDEDE5"),
         ("REVENUE", f"=C{at['rev']}", INR_FMT, f'=TEXT(C{at["exp"]},"₹#,##0")&" expenses"', "138A60", "E1F4EC"),
-        ("STOCK ON HAND", f"=C{at['stock']}", '#,##0" kg"', f'=TEXT(C{at["hs"]},"#,##0")&" kg harvested − sold"', "B7791F", "FCF2DD"),
+        ("STOCK ON HAND", f"=C{at['stock']}", '#,##0" kg"', None, "B7791F", "FCF2DD"),
     ]
     tile_cols = [(2, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]
     for (label, val, fmt, sub, accent, tint), (c1, c2) in zip(tiles, tile_cols):
@@ -456,42 +496,18 @@ def build(src, out, batch):
             ws.cell(r, c1).alignment = Alignment(horizontal="left", vertical="center", indent=1)
     ws.row_dimensions[13].height = 22
 
-    # needs attention (E:I)
-    subhead(ws, R - 2, 5, 9, "NEEDS ATTENTION", "D14B3B")
-    alerts = [
-        ("Beds past expected harvest", f'=COUNTIFS(Beds[Batch],{K},Beds[LiveStatus],"Overdue")', 0),
-        ("Harvest entries without net weight", f'=COUNTIFS(Harvest[Batch],{K},Harvest[BedNo],"<>",Harvest[NetKg],"")', 0),
-        ("Raw material payments not settled", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[PaymentStatus],"<>Paid")', 0),
-        ("Raw material lots without lab acceptance", f'=COUNTIFS(RawMaterial[Batch],{K},RawMaterial[RMLot],"<>",RawMaterial[LabResult],"<>Accepted")', 0),
-        ("FG / EXFG lab reports outside FCO", f'=COUNTIFS(QualityControl[Batch],{K},QualityControl[FCOCheck],"Outside*")', 0),
-        ("Sales priced under ₹1 per kg", f'=COUNTIFS(Sales[Batch],{K},Sales[QtyKg],">0",Sales[PricePerKg],"<1")', 0),
-        ("Days since watering was logged", '=IF(' + LASTWATER + '=0,"none logged",TODAY()-' + LASTWATER + ')', 3),
-    ]
-    for i, (label, f, limit) in enumerate(alerts):
-        r = R + i
-        ws.merge_cells(start_row=r, start_column=5, end_row=r, end_column=7)
-        ws.cell(r, 5, label).font = F(color=INK)
-        c = ws.cell(r, 8, f)
-        c.font = F(bold=True, color=INK)
-        c.number_format = "0"
-        c.alignment = Alignment(horizontal="right")
-        s = ws.cell(r, 9, f'=IF(H{r}="none logged","● Log it",IF(H{r}>{limit},"● Check","● OK"))')
-        s.font = F(bold=True)
-        s.alignment = Alignment(horizontal="center")
-        for cc in range(5, 10):
-            ws.cell(r, cc).border = Border(bottom=THIN)
-    rng = f"I{R}:I{R + len(alerts) - 1}"
-    ws.conditional_formatting.add(rng, CellIsRule(operator="equal", formula=['"● OK"'], fill=OK_FILL, font=F(bold=True, color="1D7443")))
-    ws.conditional_formatting.add(rng, CellIsRule(operator="notEqual", formula=['"● OK"'], fill=WARN_FILL, font=F(bold=True, color="9A5B00")))
-
-    # worm breeding unit (kept outside every batch figure)
-    B0 = R + len(alerts) + 2
-    subhead(ws, B0, 5, 9, "WORM BREEDING UNIT  (not counted in any batch)", "7A4FB5")
+    # earthworm purchases and breeding (kept outside every batch figure)
+    B0 = R - 2
+    subhead(ws, B0, 5, 9, "EARTHWORM  ·  purchases & breeding (not counted in any batch)", "7A4FB5")
     breed = [
-        ("Dung / feed added to breeding (kg)", '=SUMIFS(WormBreeding[QtyKg],WormBreeding[Entry],"Dung / feed added")', KG_FMT),
-        ("Breeding cost (₹)", "=SUM(WormBreeding[CostRs])", INR_FMT),
-        ("Earthworms produced (kg)", "=SUM(WormBreeding[WormsKg])", KG_FMT),
-        ("Material sent for sale after mixing (kg)", f'=SUMIFS(WormBreeding[MaterialOutKg],WormBreeding[Destination],"{BREED_DEST[0]}")', KG_FMT),
+        ("Earthworms purchased (kg)", '=SUMIFS(Earthworm[WormsKg],Earthworm[Entry],"Earthworm purchase")', KG_FMT),
+        ("Earthworm purchase cost (₹)", '=SUMIFS(Earthworm[CostRs],Earthworm[Entry],"Earthworm purchase")', INR_FMT),
+        ("Dung / feed added for breeding (kg)", '=SUMIFS(Earthworm[QtyKg],Earthworm[Entry],"Dung / feed added")', KG_FMT),
+        ("Breeding cost (₹)", '=SUMIFS(Earthworm[CostRs],Earthworm[Entry],"<>Earthworm purchase")', INR_FMT),
+        ("Earthworms produced by breeding (kg)", '=SUMIFS(Earthworm[WormsKg],Earthworm[Entry],"Worms harvested")', KG_FMT),
+        ("Earthworms issued to beds (kg)", '=SUMIFS(Earthworm[WormsKg],Earthworm[Entry],"Worms issued to beds")', KG_FMT),
+        ("Material sent for sale after mixing (kg)", f'=SUMIFS(Earthworm[MaterialOutKg],Earthworm[Destination],"{BREED_DEST[0]}")', KG_FMT),
+        ("Total earthworm spend (₹)", "=SUM(Earthworm[CostRs])", INR_FMT),
     ]
     for i, (label, f, fmt) in enumerate(breed):
         r = B0 + 1 + i
@@ -563,7 +579,7 @@ def build(src, out, batch):
     for i in range(BC):
         r = r0 + 2 + i
         b = f"B{r}"
-        ws[b] = f"=Lists!A{3 + i}"
+        ws[b] = (f'=IF(Lists!A{3 + i}="","",IFERROR(HYPERLINK("#\'Batches\'!A"&(MATCH(Lists!A{3 + i},Batches[BatchCode],0)+1),Lists!A{3 + i}),Lists!A{3 + i}))')
         vals = [f'=IF({b}="","",IFERROR(INDEX(Batches[Stage],MATCH({b},Batches[BatchCode],0)),""))',
                 f'=IF({b}="","",COUNTIFS(Beds[Batch],{b},Beds[LiveStatus],"Harvested")&" / "&COUNTIFS(Beds[Batch],{b},Beds[BedNo],"<>"))',
                 f'=IF({b}="","",SUMIFS(RawMaterial[QtyKg],RawMaterial[Batch],{b})/1000)',
@@ -575,7 +591,7 @@ def build(src, out, batch):
                 f'=IF({b}="","",I{r}-J{r})']
         fmts = ["General", "General", "#,##0.0", KG_FMT, PCT_FMT, KG_FMT, INR_FMT, INR_FMT, '₹#,##0;[Red]-₹#,##0']
         band = FILL("EEF4FC") if i % 2 == 0 else FILL("FFFFFF")
-        ws[b].font = F(bold=True, color=INK)
+        ws[b].font = F(bold=True, color="1C5FB8", underline="single")
         ws[b].fill = band
         for j, (f, fm) in enumerate(zip(vals, fmts)):
             c = ws.cell(r, 3 + j, f)
@@ -1054,7 +1070,8 @@ def build_readme(ws):
         ("Sales", "Excel sheet 6 – invoices. Revenue is calculated."),
         ("StockLedger", "Excel sheet 7 – stock in / out / loss. Closing stock runs per batch in entry-number order."),
         ("Expenses", "Excel sheet 8 – expenses by category."),
-        ("WormBreeding", "Earthworm multiplication unit, kept outside every batch. Book here the cow dung / feed used to breed earthworms (Entry = Dung / feed added, with its cost) instead of RawMaterial or Expenses. Record worms harvested (WormsKg) and the material taken out (MaterialOutKg) with its Destination. When the material is mixed and ready, choose 'Stock for sale (after mixing)' and add the same kg as Production in on the StockLedger. The Dashboard shows the unit's totals separately."),
+        ("Earthworm", "One record sheet for earthworms, kept outside every batch. Entry = Earthworm purchase (supplier, species, kg, cost); Dung / feed added (cow dung used for breeding, kg and cost – not in RawMaterial or Expenses); Worms harvested (kg produced); Worms issued to beds (with ToBatch); Material out (kg, with Destination). When breeding material is mixed and ready, choose 'Stock for sale (after mixing)' and add the same kg as Production in on the StockLedger. The Dashboard shows these totals separately."),
+        ("Go to links", "Grey 'GoTo…' columns at the end of the registers are links: click one to jump to and select the related record (RM lot ↔ pre-compost lot ↔ beds ↔ harvest ↔ sales, and each batch)."),
         ("DailyLog", "Watering, turning, temperature and moisture checks, feeding, inspections. Example: B5 · 01-10-2026 · Watering · BED-01 to BED-40 · 400 L · Ramesh."),
         ("Lists", "Drop-down values (suppliers and customers collect themselves from the registers) and the FCO reference limits (yellow cells, editable)."),
         ("h2", "Notes on the imported Batch 4 data"),

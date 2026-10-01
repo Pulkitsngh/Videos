@@ -128,8 +128,10 @@ VAR last = CALCULATE ( MAX ( DailyLog[LogDate] ), DailyLog[Activity] = "Watering
 RETURN IF ( ISBLANK ( last ), BLANK (), DATEDIFF ( last, TODAY (), DAY ) )
 Log Entries = COUNTROWS ( DailyLog )
 
-// ---------- Worm breeding unit (outside every batch) ----------
-Breeding Dung kg = CALCULATE ( SUM ( WormBreeding[QtyKg] ), WormBreeding[Entry] = "Dung / feed added" )
-Breeding Cost = SUM ( WormBreeding[CostRs] )
-Worms Produced kg = SUM ( WormBreeding[WormsKg] )
-Breeding Material For Sale kg = CALCULATE ( SUM ( WormBreeding[MaterialOutKg] ), WormBreeding[Destination] = "Stock for sale (after mixing)" )
+// ---------- Earthworm purchases & breeding (outside every batch) ----------
+Breeding Dung kg = CALCULATE ( SUM ( Earthworm[QtyKg] ), Earthworm[Entry] = "Dung / feed added" )
+Breeding Cost = CALCULATE ( SUM ( Earthworm[CostRs] ), Earthworm[Entry] <> "Earthworm purchase" )
+Worms Produced kg = CALCULATE ( SUM ( Earthworm[WormsKg] ), Earthworm[Entry] = "Worms harvested" )
+Breeding Material For Sale kg = CALCULATE ( SUM ( Earthworm[MaterialOutKg] ), Earthworm[Destination] = "Stock for sale (after mixing)" )
+Earthworms Purchased kg = CALCULATE ( SUM ( Earthworm[WormsKg] ), Earthworm[Entry] = "Earthworm purchase" )
+Earthworm Purchase Cost = CALCULATE ( SUM ( Earthworm[CostRs] ), Earthworm[Entry] = "Earthworm purchase" )
