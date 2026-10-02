@@ -62,3 +62,47 @@ Sources: Smithsonian Global Volcanism Program; Government of India (Lok Sabha re
 - Rises from a seafloor over 2 km deep: Smithsonian GVP.
 - First recorded eruption 1787; activity resumed 1991: Smithsonian eruption record.
 - January 2017 eruptive episodes of about 5–10 minutes seen by NIO scientists: Government of India reply in Parliament.
+
+---
+
+# Hindi-voice version (English captions and on-screen text kept)
+
+**✅ Final video:** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/59c685a2-2e3d-4575-9a8c-055fc8d33eab.mp4
+**Specs:** 720×1280, 24 fps, 43.4 s, −14 LUFS · the same 6 Mini clips, photos, labels, year cards, music and Like/Subscribe as the English version · Hindi narration by "Gideon" (ElevenLabs), sped up to 1.12× · English captions timed to each Hindi line
+**Cost:** ≈ 2.7 credits (10 short voice lines; no new video generated) · balance 243.65
+
+**How it was made:** each Hindi line was generated separately (jobs `e47ac71a`, `aa9f9d1b`, `82337009`, `87a61dbf`, `bab109f6`, `851eb699`, `08510518`, `99b28f72`, `3915591d`, `99c01178`). That way every line starts exactly on its scene cut and its English caption.
+
+## Hindi narration
+| Scene | Hindi (spoken) | English caption (on screen) |
+|---|---|---|
+| 1 | सोचिए… आप रात में एक अंधेरे समंदर में सफ़र कर रहे हैं… और तभी क्षितिज पर एक लाल चमक दिखती है। | Imagine sailing through a dark ocean… when a red glow lights up the horizon. |
+| 2 | ये है बैरन आइलैंड। भारत का इकलौता सक्रिय ज्वालामुखी। | This is Barren Island. India's only active volcano. |
+| 3 | न कोई शहर। न कोई इंसान। बस आग… जो अंडमान सागर से उठती है। | No towns. No people. Just fire, rising from the Andaman Sea. |
+| 4 | और ये तो बस इसकी चोटी है। ये ज्वालामुखी समंदर में दो किलोमीटर से भी ज़्यादा गहराई से उठता है। | And this is only the tip. The volcano rises from a seafloor more than two kilometres deep. |
+| 5 | इसका पहला दर्ज विस्फोट, सत्रह सौ सत्तासी में हुआ था। | Its first recorded eruption came in 1787. |
+| 6 | फिर ये ख़ामोश हो गया… और उन्नीस सौ इक्यानवे में, ये फिर से जाग उठा। | Then it fell silent… until 1991, when it roared back to life. |
+| 7 | दो हज़ार सत्रह में, वैज्ञानिकों ने इसे फिर से फटते देखा… | In 2017, scientists watched it erupt again, |
+| 8 | सिर्फ़ कुछ मिनटों के धमाकों में। | in bursts lasting just minutes. |
+| 9 | शांत ज्वालामुखी… मरा हुआ ज्वालामुखी नहीं होता। | A quiet volcano… is not a dead volcano. |
+| 10 | ऐसे ही छिपे अजूबों के लिए, फ़ॉलो कीजिए वर्ल्ड अनस्क्रिप्टेड। | Follow World Unscripted for more hidden wonders of India. |
+
+## Upload package (Hindi audience)
+- **Title:** `भारत का इकलौता ज़िंदा ज्वालामुखी 🌋 Barren Island का रहस्य! #shorts`
+- **Description:**
+```
+भारत का इकलौता सक्रिय ज्वालामुखी — बैरन आइलैंड, अंडमान सागर 🌋
+जो दिखता है वो तो बस चोटी है… असली पहाड़ समंदर में 2 किलोमीटर से भी ज़्यादा गहराई तक छिपा है!
+
+🔥 1787 – पहला दर्ज विस्फोट
+🔥 1991 – फिर से जाग उठा
+🔥 2017 – वैज्ञानिकों ने कुछ मिनटों के धमाके देखे
+
+👉 ऐसे ही रहस्यों के लिए World Unscripted को सब्सक्राइब करें!
+
+⚠️ कुछ दृश्य AI से बने पुनर्निर्माण हैं (स्क्रीन पर लिखा है)। असली फ़ोटो पर "REAL PHOTO" लिखा है।
+📷 Photos (Wikimedia Commons): Barren Island — JayantYadav1 (CC BY-SA 4.0) · Barren Island 1789 sketch (public domain) · Barren Island, Jan 2014 — Arijayprasad (CC BY-SA 4.0) · Barren Island Active Volcano — Rohitjahnavi (CC BY-SA 3.0)
+
+#BarrenIsland #Volcano #ज्वालामुखी #Andaman #IndiaFacts #FactsInHindi #Shorts #WorldUnscripted
+```
+- Mark **Altered or synthetic content: Yes**.
