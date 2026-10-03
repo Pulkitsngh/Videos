@@ -1,5 +1,45 @@
 # Jatinga, Assam: "The Valley Where Birds Fall from the Sky": ~30-second Short
 
+## ⭐ v2 script (stronger hook, use this one)
+
+**Retention devices used:**
+- **0–1 s:** a pattern interrupt ("रुकिए!")
+- **"आप" (you) framing**, so the viewer pictures themselves there
+- **Open loop at 0:03:** "the real reason will shock you", so viewers wait for it
+- **Re-hook at 0:14:** "and this is where the story turns"
+- **Callback ending** that loops back to the opening, which encourages a rewatch
+
+| Time | Hindi voice-over | English voice-over | Visual |
+|---|---|---|---|
+| **0:00–0:03** 🔥 | **रुकिए!** भारत में एक गाँव ऐसा भी है… जहाँ अंधेरी रातों में **परिंदे आसमान से गिरने लगते हैं!** | **Wait!** There's a village in India… where on dark nights, **birds start falling from the sky!** | Black screen → a lantern flares → birds burst out of the fog straight at the camera |
+| **0:03–0:07** 🔥 | सदियों से लोग कहते आए… ये परिंदे यहाँ **जान देने** आते हैं। लेकिन **असली वजह**… आपको हैरान कर देगी! | For years, people said… these birds come here **to die.** But the **real reason**… will shock you! | Villager silhouettes with lanterns on a hilltop, birds circling the light |
+| 0:07–0:11 | ये है असम का **जतिंगा**: दीमा हसाओ की धुंध भरी पहाड़ियों में छिपा एक गाँव। | This is **Jatinga**, a village hidden in the misty hills of Dima Hasao, Assam. | Drone over fog-covered hills and the village · 📍 tag at top |
+| 0:11–0:14 | हर साल सितंबर से नवंबर… चाँद-रहित, कोहरे वाली रातों में… ये रहस्य जागता है। | Every year, from September to November… on moonless, foggy nights… the mystery awakens. | Fog rolling over the ridge, no moon, distant lamps |
+| **0:14–0:21** | **और यहीं कहानी पलटती है…** ये आत्महत्या नहीं। तेज़ हवा और घना कोहरा इन्हें रास्ता भुला देते हैं… और गाँव की रोशनी इन्हें अपनी ओर खींच लेती है। | **And this is where the story turns…** It's not suicide. Strong winds and thick fog make them lose their way… and the village lights pull them in. | A lost bird in swirling mist, drawn towards a lamp (the reveal) |
+| 0:21–0:26 | आज यहाँ परिंदों को बचाने की मुहिम चलती है… | Today, people here work to protect these birds… | Dawn: birds flying free over the valley |
+| 0:26–0:30 | तो अगर कभी जतिंगा की अंधेरी रात में लालटेन जलाएँ… **ऊपर देखना मत भूलिए।** फ़ॉलो करें **वर्ल्ड अनस्क्रिप्टेड**। | So if you ever light a lantern on a dark Jatinga night… **don't forget to look up.** Follow **World Unscripted.** | Lantern raised at night, camera tilts up to the misty sky; Like/Subscribe |
+
+The ending line ("look up…") matches the opening image (a lantern and the sky), so the Short loops smoothly into a rewatch.
+
+## Other hook options (first 3–5 s), if you want to test variations
+
+| # | Style | Hindi | English |
+|---|---|---|---|
+| A | **"You" scenario** | अगर आप इस गाँव में रात को लालटेन जलाएँ… तो अंधेरे से परिंदे सीधे आपकी ओर टूट पड़ेंगे! | Light a lantern in this village at night… and birds will come diving straight at you out of the dark! |
+| B | **Warning** | ये वीडियो रात में मत देखिए… क्योंकि इस गाँव में अंधेरा होते ही परिंदे होश खो बैठते हैं! | Don't watch this at night… because in this village, when darkness falls, birds lose their senses! |
+| C | **Countdown** | साल में सिर्फ़ 3 महीने… सिर्फ़ अंधेरी रातें… और सिर्फ़ एक गाँव… जहाँ परिंदे रास्ता भूल जाते हैं! | Only 3 months a year… only on dark nights… and only in one village… do birds lose their way! |
+| D | **Sound-first** | (silence, then wing-flaps) श्श्श… सुनिए… ये आवाज़ उन परिंदों की है… जो अंधेरे में रास्ता भूल चुके हैं। | (silence, wings) Shhh… listen… that's the sound of birds… lost in the dark. |
+| E | **Myth vs truth** | दुनिया कहती थी, यहाँ परिंदे जान देने आते हैं… पर सच इससे भी ज़्यादा अजीब है! | The world said birds come here to die… but the truth is even stranger! |
+
+**Tips:**
+- Options **A** and **B** work best on Instagram, because they speak directly to the viewer.
+- Option **E** works best on YouTube Shorts, because it sets up a curiosity gap.
+- The v2 script above combines the **pattern interrupt**, the **myth** and the **curiosity gap** for the strongest start.
+
+---
+
+# Original v1 script (kept for reference)
+
 **Place:** Jatinga village, Dima Hasao district, Assam (near Haflong)
 **Format:** 9:16 · ~30 s · Hindi voice + English version · small captions above Like/Subscribe · small location tag at the top
 **Angle:** a scary legend ("birds come here to die") turned into a science reveal. Mystery, then the twist, then the answer. That keeps viewers to the end.
