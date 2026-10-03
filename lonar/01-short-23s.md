@@ -1,6 +1,31 @@
 # Lonar Lake: 23-second Short (YouTube Shorts + Instagram Reels)
 
-**✅ Latest version (v3, with captions + location tag):** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/65ea7348-8f58-474c-86d9-d7d2f31ce547.mp4
+**✅ LATEST (v4 layout: location title at the very top; Like/Subscribe at the bottom, inside the Shorts/Reels safe area):**
+- **Hindi voice + English captions:** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/b91567ca-a6da-4b2a-9ec0-0ac1dc7fd6cb.mp4
+  - 24.4 s
+  - Hindi lines by "Gideon" at 1.13×
+  - Voice jobs: `bd32666c`, `5d4f0795`, `2a31dcae`, `025d349b`, `e4e2610b`, `d5d0b9fe`, `8fda669d`
+  - Cost ≈ 1.65 credits
+- **English voice + captions:** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/65749b13-5cc2-48c1-9e37-d79491d09ed4.mp4 (24.1 s, re-render, free)
+
+**Layout:**
+- Location tag at y ≈ 26 px.
+- Captions 44 px, sitting just above the button.
+- Like/Subscribe button:
+  - 612 px wide, centred, at y 1032–1142 of 1280
+  - It can't go any lower: YouTube's title and channel name and Instagram's caption cover roughly the bottom 140 px, and the like/comment buttons cover the right edge.
+- Balance 220.8.
+
+### Hindi narration (v4)
+1. ये झील... अचानक गुलाबी हो गई!
+2. और इसे बनाया था... अंतरिक्ष से गिरे एक पत्थर ने!
+3. ये है महाराष्ट्र की लोनार झील... उल्कापिंड की टक्कर से बना एक विशाल गड्ढा।
+4. इसका पानी खारा और क्षारीय है...
+5. और दो हज़ार बीस में, सूक्ष्म जीवों ने इसे गुलाबी कर दिया।
+6. किनारे पर सदियों पुराने मंदिर हैं... और कथा है, यहीं भगवान विष्णु ने लोनासुर का वध किया था।
+7. विज्ञान और आस्था... एक ही झील में! फ़ॉलो कीजिए वर्ल्ड अनस्क्रिप्टेड।
+
+**Older v3, with captions + location tag):** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/65ea7348-8f58-474c-86d9-d7d2f31ce547.mp4
 - Same video as v2, plus:
   - smaller English captions (44 px instead of 60, key words in yellow), placed just above the Like/Subscribe buttons
   - a small location tag "LONAR LAKE · MAHARASHTRA, INDIA" at the top for the whole video
