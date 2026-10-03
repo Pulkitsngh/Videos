@@ -1,0 +1,64 @@
+# Lonar Lake: 23-second Short (YouTube Shorts + Instagram Reels)
+
+**Topic:** Lonar Lake, Buldhana district, Maharashtra
+**Format:** 9:16 · ~23 s · Hindi voice (English version below) · captions on
+**Hook idea:** open on the *payoff image* (green lake turning pink) and immediately add a second shock (made by a rock from space). Two surprises inside 5 seconds make people stay.
+
+## Hindi script (main)
+
+| Time | Voice-over | Visual | On-screen text |
+|---|---|---|---|
+| **0:00–0:03** | ये झील… अचानक **गुलाबी** हो गई थी! | Green crater lake turns pink in a fast morph; quick zoom-in. No intro, no logo | **THIS LAKE TURNED PINK 😱** |
+| **0:03–0:05** | और इसे बनाया था… **अंतरिक्ष से गिरे एक पत्थर** ने! | A fiery meteor streaks across the sky and slams into the ground. White flash, then shockwave dust | **MADE BY A METEORITE ☄️** |
+| 0:05–0:09 | ये है महाराष्ट्र की **लोनार झील**: उल्कापिंड की टक्कर से बना एक विशाल गड्ढा। | Drone rises to reveal the near-perfect round crater and lake | 📍 LONAR, BULDHANA, MAHARASHTRA |
+| 0:09–0:14 | इसका पानी खारा और क्षारीय है… और 2020 में, सूक्ष्म जीवों ने इसे गुलाबी कर दिया। | Close-up of the water's edge; microscope-style shot of tiny pink microbes; real photo of the pink lake | SALTY + ALKALINE WATER · PINK = MICROBES (2020) |
+| 0:14–0:19 | किनारे पर सदियों पुराने मंदिर… और कथा है, यहीं भगवान विष्णु ने **लोनासुर** का वध किया था। | Real photo of the Daitya Sudan temple; slow push on carved stone; mist over the lake | ANCIENT TEMPLES · LEGEND OF LONASURA |
+| 0:19–0:23 | विज्ञान और आस्था… एक ही झील में! फ़ॉलो करें **वर्ल्ड अनस्क्रिप्टेड**। | Sunset aerial of the crater; Like/Subscribe pops up | **SPACE + SCIENCE + FAITH** · WORLD UNSCRIPTED |
+
+**About 65 Hindi words.** That fits 23 s at a brisk Shorts pace, with the voice sped up about 1.05–1.1×.
+
+## English version (same timing)
+
+| Time | Voice-over |
+|---|---|
+| 0:00–0:03 | This lake suddenly turned **pink**… |
+| 0:03–0:05 | …and it was created by **a rock from space!** |
+| 0:05–0:09 | This is **Lonar Lake** in Maharashtra: a giant crater blasted out by a meteorite. |
+| 0:09–0:14 | Its water is salty and alkaline… and in 2020, tiny microbes turned it pink. |
+| 0:14–0:19 | Ancient temples line its shore… and legend says Lord Vishnu slew the demon **Lonasura** here. |
+| 0:19–0:23 | Space, science and faith, in one lake! Follow **World Unscripted**. |
+
+## Why the first 5 seconds work
+1. **Frame 1 is the most shocking image** (pink lake), not a title card or logo. The scroll stops on colour.
+2. **The first line is a mystery without the answer** ("…अचानक गुलाबी हो गई थी!"). Viewers stay to learn why.
+3. **A second twist at 0:03** (a meteorite!) resets attention before the 5-second drop-off point.
+4. **Big text on screen from frame 1**, because many viewers watch on mute, especially on Instagram.
+5. **The name "Lonar" arrives only at 0:05**, after the viewer is already hooked.
+
+## Facts used (keep the wording careful)
+- **Meteorite impact crater** in basalt rock; the lake sits inside the crater. Scientists' age estimates vary widely, so the script gives no age.
+- **Water is saline and alkaline.**
+- **Turned pink in June 2020.** Researchers linked the colour to salt-loving microbes (haloarchaea) after water levels dropped and salinity rose.
+- Declared a **Ramsar wetland site in 2020.**
+- **Lonasura legend** (the name "Lonar" is linked to it) and old temples around the lake such as the Daitya Sudan temple. Present this as a **legend** ("कथा है").
+
+## Production plan (Higgsfield, same pipeline as Barren Island)
+- **Real photos (Wikimedia Commons, free licences):** aerial view of the crater, the pink lake in 2020 (if a free photo exists), Daitya Sudan temple. Credit them in the description.
+- **Seedance 2.0 Mini clips (~4):**
+  - lake turning pink
+  - meteor impact
+  - drone reveal of the crater
+  - sunset ending
+- Label AI scenes "AI RECONSTRUCTION".
+- **Captions** (English or Hindi), a **Like/Subscribe** button and music that builds tension, with a boom on the meteorite impact.
+- **Instagram safe zone:** keep text away from the bottom ~20% and the right edge, where the Reels buttons sit.
+- **Estimated cost:**
+  - Mini 720p: about **20–25 credits**
+  - Seedance fast 720p: about **55–60 credits**
+  - Hindi + English voice: about 1–2 credits extra
+
+## Titles and hashtags
+- **YouTube:** `This Lake Suddenly Turned PINK 😱 Made by a Meteorite | Lonar Lake #shorts`
+- **YouTube (Hindi):** `ये झील अचानक गुलाबी हो गई! 😱 उल्कापिंड से बनी लोनार झील #shorts`
+- **Instagram caption:** `A rock from space made this lake… and then it turned PINK 😱☄️ Lonar Lake, Maharashtra 🇮🇳 Would you visit? 👇`
+- **Hashtags:** `#LonarLake #Lonar #Maharashtra #MeteoriteCrater #PinkLake #IncredibleIndia #MysteriousIndia #IndiaFacts #Shorts #Reels #WorldUnscripted`
