@@ -1,4 +1,41 @@
-# Jatinga, Assam: "The Valley Where Birds Fall from the Sky": ~30-second Short
+# Jatinga, Assam: "The Valley Where Birds Fall from the Sky": Short
+
+**✅ Final video (Hindi voice, v2 hook script):** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/aa9e3dfc-86f6-443a-ac8d-3cd38925fd33.mp4
+**Specs:** 720×1280, 24 fps, **42.2 s**, −14 LUFS
+- The Hindi narration is longer than the 30 s plan, even sped up to the 1.15× limit.
+- 5 Seedance 2.0 Mini clips + 2 real photos (Jatinga village from above with a fast push-in, and village houses with a sideways pan)
+- Small English captions just above Like/Subscribe
+- "JATINGA · DIMA HASAO, ASSAM" tag at the very top
+- Like/Subscribe at the bottom, inside the safe area
+- No AI or real-photo corner labels
+- Eerie drone music with booms on the hook and on the twist
+
+**Cost:** ≈ 27.25 credits (220.8 → 193.55)
+
+**Jobs:**
+- Voice (7 Hindi lines, "Gideon"): `0c737cb3`, `dd2428cf`, `8024a0dd`, `91e18640`, `6930bd47`, `5089d9f2`, `bd778249`
+- Mini clips:
+  - `b3d71574`: birds burst from fog to a lantern
+  - `1c6ef30d`: villagers with lanterns, birds circling
+  - `2e76219c`: fog rolling over hills at night
+  - `185ade5c`: lost bird drawn to a lamp
+  - `2534ac44`: lantern raised, camera tilts up to birds in the sky
+
+| Time | Visual |
+|---|---|
+| 0:00–5.7 | AI: birds burst out of fog towards the lantern (hook) |
+| 5.7–12.2 | AI: villager silhouettes with lanterns, birds circling |
+| 12.2–17.0 | **Real photo:** overhead view of Jatinga village (push-in zoom) |
+| 17.0–22.3 | AI: fog rolling over the hills on a moonless night |
+| 22.3–31.4 | AI: lost bird in the mist, drawn to a lamp (the twist), shown in slow motion |
+| 31.4–33.9 | **Real photo:** houses in Jatinga village (pan) |
+| 33.9–42.2 | AI: lantern raised, camera tilts up to birds in the sky; Like/Subscribe |
+
+**Photo credits (put these in the description):**
+- "Overhead view of Jatinga village, Assam" by **GeoEvan (www.polgeonow.com)**, CC BY 4.0: https://commons.wikimedia.org/wiki/File:Overhead_view_of_Jatinga_village,_Assam.jpg
+- "Houses in Jatinga village" by **GeoEvan (www.polgeonow.com)**, CC BY 4.0: https://commons.wikimedia.org/wiki/File:Houses_in_Jatinga_village.jpg
+
+---
 
 ## ⭐ v2 script (stronger hook, use this one)
 
