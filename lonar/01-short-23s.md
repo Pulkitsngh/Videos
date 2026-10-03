@@ -125,3 +125,33 @@
 - **YouTube (Hindi):** `ये झील अचानक गुलाबी हो गई! 😱 उल्कापिंड से बनी लोनार झील #shorts`
 - **Instagram caption:** `A rock from space made this lake… and then it turned PINK 😱☄️ Lonar Lake, Maharashtra 🇮🇳 Would you visit? 👇`
 - **Hashtags:** `#LonarLake #Lonar #Maharashtra #MeteoriteCrater #PinkLake #IncredibleIndia #MysteriousIndia #IndiaFacts #Shorts #Reels #WorldUnscripted`
+
+## Upload package: Hindi-voice version (v4)
+**Title (pick one):**
+1. `ये झील अचानक गुलाबी हो गई! 😱 अंतरिक्ष से गिरे पत्थर ने बनाई लोनार झील #shorts`
+2. `उल्कापिंड से बनी भारत की रहस्यमयी झील ☄️ Lonar Lake का सच #shorts`
+3. `महाराष्ट्र की गुलाबी झील का रहस्य 😱 Lonar Lake #shorts`
+
+**Description:**
+```
+ये झील अचानक गुलाबी हो गई थी! 😱
+महाराष्ट्र के बुलढाणा ज़िले की लोनार झील — जो अंतरिक्ष से गिरे एक उल्कापिंड (meteorite) की टक्कर से बने विशाल गड्ढे में है ☄️
+
+🔬 इसका पानी खारा और क्षारीय (alkaline) है
+🌸 2020 में झील का रंग गुलाबी हो गया — वैज्ञानिकों के मुताबिक़ खारे पानी में पनपने वाले सूक्ष्म जीवों (microbes) की वजह से
+🛕 किनारों पर सदियों पुराने मंदिर — और कथा है कि यहीं भगवान विष्णु ने लोनासुर राक्षस का वध किया था
+
+विज्ञान और आस्था — एक ही झील में! 🇮🇳
+👉 ऐसे ही रहस्यों के लिए World Unscripted को सब्सक्राइब करें!
+
+⚠️ कुछ दृश्य AI से बनाए गए हैं (प्रतीकात्मक)। असली तस्वीरें: लोनार क्रेटर, NASA की 2020 सैटेलाइट तस्वीर और दैत्य सूदन मंदिर।
+📷 Photo credits (Wikimedia Commons): Lonar Crater — Dhruva Punde (CC BY-SA 4.0) · Lonar Lake, 10 June 2020 — NASA Earth Observatory (public domain) · Temple of Daitya Sudana — Aman.arch (CC BY-SA 4.0)
+
+#LonarLake #लोनार_झील #Lonar #Maharashtra #PinkLake #MeteoriteCrater #MysteriousIndia #रहस्य #IncredibleIndia #FactsInHindi #Shorts #WorldUnscripted
+```
+**Tags:** `lonar lake, lonar lake pink, lonar crater, lonar lake maharashtra, लोनार झील, लोनार सरोवर, meteorite crater india, pink lake india, buldhana, lonasura, mysterious india hindi, facts in hindi, world unscripted`
+
+**Settings:**
+- Video language: **Hindi**
+- Altered or synthetic content: **Yes**
+- **Instagram:** turn on the **AI info** label. Caption: `अंतरिक्ष से गिरे पत्थर ने बनाई ये झील… और फिर ये गुलाबी हो गई! 😱☄️ लोनार झील, महाराष्ट्र 🇮🇳 क्या आप यहाँ जाना चाहेंगे? 👇`
