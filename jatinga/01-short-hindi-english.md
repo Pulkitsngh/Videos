@@ -149,3 +149,32 @@ The ending line ("look up…") matches the opening image (a lantern and the sky)
 - **Hindi:** `वो गाँव जहाँ रात में परिंदे आसमान से गिरते हैं! 😱 जतिंगा का रहस्य #shorts`
 - **English:** `The Village Where Birds Fall from the Sky 😱 Jatinga, Assam #shorts`
 - **Hashtags:** `#Jatinga #JatingaMystery #Assam #DimaHasao #Haflong #BirdMystery #MysteriousIndia #NortheastIndia #IndiaFacts #Shorts #WorldUnscripted`
+
+## Upload package: Hindi video (42 s version `aa9e3dfc`)
+**Title (pick one):**
+1. `वो गाँव जहाँ रात में परिंदे आसमान से गिरते हैं! 😱 जतिंगा का रहस्य #shorts`
+2. `रुकिए! यहाँ परिंदे जान देने आते हैं? 😱 असम के जतिंगा का सच #shorts`
+3. `भारत का सबसे रहस्यमयी गाँव 🐦 Jatinga Bird Mystery #shorts`
+
+**Description:**
+```
+रुकिए! भारत में एक गाँव ऐसा भी है… जहाँ अंधेरी रातों में परिंदे आसमान से गिरने लगते हैं! 😱
+
+📍 जतिंगा — दीमा हसाओ ज़िला, असम (हाफ़लोंग के पास)
+
+🌫️ हर साल सितंबर से नवंबर, चाँद-रहित और कोहरे वाली रातों में सैकड़ों पक्षी गाँव की रोशनी की तरफ़ खिंचे चले आते हैं।
+❌ लोग इसे "परिंदों की आत्महत्या" कहते थे — लेकिन ये एक मिथक है।
+✅ वैज्ञानिकों के मुताबिक़ तेज़ हवा और घना कोहरा पक्षियों को रास्ता भटका देते हैं, और रोशनी उन्हें अपनी ओर खींच लेती है।
+🕊️ आज यहाँ परिंदों को बचाने के लिए जागरूकता की मुहिम चलती है।
+
+तो अगर कभी जतिंगा जाएँ… ऊपर देखना मत भूलिए! 🏮
+👉 ऐसे ही रहस्यों के लिए World Unscripted को सब्सक्राइब करें!
+
+⚠️ कुछ दृश्य AI से बनाए गए हैं (प्रतीकात्मक)। असली तस्वीरें: जतिंगा गाँव।
+📷 Photo credits (Wikimedia Commons, CC BY 4.0): "Overhead view of Jatinga village, Assam" & "Houses in Jatinga village" — GeoEvan (www.polgeonow.com)
+
+#Jatinga #जतिंगा #JatingaMystery #Assam #DimaHasao #Haflong #BirdMystery #MysteriousIndia #NortheastIndia #रहस्य #FactsInHindi #Shorts #WorldUnscripted
+```
+**Tags:** `jatinga, jatinga bird mystery, jatinga assam, jatinga bird suicide, जतिंगा, जतिंगा रहस्य, dima hasao, haflong, bird mystery india, mysterious village india, assam mystery, northeast india, facts in hindi, world unscripted`
+
+**Subtitles:** `jatinga/subtitles/jatinga-hindi_hi.srt` (Hindi, timed to this version). Settings: video language **Hindi**, **Altered or synthetic content: Yes**.
