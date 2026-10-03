@@ -1,5 +1,36 @@
 # Lonar Lake: 23-second Short (YouTube Shorts + Instagram Reels)
 
+**✅ Final video (English voice, no captions, no labels):** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/8af9b002-3d59-4337-9c04-8e11b5d2761e.mp4
+**Specs:** 720×1280, 24 fps, 24.1 s, −14 LUFS
+- 4 Seedance 2.0 Mini clips + 3 real photos
+- English narration ("Gideon", 1.15×)
+- No captions, no on-screen text, no AI/real-photo corner labels; only Like/Subscribe from 2.5 s
+- Music with a boom on the meteorite impact
+
+**Cost:** ≈ 21.2 credits (243.65 → 222.45)
+- An earlier render (`a6652d6c`) showed only the first 1.8 s of the pink clip, so it was replaced. In v2 the hook clips play as a fast time-lapse.
+
+| Time | Visual | Source |
+|---|---|---|
+| 0:00–1.8 | Lake turns green → pink (time-lapse) | AI (Mini, job `b6d23f5c`) |
+| 1.8–4.0 | Meteorite strikes basalt plain | AI (Mini, `2e6ec2dd`) |
+| 4.0–8.6 | Lonar crater, real photo | Dhruva Punde, CC BY-SA 4.0 |
+| 8.6–10.5 | Salty water → pink microbes | AI (Mini, `cdaeceba`) |
+| 10.5–13.3 | **Real NASA Landsat image of the pink lake, 10 June 2020** | NASA Earth Observatory, public domain |
+| 13.3–18.6 | Daitya Sudan temple, real photo | Aman.arch, CC BY-SA 4.0 |
+| 18.6–24.1 | Sunset aerial of the crater | AI (Mini, `1afaa33c`) |
+
+**Photo credits (put in the description):**
+1. "Lonar Crater seen from above" by **Dhruva Punde**, CC BY-SA 4.0: https://commons.wikimedia.org/wiki/File:Lonar_Crater_seen_from_above.jpg
+2. "Lonar lake OLI 2020162" (Landsat 8 image, 10 June 2020), **NASA Earth Observatory**, public domain: https://commons.wikimedia.org/wiki/File:Lonar_lake_OLI_2020162_LRG.jpg
+3. "Temple of Daitya Sudana" by **Aman.arch**, CC BY-SA 4.0: https://commons.wikimedia.org/wiki/File:Temple_of_Daitya_Sudana-Buldhana_district-Maharstra-DSC001.jpg
+
+**Upload:**
+- Title: `This Lake Suddenly Turned PINK 😱 Made by a Meteorite | Lonar Lake #shorts`
+- Mark **Altered or synthetic content: Yes**. With no on-screen labels, also say in the description that some scenes are AI-generated.
+
+---
+
 **Topic:** Lonar Lake, Buldhana district, Maharashtra
 **Format:** 9:16 · ~23 s · Hindi voice (English version below) · captions on
 **Hook idea:** open on the *payoff image* (green lake turning pink) and immediately add a second shock (made by a rock from space). Two surprises inside 5 seconds make people stay.
