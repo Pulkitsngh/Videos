@@ -1,5 +1,12 @@
 # Lonar Lake: 23-second Short (YouTube Shorts + Instagram Reels)
 
+**✅ Latest version (v3, with captions + location tag):** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/65ea7348-8f58-474c-86d9-d7d2f31ce547.mp4
+- Same video as v2, plus:
+  - smaller English captions (44 px instead of 60, key words in yellow), placed just above the Like/Subscribe buttons
+  - a small location tag "LONAR LAKE · MAHARASHTRA, INDIA" at the top for the whole video
+- Still no AI or real-photo corner labels. Re-render only, no extra credits.
+- v2 without captions: https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/8af9b002-3d59-4337-9c04-8e11b5d2761e.mp4
+
 **✅ Final video (English voice, no captions, no labels):** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/8af9b002-3d59-4337-9c04-8e11b5d2761e.mp4
 **Specs:** 720×1280, 24 fps, 24.1 s, −14 LUFS
 - 4 Seedance 2.0 Mini clips + 3 real photos
