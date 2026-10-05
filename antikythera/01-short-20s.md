@@ -1,4 +1,80 @@
-# Antikythera Mechanism, Greece: "The 2,000-Year-Old Computer": ~20-second Short
+# Antikythera Mechanism, Greece: "The 2,000-Year-Old Computer": Hindi Short
+
+**✅ Final video (Hindi, 21.7 s):** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/dff8acd3-7e86-4691-be16-5cc480a03263.mp4
+(First render, 22.9 s, too long: `a20a32cd`)
+
+**Thumbnails:**
+- 9:16: https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/b70631ac-07ec-4fd6-b90b-18623de3d00c.jpg
+- 16:9: https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/e663c62f-348d-4155-81fa-81042e5a5e32.jpg
+- Text: "2000 साल पुराना / कंप्यूटर! / समंदर में मिली रहस्यमयी मशीन / ANTIKYTHERA MECHANISM"
+- Hind and Montserrat fonts confirmed loaded at render time.
+
+**Subtitles:** `antikythera/subtitles/antikythera-hindi_hi.srt`
+
+**Specs:** 720×1280, 24 fps, 21.7 s, −14 LUFS
+- 6 Hindi lines ("Gideon", 1.18×, tight 0.1 s gaps)
+- 4 Seedance 2.0 Mini clips + 3 real photos with zoom and pan
+- Pop-up cards: 2000 / ANTIKYTHERA / 30+ / ECLIPSES / 1000 / FOLLOW + SUBSCRIBE
+- Small English captions
+- Top tag "ANTIKYTHERA MECHANISM · GREECE"
+- Ending says "फ़ॉलो और सब्सक्राइब कीजिए चैनल" (no channel name)
+
+**Cost:** ≈ 23.4 credits (4 Mini clips ≈ 20, voice ≈ 1, thumbnail ≈ 2). Balance 142.9.
+
+| Time | Visual |
+|---|---|
+| 0:00–5.5 | AI, realistic: diver's hand sweeps sand off the corroded bronze lump on the shipwreck; push-in, hidden gear glints (hook) |
+| 5.5–7.9 | **Real:** Antikythera Mechanism fragment, National Archaeological Museum, Athens (push-in) |
+| 7.9–10.2 | **Real:** Antikythera island from the sea (push-in) |
+| 10.2–13.3 | AI: X-ray/CT scan reveals glowing gears inside |
+| 13.3–15.2 | AI: reconstructed gears turning, sun and moon dials, eclipse |
+| 15.2–18.0 | **Real:** modern reconstruction model, front view (vertical pan) |
+| 18.0–21.7 | AI: camera flies out of the gears into a starry sky; Like/Subscribe |
+
+**Real image credits (put in the description):**
+- "Mechanism of Antikythera, 150-100 BC, NAMA, 191431" by **Zde**, CC BY-SA 4.0
+- "Antikythera island seen from ferry from Kissamos" by **Alexey Komarov**, CC BY-SA 4.0
+- "Antikythera mechanism frontview (model)" by **Gts-tg**, CC BY-SA 4.0
+
+**Jobs:**
+- Voice: `cf54da10`, `3d872dd5`, `0dc2a20d`, `dae537a7`, `0b1e2c5c`, `e7bb8338`
+- Clips: `d186cccb`, `3c43f573`, `e857771c`, `1bf26d3a`
+- Thumbnail base: `859a0138`
+
+## Upload package (Hindi)
+**Title (pick one):**
+1. `2000 साल पुराना कंप्यूटर! 😱 समंदर में मिली रहस्यमयी मशीन #shorts`
+2. `समंदर से निकला 2000 साल पुराना कंप्यूटर! 🤯 Antikythera Mechanism #shorts`
+3. `प्राचीन ग्रीस का कंप्यूटर जो ग्रहण बता देता था! 😱 #shorts`
+
+**Description:**
+```
+रुकिए! समंदर में मिला ये ज़ंग लगा टुकड़ा… दरअसल 2000 साल पुराना कंप्यूटर है! 😱⚙️
+
+📍 एंटीकिथेरा मैकेनिज़्म (Antikythera Mechanism), ग्रीस
+🌊 1900–1901 में ग्रीस के एंटीकिथेरा द्वीप के पास एक प्राचीन डूबे जहाज़ से मिला
+📅 लगभग ईसा पूर्व दूसरी–पहली सदी का (2000+ साल पुराना)
+🔬 एक्स-रे स्कैन में कांसे के 30 से ज़्यादा गियर दिखे
+🌑 सूरज-चाँद की स्थिति और ग्रहण तक का हिसाब लगा सकता था
+⏳ इतनी जटिल गियर वाली मशीन अगले हज़ार साल से ज़्यादा तक नहीं मिली
+🏛️ आज ये एथेंस के नेशनल आर्कियोलॉजिकल म्यूज़ियम में रखा है
+
+ऐसे ही रहस्यों के लिए फ़ॉलो और सब्सक्राइब कीजिए चैनल! 🔔
+
+⚠️ कुछ दृश्य AI से बनाए गए हैं (प्रतीकात्मक)।
+📷 Real photos (Wikimedia Commons, CC BY-SA 4.0): Antikythera Mechanism fragment — Zde · Antikythera island — Alexey Komarov · Reconstruction model — Gts-tg
+
+#AntikytheraMechanism #AncientTechnology #Greece #AncientGreece #Mystery #History #प्राचीन_विज्ञान #FactsInHindi #Shorts
+```
+**Tags:** `antikythera mechanism, antikythera mechanism hindi, ancient computer, 2000 year old computer, ancient greek technology, ancient mystery, एंटीकिथेरा, प्राचीन कंप्यूटर, history facts hindi, ancient technology`
+
+**Settings:**
+- Video language: Hindi
+- Altered or synthetic content: **Yes**
+- Upload the Hindi SRT under Subtitles, "With timing"
+- Keep the photo credits: the CC BY-SA licence requires them.
+
+---
 
 **Object:** Antikythera Mechanism, found in a Roman-era shipwreck off the island of Antikythera, Greece. Now in the National Archaeological Museum, Athens.
 **Format:** 9:16 · ~20–22 s · Hindi voice (English version below) · small captions · pop-up cards · top tag "ANTIKYTHERA · GREECE"
