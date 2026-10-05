@@ -16,9 +16,11 @@ Every topic, with its location, status and final video links. One row per topic,
 | 10 | 2026-10-03 | Jatinga – where birds fall from the sky | Mysterious place / nature | Jatinga village | Dima Hasao | Haflong | Assam | India | Short published-ready + Hindi subtitles + thumbnail; 25 s cut pending | Hindi voice + English captions | 42.2 s | `jatinga/` |
 | 11 | 2026-09-29 | Lavasa (reference video analysis) | Research | Lavasa planned city | Pune | Pune | Maharashtra | India | Analysis only | — | — | `lavasa-style-analysis/` |
 | 12 | 2026-09-29 | 12 mysterious temples (LightJyoti-style script) | Research / script | Multiple locations | — | — | Multiple | India | Script only | Hindi | Long-form (planned) | `lightjyoti-style/` |
+| 13 | 2026-10-05 | Voynich Manuscript – the book nobody can read | Unsolved mystery / history | Beinecke Rare Book & Manuscript Library, Yale University (MS 408) | New Haven County | New Haven | Connecticut | USA | Script only | Hindi (+ English version) | ~22 s (planned) | `voynich/` |
 
 ## Summary by state / UT
 - **Andaman & Nicobar Islands (UT)**: 1
+- **Connecticut (USA)**: 1
 - **Andhra Pradesh**: 1
 - **Assam**: 1
 - **Gujarat**: 1
@@ -29,6 +31,7 @@ Every topic, with its location, status and final video links. One row per topic,
 - **Uttarakhand**: 1
 
 ## Summary by country
+- **USA**: 1
 - **India**: 10
 - **Saudi Arabia (flight UAE → Israel)**: 1
 
