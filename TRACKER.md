@@ -17,11 +17,13 @@ Every topic, with its location, status and final video links. One row per topic,
 | 11 | 2026-09-29 | Lavasa (reference video analysis) | Research | Lavasa planned city | Pune | Pune | Maharashtra | India | Analysis only | — | — | `lavasa-style-analysis/` |
 | 12 | 2026-09-29 | 12 mysterious temples (LightJyoti-style script) | Research / script | Multiple locations | — | — | Multiple | India | Script only | Hindi | Long-form (planned) | `lightjyoti-style/` |
 | 13 | 2026-10-05 | Voynich Manuscript – the book nobody can read | Unsolved mystery / history | Beinecke Rare Book & Manuscript Library, Yale University (MS 408) | New Haven County | New Haven | Connecticut | USA | Short published-ready + Hindi subtitles + thumbnails | Hindi voice + English captions | 24.0 s | `voynich/` |
+| 14 | 2026-10-05 | Antikythera Mechanism – the 2,000-year-old computer | Ancient technology / mystery | Found in shipwreck off Antikythera island; now at National Archaeological Museum | Islands regional unit (Attica region) | Athens (museum) / Antikythera island | Attica | Greece | Script only | Hindi (+ English version) | ~20 s (planned) | `antikythera/` |
 
 ## Summary by state / UT
 - **Andaman & Nicobar Islands (UT)**: 1
 - **Connecticut (USA)**: 1
 - **Andhra Pradesh**: 1
+- **Attica (Greece)**: 1
 - **Assam**: 1
 - **Gujarat**: 1
 - **Maharashtra**: 2
@@ -31,6 +33,7 @@ Every topic, with its location, status and final video links. One row per topic,
 - **Uttarakhand**: 1
 
 ## Summary by country
+- **Greece**: 1
 - **USA**: 1
 - **India**: 10
 - **Saudi Arabia (flight UAE → Israel)**: 1
