@@ -1,4 +1,78 @@
-# Voynich Manuscript: "The Book Nobody Can Read": 20–24 second Short
+# Voynich Manuscript: "The Book Nobody Can Read": Hindi Short
+
+**✅ Final video (Hindi, 24.0 s):** https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/aa3340e2-87be-4047-bdaf-f5bef319e7ba.mp4
+(Untrimmed 24.9 s render: `b669c603-c3f3-4ebe-b2fd-e9ce68114aa8`)
+
+**Thumbnails:**
+- 9:16 (Shorts cover): https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/cffcfc0e-8fab-4700-9d22-23f3dfeee0aa.jpg
+- 16:9: https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/29007411-0bba-4054-a396-867c90ce0a86.jpg
+- Text on both: "600 साल पुरानी किताब / कोई नहीं पढ़ पाया! / दुनिया का सबसे बड़ा रहस्य / VOYNICH MANUSCRIPT"
+- Fonts: Hind Bold and Montserrat, both confirmed loaded at render time.
+
+**Subtitles:** `voynich/subtitles/voynich-hindi_hi.srt`
+
+**Specs:** 720×1280, 24 fps, 24.0 s, −14 LUFS
+- 6 Hindi voice lines ("Gideon", 1.15×)
+- 4 Seedance 2.0 Mini clips + 4 real images, each animated with a zoom or pan
+- Pop-up cards: 600 / UNKNOWN LANGUAGE / UNKNOWN PLANTS · STAR CHARTS / WWII CODEBREAKERS FAILED / VOYNICH MANUSCRIPT · YALE / SECRET... OR HOAX?
+- Small English captions above Like/Subscribe
+- Top tag "THE UNREADABLE BOOK · 15TH CENTURY"
+- Booms on the hook, the codebreakers line and the final question
+
+**Cost:** ≈ 23 credits (4 Mini clips ≈ 20, voice ≈ 1, thumbnail image ≈ 2). Balance 166.25.
+
+| Time | Visual |
+|---|---|
+| 0:00–4.6 | AI: glowing glyphs, fast pull-back, the book bursts open and its pages riffle (hook) |
+| 4.6–8.7 | **Real:** Voynich page full of the unknown script (fast push-in) |
+| 8.7–10.0 | **Real:** Voynich plant page (push-in) |
+| 10.0–11.3 | **Real:** Voynich astronomical circle, f70r (push-in) |
+| 11.3–14.8 | AI: 1940s codebreakers' desk, frustrated hands |
+| 14.8–17.0 | **Real:** Beinecke Library interior, Yale (vertical pan) |
+| 17.0–19.7 | AI: glide to the manuscript in a glass case |
+| 19.7–24.0 | AI: candlelit pages flip, glowing symbols float away; Like/Subscribe |
+
+**Real image credits (all public domain, Wikimedia Commons):**
+- Voynich Manuscript pages (3) and (32), and "astronomical example 70r crop": scans of Beinecke MS 408, public domain
+- "Beinecke Library interior.JPG": public domain
+
+**Jobs:**
+- Voice: `895203af`, `efc4c010`, `143ee0f7`, `1b8e2772`, `ae62ba66`, `1c24b407`
+- Clips: `68df151f`, `3180bea5`, `a148aab8`, `94f42949`
+- Thumbnail base image: `726097a8`
+
+## Upload package (Hindi)
+**Title (pick one):**
+1. `600 साल पुरानी किताब जिसे आज तक कोई नहीं पढ़ पाया! 😱 Voynich Manuscript #shorts`
+2. `दुनिया की सबसे रहस्यमयी किताब 📜 इसे कोई नहीं पढ़ सका! #shorts`
+3. `इस किताब की भाषा धरती की नहीं? 😱 Voynich Manuscript का रहस्य #shorts`
+
+**Description:**
+```
+600 साल पुरानी एक किताब… जिसे आज तक दुनिया में कोई नहीं पढ़ पाया! 😱📜
+
+🔎 वॉयनिच मैनुस्क्रिप्ट (Voynich Manuscript)
+📅 इसके पन्नों की कार्बन डेटिंग: लगभग 1404–1438 ई.
+🔤 इसकी लिखावट किसी भी जानी-पहचानी भाषा से मेल नहीं खाती
+🌿 अजीब, अनजाने पौधे और रहस्यमयी नक्षत्र-चित्र
+🕵️ विश्वयुद्ध के दौर के मशहूर कोड-ब्रेकर्स भी इसे नहीं पढ़ पाए
+🏛️ आज ये अमेरिका की येल यूनिवर्सिटी की Beinecke Library में रखी है (MS 408)
+
+गुप्त ज्ञान… या सदियों पुराना धोखा? 🤔 कमेंट में अपनी राय बताइए!
+👉 ऐसे ही रहस्यों के लिए World Unscripted को सब्सक्राइब करें!
+
+⚠️ कुछ दृश्य AI से बनाए गए हैं (प्रतीकात्मक)। असली तस्वीरें: वॉयनिच मैनुस्क्रिप्ट के पन्ने और Beinecke Library (Wikimedia Commons, public domain)।
+
+#VoynichManuscript #वॉयनिच #Mystery #UnsolvedMystery #रहस्य #AncientBook #History #FactsInHindi #Shorts #WorldUnscripted
+```
+**Tags:** `voynich manuscript, voynich manuscript hindi, mysterious book, book nobody can read, unsolved mystery, वॉयनिच मैनुस्क्रिप्ट, रहस्यमयी किताब, ancient manuscript, yale beinecke, history facts hindi, world unscripted`
+
+**Settings:**
+- Video language: Hindi
+- Altered or synthetic content: **Yes**
+- Upload the Hindi SRT under Subtitles, "With timing"
+
+---
 
 **Subject:** Voynich Manuscript (Beinecke MS 408), kept at the Beinecke Rare Book & Manuscript Library, Yale University, New Haven, Connecticut, USA
 **Format:** 9:16 · ~22 s · Hindi voice (English version below) · small captions above Like/Subscribe · small top tag "VOYNICH MANUSCRIPT · YALE, USA"
