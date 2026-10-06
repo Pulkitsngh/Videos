@@ -9,6 +9,17 @@
 - Text: "2000 साल पुराना / कंप्यूटर! / समंदर में मिली रहस्यमयी मशीन / ANTIKYTHERA MECHANISM"
 - Hind and Montserrat fonts confirmed loaded at render time.
 
+**Detailed thumbnails (v2, recommended):**
+- 9:16: https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/fe60b5e7-4180-47f6-8506-b84a7f123db7.jpg
+- 16:9: https://d2ol7oe51mr4n9.cloudfront.net/user_3JzJNaJGbHkwuqjj3dJkjvMymWi/09b50970-70bd-48bc-a925-33ae06e97c10.jpg
+- Text:
+  - Headline: "2000 साल पुराना / कंप्यूटर!"
+  - Badge: "150–100 BC"
+  - Fact chips: "1901 · समंदर में डूबे जहाज़ से मिला", "30+ · कांसे के गियर अंदर छिपे", "ग्रहण · की भविष्यवाणी करता था"
+  - Red banner: "रहस्यमयी प्राचीन मशीन"
+  - Bottom line: "ANTIKYTHERA MECHANISM · GREECE"
+- Same base image (`859a0138`), so there was no extra credit cost. Fonts confirmed loaded.
+
 **Subtitles:** `antikythera/subtitles/antikythera-hindi_hi.srt`
 
 **Specs:** 720×1280, 24 fps, 21.7 s, −14 LUFS
