@@ -9,29 +9,31 @@
 
 | Time | Voice-over | Visual (realistic first) | Pop-up card |
 |---|---|---|---|
-| **0:00–0:04** 🔥 | **रुकिए!** 1963 में एक आदमी ने अपने घर की **दीवार तोड़ी…** और पीछे मिला… **ज़मीन के नीचे पूरा शहर!** | **Realistic:** a sledgehammer smashes through an old stone wall in dim lamplight; dust settles and the camera pushes through the hole into a dark tunnel that drops away into endless stairs (AI) | **1963** |
+| **0:00–0:04** 🔥 | **1963 में** एक आदमी ने अपने घर की **दीवार तोड़ी…** और पीछे मिला… **ज़मीन के नीचे पूरा शहर!** | **Realistic:** a sledgehammer smashes through an old stone wall in dim lamplight; dust settles and the camera pushes through the hole into a dark tunnel that drops away into endless stairs (AI) | **1963** |
 | 0:04–0:08 | ये है **तुर्की का डेरिंकुयु**: लगभग **85 मीटर गहरा!** | Real photo of the narrow carved passages (push-in), then a cutaway animation of floor after floor going down | **85 METRES DEEP** |
-| 0:08–0:12 | यहाँ **20,000 लोग**, जानवरों समेत, छिप सकते थे! | AI: torch-lit underground halls full of people, stables, wells, smoke rising up air shafts (no faces in close-up) | **20,000 PEOPLE** |
-| 0:12–0:17 | दुश्मन आते… तो **500 किलो के पत्थर के दरवाज़े** रास्ता बंद कर देते! | Real photo of the round **rolling stone door**, then AI: the stone rolls shut with a heavy boom | **500 KG STONE DOOR** |
+| 0:08–0:12 | अंदर **कुएँ, अस्तबल, चर्च** थे… और **20,000 लोग** यहाँ छिप सकते थे! | AI: torch-lit underground halls, a well, stables, a carved chapel, smoke rising up air shafts (no faces in close-up) | **WELLS · STABLES · CHAPEL** → **20,000 PEOPLE** |
+| 0:12–0:17 | दुश्मन आते… तो **500 किलो के पत्थर** से रास्ता बंद! | Real photo of the round **rolling stone door**, then AI: the stone rolls shut with a heavy boom | **500 KG STONE DOOR** |
 | 0:17–0:21 | ऐसे ही रहस्यों के लिए… **फ़ॉलो और सब्सक्राइब कीजिए चैनल!** | Camera rises up a ventilation shaft into the Cappadocia landscape at sunrise; Like/Subscribe | |
 
-**Alternative hooks (0–4 s):**
-- A: "आपके घर के नीचे… कोई शहर हो सकता है? तुर्की में यही हुआ!"
-- B: "ज़मीन के 85 मीटर नीचे… 20,000 लोग छिपकर रहते थे!"
-- C: "एक दीवार तोड़ी… और खुल गया हज़ारों साल पुराना राज़!"
+**Opening rule (updated):** no "रुकिए!"; the video opens directly on a hard fact (the year **1963**), and the freed time adds one more fact (wells, stables, chapel inside).
+
+**Alternative fact-first hooks (0–4 s):**
+- A: "ज़मीन से **85 मीटर नीचे**… एक पूरा शहर छिपा था, और किसी को पता नहीं था!"
+- B: "एक घर की दीवार के पीछे… **20,000 लोगों** का छिपा हुआ शहर!"
+- C: "**500 किलो** के पत्थर के दरवाज़े… ज़मीन के नीचे! ये है डेरिंकुयु!"
 
 ## English version (same timing)
 
 | Time | Voice-over |
 |---|---|
-| 0:00–0:04 | **Wait!** In 1963, a man knocked down a **wall in his house…** and behind it was **an entire city underground!** |
+| 0:00–0:04 | **In 1963**, a man knocked down a **wall in his house…** and behind it was **an entire city underground!** |
 | 0:04–0:08 | This is **Derinkuyu, Turkey**, about **85 metres deep!** |
-| 0:08–0:12 | Up to **20,000 people**, with their animals, could hide here! |
-| 0:12–0:17 | When enemies came… **half-tonne stone doors** rolled shut to seal the way! |
+| 0:08–0:12 | Inside were **wells, stables, a chapel**… and up to **20,000 people** could hide here! |
+| 0:12–0:17 | When enemies came… a **half-tonne stone** sealed the way! |
 | 0:17–0:21 | For more mysteries like this… **follow and subscribe to the channel!** |
 
 ## Why the opening holds viewers
-1. **"रुकिए!"** stops the scroll in the first half-second.
+1. **A hard fact in the first second** ("1963…"): it sounds like real news, not a gimmick.
 2. **An everyday act with an impossible result:** "broke a wall in his house" leads to "a whole city". Anyone can picture it.
 3. **A realistic first frame:** a hammer through a wall, dust and a dark hole. It feels like real footage, not fantasy.
 4. **A new number every 4 s** (1963 → 85 m → 20,000 → 500 kg) keeps the "wow" coming with no dead moment.
