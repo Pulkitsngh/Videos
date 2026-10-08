@@ -1,0 +1,39 @@
+/* Desktop-only additions on top of the original VermiTrack stylesheet. */
+.setup-card { width:min(100%,560px); text-align:left; }
+.setup-card h1, .setup-card .eyebrow, .setup-card .access-logo { text-align:center; margin-left:auto; margin-right:auto; }
+.setup-card>p:not(.eyebrow) { max-width:none; text-align:center; }
+.setup-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:0 0 14px; padding:4px; border-radius:13px; background:#eef2ec; }
+.setup-tabs button { border:0; border-radius:10px; padding:10px 8px; background:transparent; color:#4f6458; font-weight:750; font-size:12px; cursor:pointer; }
+.setup-tabs button.active { background:#fff; color:#1f5a43; box-shadow:0 2px 8px rgba(35,67,51,.12); }
+.setup-form { display:flex; flex-direction:column; gap:12px; margin-bottom:10px; }
+.setup-form label { display:flex; flex-direction:column; gap:5px; }
+.setup-form label>span { color:#4f6458; font-size:12px; font-weight:750; }
+.setup-form label>small { color:#8a958f; font-size:11px; line-height:1.45; }
+.setup-form input, .setup-form textarea, .prompt-input { width:100%; border:1px solid #d6dfd7; border-radius:11px; padding:11px 12px; background:#fff; color:var(--ink); font-size:13px; }
+.setup-form textarea { font-family:ui-monospace,Consolas,monospace; font-size:12px; resize:vertical; }
+.access-card .form-error { margin:0 0 12px; text-align:left; }
+.access-card .access-secondary-button { margin-top:10px; width:100%; }
+.access-card button.access-secondary-button:disabled { opacity:.6; cursor:wait; }
+.access-card footer b { word-break:break-all; }
+.demo-banner { margin:0; padding:9px 18px; background:#fff3d6; color:#7a5310; font-size:12px; font-weight:650; text-align:center; border-bottom:1px solid #f0dfb1; }
+.report-head-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.primary-small.secondary { background:#fff; color:#1f5a43; border:1px solid #c9d8cd; }
+.prompt-sheet { max-width:520px; }
+.prompt-input { margin:4px 0 14px; resize:vertical; font:inherit; }
+.signout-link { cursor:pointer; font:inherit; }
+.setup-code { display:block; margin:8px 0 10px; padding:9px 10px; border-radius:9px; background:#f5f4ef; color:#234b38; font-size:11px; word-break:break-all; user-select:all; }
+.connection-card small { word-break:break-all; }
+.user-card-actions { display:flex; gap:8px; flex-wrap:wrap; grid-column:1/-1; }
+.user-card-actions button.secondary { background:#fff; color:#1f5a43; border:1px solid #c9d8cd; }
+.recipient-list { display:flex; flex-direction:column; gap:6px; max-height:220px; overflow:auto; padding:2px; }
+.recipient-list>span { color:#5b6c63; font-size:11px; font-weight:750; }
+.recipient-list>small { color:#8a958f; }
+label.recipient { display:grid !important; grid-template-columns:auto 1fr; column-gap:10px; align-items:center; padding:8px 10px; border:1px solid #e3e7e1; border-radius:10px; background:#fff; cursor:pointer; }
+label.recipient input { grid-row:span 2; width:16px; height:16px; }
+label.recipient b { font-size:12px; } label.recipient small { color:#8a958f; font-size:11px; }
+.batch-form .recipient-list.wide { grid-column:1/-1; }
+.import-body { padding:4px 14px 14px; }
+.import-body p { margin:0 0 12px; color:#5b6c63; font-size:12px; line-height:1.6; }
+.import-button { display:inline-flex; position:relative; cursor:pointer; }
+.import-button input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.import-button span { display:inline-block; padding:10px 16px; border-radius:11px; background:#245c43; color:#fff; font-size:12px; font-weight:800; }

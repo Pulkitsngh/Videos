@@ -1,0 +1,94 @@
+{
+  "name": "vermitrack-desktop",
+  "productName": "Navjyoti VermiTrack",
+  "version": "1.0.0",
+  "description": "Navjyoti VermiTrack desktop app — shared vermicompost production register on Microsoft 365.",
+  "author": "Navjyoti Commodity Management Services Ltd.",
+  "private": true,
+  "main": "dist-electron/main.cjs",
+  "scripts": {
+    "dev": "npm run build:main && vite build && electron .",
+    "build:main": "esbuild electron/main.ts --bundle --platform=node --format=cjs --target=node20 --external:electron --outfile=dist-electron/main.cjs",
+    "build": "tsc --noEmit && npm run build:main && vite build",
+    "start": "electron .",
+    "test": "esbuild tests/sharepoint.test.ts --bundle --platform=node --format=esm --outfile=dist-tests/sharepoint.test.mjs --log-level=warning && node --test dist-tests/sharepoint.test.mjs",
+    "dist:win": "npm run build && electron-builder --win --publish never",
+    "dist:mac": "npm run build && electron-builder --mac --publish never",
+    "dist:linux": "npm run build && electron-builder --linux --publish never",
+    "test:e2e": "npm run build && xvfb-run -a node tests/e2e.mjs"
+  },
+  "build": {
+    "appId": "com.navjyoti.vermitrack",
+    "productName": "Navjyoti VermiTrack",
+    "directories": {
+      "output": "release",
+      "buildResources": "build-resources"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build-resources/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "VermiTrack"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "category": "public.app-category.business",
+      "icon": "build-resources/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office",
+      "icon": "build-resources/icon.png"
+    },
+    "extraResources": [
+      "SETUP-GUIDE.md"
+    ]
+  },
+  "devDependencies": {
+    "@azure/msal-node": "^3.8.10",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^38.8.6",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.64.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "5.9",
+    "vite": "^7.3.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pulkitsngh/videos.git"
+  }
+}

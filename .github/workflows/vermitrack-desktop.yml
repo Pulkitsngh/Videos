@@ -1,0 +1,45 @@
+name: VermiTrack desktop installers
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "vermitrack-desktop/**"
+      - ".github/workflows/vermitrack-desktop.yml"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: --win
+            artifact: VermiTrack-Windows-installer
+            files: vermitrack-desktop/release/*.exe
+          - os: macos-latest
+            target: --mac
+            artifact: VermiTrack-Mac-installer
+            files: vermitrack-desktop/release/*.dmg
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: vermitrack-desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vermitrack-desktop/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npx electron-builder ${{ matrix.target }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
