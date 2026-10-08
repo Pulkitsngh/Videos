@@ -43,3 +43,32 @@ jobs:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.files }}
           if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+      - name: Rename installers for simple download links
+        run: |
+          cd installers
+          for f in *.exe; do mv "$f" VermiTrack-Windows-Setup.exe; done
+          for f in *.dmg; do mv "$f" VermiTrack-Mac.dmg; done
+          ls -la
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: vermitrack-desktop-latest
+          name: Navjyoti VermiTrack desktop (latest)
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          body: |
+            Download **VermiTrack-Windows-Setup.exe** (Windows) or **VermiTrack-Mac.dmg** (Mac) below.
+            Windows: if SmartScreen appears, click "More info" → "Run anyway".
+            Setup steps: vermitrack-desktop/SETUP-GUIDE.md
+          files: installers/*
+          overwrite_files: true
