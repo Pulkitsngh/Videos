@@ -100,3 +100,16 @@ The code contains only the app ID, tenant ID and site address; it is not a passw
   - *"not an approved VermiTrack user"*: add the person under Admin → Approved users, using their exact sign-in email.
   - *"does not have permission for the VermiTrack SharePoint site"*: add them as a Member of the site.
   - *"Sign-in did not complete"*: check that the redirect URI `http://localhost` is set as a **Public client/native** platform in Step 2.
+
+## For IT: deploying to every PC
+
+- **Silent install, all users (Windows):** `VermiTrack-Windows-Setup.exe /S /allusers`. Use `/currentuser` for a per-user install. It works with Intune (Win32 app), SCCM or Group Policy scripts.
+- **Pre-configure the connection** so users never type a setup code. Create `C:\ProgramData\VermiTrack\vermitrack.config.json` (Mac: `/Library/Application Support/VermiTrack/vermitrack.config.json`) containing:
+
+  ```json
+  { "clientId": "<Application (client) ID>", "tenantId": "<Directory (tenant) ID>", "siteUrl": "https://lnbgroup.sharepoint.com/sites/VermiTrack" }
+  ```
+
+  or `{ "setupCode": "VT1-..." }`. On launch, VermiTrack goes straight to Microsoft 365 sign-in.
+- **Uninstall:** Settings → Apps → Navjyoti VermiTrack, or run the uninstaller with `/S`.
+- **Per-user data on the PC:** `%APPDATA%\vermitrack-desktop` holds the settings, the encrypted sign-in token cache and the log. Register data lives only in SharePoint.

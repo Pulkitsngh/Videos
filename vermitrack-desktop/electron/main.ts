@@ -31,7 +31,39 @@ const memory:ApiContext["memory"]={ sessions:new Map(),touched:new Map() };
 
 // ----------------------------------------------------------------- settings
 
-function readSettings():Settings | null { try { return JSON.parse(fs.readFileSync(userFile("settings.json"),"utf8")) as Settings; } catch { return null; } }
+function readUserSettings():Settings | null { try { return JSON.parse(fs.readFileSync(userFile("settings.json"),"utf8")) as Settings; } catch { return null; } }
+
+/**
+ * IT-managed connection settings, so the app can be deployed to every PC
+ * without each user entering a setup code. The file holds either
+ * {"setupCode":"VT1-..."} or {"clientId","tenantId","siteUrl","downloadUrl"}.
+ */
+function managedConfigPaths() {
+  if (process.env.VERMITRACK_MANAGED_CONFIG) return [process.env.VERMITRACK_MANAGED_CONFIG];
+  const name="vermitrack.config.json";
+  const paths=[path.join(path.dirname(process.execPath),name)];
+  if (process.platform==="win32") paths.unshift(path.join(process.env.ProgramData || "C:\\ProgramData","VermiTrack",name));
+  if (process.platform==="darwin") paths.unshift(path.join("/Library/Application Support/VermiTrack",name));
+  return paths;
+}
+function readManagedSettings():Settings | null {
+  for (const file of managedConfigPaths()) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const raw=JSON.parse(fs.readFileSync(file,"utf8")) as Record<string,string>;
+      const values=raw.setupCode ? decodeSetupCode(raw.setupCode) : { clientId:raw.clientId ?? "",tenantId:raw.tenantId ?? "",siteUrl:raw.siteUrl ?? "",downloadUrl:raw.downloadUrl ?? "" };
+      if (!GUID.test(values.clientId) || !/^https:\/\/[^/]+\.sharepoint\./i.test(values.siteUrl)) { log(`Ignoring invalid managed config ${file}`); continue; }
+      return { mode:"sharepoint",clientId:values.clientId,tenantId:values.tenantId,siteUrl:values.siteUrl.replace(/\/+$/,""),downloadUrl:values.downloadUrl || undefined };
+    } catch (error) { log(`Could not read managed config ${file}`,error); }
+  }
+  return null;
+}
+function readSettings():Settings | null {
+  const user=readUserSettings();
+  const managed=readManagedSettings();
+  if (!managed) return user;
+  return user?.mode==="sharepoint" && user.siteUrl===managed.siteUrl && user.clientId===managed.clientId ? { ...managed,siteId:user.siteId,siteName:user.siteName } : managed;
+}
 function writeSettings(settings:Settings | null) {
   fs.mkdirSync(app.getPath("userData"),{ recursive:true });
   if (settings) fs.writeFileSync(userFile("settings.json"),JSON.stringify(settings,null,2)); else fs.rmSync(userFile("settings.json"),{ force:true });
