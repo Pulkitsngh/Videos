@@ -523,28 +523,6 @@ def build(src, out, batch):
             ws.cell(r, c1).alignment = Alignment(horizontal="left", vertical="center", indent=1)
     ws.row_dimensions[13].height = 22
 
-    # earthworm purchases (kept outside every batch figure)
-    B0 = R - 2
-    subhead(ws, B0, 5, 9, "EARTHWORM PURCHASES  (not counted in any batch)", "7A4FB5")
-    breed = [
-        ("Earthworms purchased (kg)", "=SUM(Earthworm[WormsKg])", KG_FMT),
-        ("Purchase amount (₹)", "=SUM(Earthworm[Amount])", INR_FMT),
-        ("Transport (₹)", "=SUM(Earthworm[TransportCost])", INR_FMT),
-        ("Total earthworm cost (₹)", "=SUM(Earthworm[Amount])+SUM(Earthworm[TransportCost])", INR_FMT),
-        ("Number of purchases", '=COUNTIFS(Earthworm[PurchaseDate],">0")', "#,##0"),
-        ("Average rate (₹/kg)", '=IFERROR(SUM(Earthworm[Amount])/SUM(Earthworm[WormsKg]),"")', "₹#,##0.00"),
-        ("Payments not settled", '=COUNTIFS(Earthworm[PurchaseDate],">0",Earthworm[PaymentStatus],"<>Paid")', "#,##0"),
-    ]
-    for i, (label, f, fmt) in enumerate(breed):
-        r = B0 + 1 + i
-        ws.merge_cells(start_row=r, start_column=5, end_row=r, end_column=7)
-        ws.cell(r, 5, label).font = F(color=INK)
-        c = ws.cell(r, 8, f)
-        c.font, c.number_format, c.alignment = F(bold=True, color=INK), fmt, Alignment(horizontal="right")
-        for cc in range(5, 10):
-            ws.cell(r, cc).border = Border(bottom=THIN)
-            ws.cell(r, cc).fill = FILL("F3EEFA")
-
     # charts
     T = 37
     subhead(ws, T, 2, 12, "TRENDS", GREEN)
@@ -636,6 +614,7 @@ def build(src, out, batch):
     ws["C5"].protection = Protection(locked=False)
     protect(ws)
 
+    earthworm_totals(wb["Earthworm"])
     build_reports(wb, ws_rep, list_ranges, lists["Supplier"], lists["Customer"])
     build_readme(ws_readme)
     protect(ws_readme)
@@ -718,6 +697,32 @@ def banner(ws, row, c1, c2, title, sub):
     ws.row_dimensions[row].height = 26
     ws.row_dimensions[row + 1].height = 8
     ws.row_dimensions[row + 2].height = 18
+
+
+def earthworm_totals(ws):
+    """Totals beside the Earthworm register. Earthworms serve several batches, so these costs appear only here."""
+    ws.column_dimensions["L"].width, ws.column_dimensions["M"].width = 32, 16
+    head = ws.cell(1, 12, "EARTHWORM TOTALS (all purchases)")
+    head.font, head.fill = F(bold=True, color="FFFFFF"), FILL("7A4FB5")
+    ws.cell(1, 13).fill = FILL("7A4FB5")
+    rows = [("Earthworms purchased (kg)", "=SUM(Earthworm[WormsKg])", KG_FMT),
+            ("Purchase amount (₹)", "=SUM(Earthworm[Amount])", INR_FMT),
+            ("Transport (₹)", "=SUM(Earthworm[TransportCost])", INR_FMT),
+            ("Total earthworm cost (₹)", "=SUM(Earthworm[Amount])+SUM(Earthworm[TransportCost])", INR_FMT),
+            ("Number of purchases", '=COUNTIFS(Earthworm[PurchaseDate],">0")', "#,##0"),
+            ("Average rate (₹/kg)", '=IFERROR(SUM(Earthworm[Amount])/SUM(Earthworm[WormsKg]),"")', "₹#,##0.00"),
+            ("Payments not settled", '=COUNTIFS(Earthworm[PurchaseDate],">0",Earthworm[PaymentStatus],"<>Paid")', "#,##0")]
+    for i, (label, f, fmt) in enumerate(rows, 2):
+        ws.cell(i, 12, label).font = F(color=INK)
+        c = ws.cell(i, 13, f)
+        c.font, c.number_format, c.alignment = F(bold=True, color=INK), fmt, Alignment(horizontal="right")
+        for cc in (12, 13):
+            ws.cell(i, cc).fill = FILL("F3EEFA")
+            ws.cell(i, cc).border = Border(bottom=THIN)
+    note = ws.cell(len(rows) + 3, 12, "Used across several batches: not part of any batch's expenses, the Dashboard or Reports.")
+    note.font, note.alignment = F(italic=True, size=9, color="6B7A70"), Alignment(wrap_text=True, vertical="top")
+    ws.merge_cells(start_row=len(rows) + 3, start_column=12, end_row=len(rows) + 3, end_column=13)
+    ws.row_dimensions[len(rows) + 3].height = 30
 
 
 def subhead(ws, row, c1, c2, text, color):
@@ -1090,7 +1095,7 @@ def build_readme(ws):
         ("QualityControl", "Excel sheet 5 – lab reports. Product: RM = raw material / trial, FG = finished goods, EXRM = export raw material / trial, EXFG = export finished goods. FCO check is calculated for FG and EXFG."),
         ("Sales", "Excel sheet 6 – invoices. Revenue is calculated."),
         ("Expenses", "Excel sheet 8 – expenses by category."),
-        ("Earthworm", "Earthworm purchase register, kept outside every batch: date, invoice, supplier, species, kg, rate per kg, transport and payment status. Amount is calculated. These costs are not in any batch's expenses; the Dashboard shows them separately."),
+        ("Earthworm", "Earthworm purchase register, kept outside every batch: date, invoice, supplier, species, kg, rate per kg, transport and payment status. Amount is calculated. Earthworms are used across several batches, so these costs are not in any batch's expenses, the Dashboard or Reports. Totals sit beside the register (columns L–M)."),
         ("Links", "Blue underlined codes are links: RM lot, pre-compost lot, bed number, production batch, FG batch and batch codes jump to the related record (RawMaterial ↔ PreCompost ↔ Beds ↔ Harvest ↔ Sales, and every batch to the Batches sheet). For rows added later, press the 'Refresh links' button (Office Script RefreshLinks) – see README. To edit a linked cell, select it with the arrow keys or click and hold. An amber ProdCode / ProdBatch means the bed's production code differs between Beds and Harvest – correct one of them."),
         ("Lists", "Drop-down values (suppliers and customers collect themselves from the registers) and the FCO reference limits (yellow cells, editable)."),
         ("h2", "Notes on the imported Batch 4 data"),

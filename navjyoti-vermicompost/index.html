@@ -135,7 +135,6 @@ input.search { min-width: 0; width: 220px }
 .panel > h3 { font-size: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--line) }
 .panel .sub { color: var(--muted); font-size: 12.5px; margin: -4px 0 0 }
 
-.ew-note { margin: 0; color: var(--muted); font-size: 12.5px }
 .alerts { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none }
 .alerts li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 9px 10px; border-radius: 6px; background: var(--surface-2) }
 .alerts li.warn { background: var(--warn-bg) } .alerts li.bad { background: var(--bad-bg) } .alerts li.ok { background: var(--good-bg) }
@@ -373,13 +372,13 @@ const REG = {
     cols: [C('invoice', 'Invoice', 'mono'), C('date', 'Date', 'date'), C('customer', 'Customer'), C('fgBatch', 'FG batch', 'mono'), C('qtyKg', 'Qty kg', 'num'), C('price', '₹/kg', 'num2'),
       C('revenue', 'Revenue', 'inr', r => r.qtyKg * r.price), C('payment', 'Payment', 'chip')],
     sums: ['qtyKg', 'revenue'] },
-  expenses: { title: 'Costs & expenses', one: 'expense', blurb: 'Every rupee spent on the batch, by category.',
+  expenses: { title: 'Costs & expenses', one: 'expense', blurb: 'Every rupee spent on the batch, by category. Record earthworm purchases in the Earthworm tab, not here.',
     sort: ['date', 'asc'],
     fields: [F('date', 'Date', 'date', { def: () => TODAY }), F('category', 'Category', 'select', { opts: EXP_CATS }), F('desc', 'Description / vendor', 'text', { req: 1, wide: 1 }),
       F('mode', 'Payment mode', 'select', { opts: ['Online', 'UPI', 'Cash', 'Cheque'] }), F('amount', 'Amount (₹)', 'num'), F('note', 'Cost / compliance note', 'text')],
     cols: [C('date', 'Date', 'date'), C('category', 'Category'), C('desc', 'Description', 'wrap'), C('mode', 'Mode'), C('amount', 'Amount', 'inr'), C('note', 'Note')],
     sums: ['amount'] },
-  earthworm: { title: 'Earthworm purchases', one: 'earthworm purchase', blurb: 'Earthworms bought for the unit. Kept outside every batch, so these costs never enter a batch’s expenses or margin.', noBatch: 1,
+  earthworm: { title: 'Earthworm purchases', one: 'earthworm purchase', blurb: 'Earthworms bought for the unit and used across several batches. Kept here only: these costs are not part of any batch’s expenses, the Overview or Reports.', noBatch: 1,
     sort: ['date', 'asc'],
     fields: [F('date', 'Purchase date', 'date', { req: 1, def: () => TODAY }), F('invoice', 'Invoice no.', 'text'), F('supplier', 'Supplier', 'text', { list: listOf('earthworm', 'supplier') }),
       F('species', 'Species', 'text', { list: () => uniq(['Eisenia fetida', 'Eudrilus eugeniae', 'Perionyx excavatus', ...rows('earthworm').map(r => r.species)]) }), F('wormsKg', 'Worms (kg)', 'num'),
@@ -491,7 +490,7 @@ function offlineView() {
 
 function head(title, blurb, tools = '', key = state.tab) {
   const bname = state.batch === 'ALL' ? 'All batches' : (all('batches').find(b => b.code === state.batch)?.name || state.batch);
-  return `<div class="page-head"><div class="ph"><span class="ph-ic" style="--k:${TAB_COLOR[key] || 'var(--accent)'}">${ico(key)}</span><div><h2>${esc(title)}</h2><p>${esc(blurb)} <span class="muted">Showing ${esc(bname)}.</span></p></div></div><div class="tools">${tools}</div></div>`;
+  return `<div class="page-head"><div class="ph"><span class="ph-ic" style="--k:${TAB_COLOR[key] || 'var(--accent)'}">${ico(key)}</span><div><h2>${esc(title)}</h2><p>${esc(blurb)} ${REG[key]?.noBatch ? '' : `<span class="muted">Showing ${esc(bname)}.</span>`}</p></div></div><div class="tools">${tools}</div></div>`;
 }
 const addBtn = key => state.canWrite ? `<button class="btn primary" type="button" data-add="${key}">+ Add ${REG[key].one}</button>` : '';
 
@@ -553,6 +552,16 @@ function tableHTML(key, list) {
   }
   return `<div class="tbl-wrap"><table><thead><tr>${showBatch ? '<th>Batch</th>' : ''}${cols.map(th).join('')}</tr></thead><tbody>${body}</tbody>${foot}</table></div>`;
 }
+function earthwormTiles() {
+  const ew = rows('earthworm'), kg = sum(ew, r => r.wormsKg), amt = sum(ew, r => r.wormsKg * r.rate), tr = sum(ew, r => r.transport);
+  const open = ew.filter(r => r.payment && r.payment !== 'Paid').length;
+  return `<div class="kpis">${[
+    ['Earthworms purchased', fmt(kg), 'kg', `${ew.length} purchase${ew.length === 1 ? '' : 's'}`, 'var(--c5)', 'earthworm'],
+    ['Purchase amount', inr(amt), '', kg ? `avg ₹${fmt(amt / kg, 2)} per kg` : 'no purchases yet', 'var(--c5)', 'rupee'],
+    ['Transport', inr(tr), '', 'for earthworm deliveries', 'var(--c5)', 'rm'],
+    ['Total earthworm cost', inr(amt + tr), '', open ? `${open} payment${open === 1 ? '' : 's'} not settled` : 'all payments settled', 'var(--c5)', 'expenses'],
+  ].map(kpiHTML).join('')}</div>`;
+}
 function registerView(key) {
   const def = REG[key];
   const ui = state.ui[key] || (state.ui[key] = { q: '', sort: def.sort[0], dir: def.sort[1] });
@@ -560,7 +569,7 @@ function registerView(key) {
   let extra = '';
   if (key === 'qc') extra = `<p class="foot">FCO reference for finished vermicompost: ${Object.values(FCO).map(f => esc(f[2])).join(' · ')}. Values in red fall outside it. Check whether your lab reports P and K as P₂O₅ and K₂O before comparing.</p>`;
   return head(def.title, def.blurb, `<input class="search" id="q_${key}" type="search" placeholder="Search ${esc(def.title.toLowerCase())}" value="${esc(ui.q)}" aria-label="Search">${addBtn(key)}`)
-    + `<div id="tbl_${key}">${tableHTML(key, list)}</div>` + extra;
+    + (key === 'earthworm' ? earthwormTiles() : '') + `<div id="tbl_${key}">${tableHTML(key, list)}</div>` + extra;
 }
 const outOfRange = (k, v) => { const [lo, hi] = FCO[k]; return (lo != null && v < lo) || (hi != null && v > hi); };
 
@@ -618,14 +627,6 @@ function overview() {
   ];
   const flow = [['Raw material', tons(m.rmKg) + ' t', `${m.rmLots} lots received`], ['Pre-compost', fmt(m.pcMT, 1) + ' MT', `${m.pcLots} lots decomposed`],
     ['Beds', tons(m.dungKg) + ' t', `${m.beds} beds filled`], ['Harvest', tons(m.net) + ' t', `net from ${fmt(m.raw / 1000, 1)} t raw`], ['Sold', tons(m.sold) + ' t', inr(m.revenue)]];
-  const ew = all('earthworm'), ewKg = sum(ew, r => r.wormsKg), ewAmt = sum(ew, r => r.wormsKg * r.rate), ewTr = sum(ew, r => r.transport);
-  const ewOpen = ew.filter(r => r.payment && r.payment !== 'Paid').length;
-  const ewTiles = [
-    ['Earthworms purchased', fmt(ewKg), 'kg', `${ew.length} purchase${ew.length === 1 ? '' : 's'}`, 'var(--c5)', 'earthworm'],
-    ['Purchase amount', inr(ewAmt), '', ewKg ? `avg ₹${fmt(ewAmt / ewKg, 2)} per kg` : 'no purchases yet', 'var(--c5)', 'rupee'],
-    ['Transport', inr(ewTr), '', 'for earthworm deliveries', 'var(--c5)', 'rm'],
-    ['Total earthworm cost', inr(ewAmt + ewTr), '', ewOpen ? `${ewOpen} payment${ewOpen === 1 ? '' : 's'} not settled` : 'all payments settled', 'var(--c5)', 'expenses'],
-  ];
   const cats = {};
   rows('expenses').forEach(e => { cats[e.category || 'Other'] = (cats[e.category || 'Other'] || 0) + (e.amount || 0); });
   const catList = Object.entries(cats).sort((a, b) => b[1] - a[1]);
@@ -636,14 +637,12 @@ function overview() {
     return `<tr><td class="mono">${esc(c)}</td><td>${bb?.status ? `<span class="chip ${chipClass(bb.status)}">${esc(bb.status)}</span>` : ''}</td><td class="n">${x.harvested}/${x.beds}</td><td class="n">${tons(x.rmKg)}</td><td class="n">${fmt(x.net)}</td><td class="n">${x.rmKg ? fmt(x.net / x.rmKg * 100, 1) + '%' : '—'}</td><td class="n">${fmt(x.sold)}</td><td class="n">${inr(x.revenue)}</td><td class="n">${inr(x.spend)}</td></tr>`;
   }).join('')}</tbody></table></div></div>` : '';
   const empty = !COLLS.some(c => !REG[c]?.noBatch && rows(c).length);
-  return `<section class="hero"><div><span class="eyebrow">Production dashboard</span><h2>${esc(title)}</h2><p>${sub}</p></div><div class="tools">${state.canWrite ? `<button class="btn" type="button" data-add="earthworm">+ Earthworm purchase</button><button class="btn primary" type="button" data-add="batches">+ New batch</button>` : ''}</div></section>`
+  return `<section class="hero"><div><span class="eyebrow">Production dashboard</span><h2>${esc(title)}</h2><p>${sub}</p></div><div class="tools">${state.canWrite ? `<button class="btn primary" type="button" data-add="batches">+ New batch</button>` : ''}</div></section>`
     + (empty ? `<div class="banner"><b>No records for this batch yet.</b> Start with the raw material purchase, then add pre-compost lots, beds (use “Add beds in bulk”), harvests, lab reports and sales as the batch runs.</div>` : '')
     + `<div class="kpis">${tiles.map(kpiHTML).join('')}</div>`
     + `<div class="flow" aria-label="Material flow">${flow.map((f, i) => `<div style="--k:${['var(--c1)', 'var(--soil)', 'var(--c7)', 'var(--s1)', 'var(--c2)'][i]}"><div class="st">${f[0]}</div><div class="q">${f[1]}</div><div class="d">${esc(f[2])}</div></div>`).join('')}</div>`
     + `<div class="grid2"><div class="panel"><h3>Produced vs sold</h3><p class="sub">Cumulative net yield from harvest entries against cumulative sales, in kg.</p>${cumChart()}</div>
        <div class="panel"><h3>Where the money went</h3>${catList.length ? `<div class="bars">${catList.map(([c, v], i) => `<div class="row" title="${esc(c)}: ${inr(v)}"><span>${esc(c)}</span><div class="track"><div class="bar" style="width:${(v / catMax * 100).toFixed(1)}%;background:var(--c${(i % 8) + 1})"></div></div><span class="num">${inr(v)}</span></div>`).join('')}</div>` : `<div class="empty">No expenses recorded.</div>`}</div></div>`
-    + `<div class="panel"><h3>Earthworm purchases</h3><p class="ew-note">Not counted in any batch, so these figures stay the same whichever batch is selected.</p>
-       <div class="kpis">${ewTiles.map(kpiHTML).join('')}</div></div>`
     + compare;
 }
 
