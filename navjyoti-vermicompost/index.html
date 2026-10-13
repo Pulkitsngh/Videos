@@ -93,6 +93,7 @@ input.search { min-width: 0; width: 220px }
 .panel h3 { font-size: 16px }
 .panel .sub { color: var(--muted); font-size: 12.5px; margin-top: -8px }
 
+.ew-note { margin: 0; color: var(--muted); font-size: 12.5px }
 .alerts { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none }
 .alerts li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 9px 10px; border-radius: 6px; background: var(--surface-2) }
 .alerts li.warn { background: var(--warn-bg) } .alerts li.bad { background: var(--bad-bg) } .alerts li.ok { background: var(--good-bg) }
@@ -235,11 +236,13 @@ dialog form { display: grid; grid-template-rows: auto 1fr auto; max-height: calc
 
 <script>
 (() => {
-const COLLS = ['batches', 'logs', 'rm', 'precompost', 'beds', 'harvest', 'qc', 'sales', 'stock', 'expenses'];
-const BATCH_STATUS = ['Planning', 'Raw material', 'Pre-composting', 'In beds', 'Harvesting', 'Closing', 'Closed'];
+const COLLS = ['batches', 'rm', 'precompost', 'beds', 'harvest', 'qc', 'sales', 'expenses', 'earthworm'];
+const BATCH_STATUS = ['Planned', 'Raw material', 'Pre-composting', 'In beds', 'Harvesting', 'Closing', 'Closed'];
 const BED_STATUS = ['Filled', 'Inoculated', 'Active', 'Ready to harvest', 'Harvested', 'Empty'];
 const EXP_CATS = ['Raw material', 'Culture & inputs', 'Bed setup', 'Labour', 'Sieving', 'Transport', 'Machinery', 'Packaging', 'Lab testing', 'Sales & dispatch', 'Utilities', 'Other'];
-const ACTIVITIES = ['Watering', 'Turning', 'Temperature check', 'Moisture check', 'Feeding', 'Shuffling', 'Worm inoculation', 'Pest / ant control', 'Shade / cover repair', 'Harvest', 'Sieving', 'Inspection', 'Other'];
+const MATERIALS = ['SMC', 'Cow Dung', 'Cow Dung Slurry', 'Coco Peat', 'FOM', 'Press Mud', 'Crop Residue', 'Others'];
+// Quality products: RM = raw material / trial, FG = finished goods, EXRM / EXFG = export trial / export finished. FCO applies to FG and EXFG.
+const FINISHED = ['FG', 'EXFG'];
 // FCO reference for vermicompost (finished goods). P and K are specified as P2O5 / K2O.
 const FCO = { moisture: [15, 25, 'Moisture 15–25 %'], ph: [6.5, 7.5, 'pH 6.5–7.5'], ec: [null, 4, 'EC ≤ 4 dS/m'], oc: [18, null, 'Organic carbon ≥ 18 %'],
   n: [1, null, 'Nitrogen ≥ 1.0 %'], p: [0.8, null, 'P₂O₅ ≥ 0.8 %'], k: [0.8, null, 'K₂O ≥ 0.8 %'], cn: [null, 20, 'C:N ≤ 20'] };
@@ -265,15 +268,10 @@ const C = (k, l, t = 'text', fn) => ({ k, l, t, fn });
 const listOf = (coll, key) => () => uniq(rows(coll).map(r => r[key]));
 
 const REG = {
-  logs: { title: 'Daily log', one: 'log entry', blurb: 'Watering, turning, temperature and moisture checks, feeding and inspections, logged as they happen on the floor.',
-    sort: ['date', 'desc'],
-    fields: [F('date', 'Date', 'date', { req: 1, def: () => TODAY }), F('activity', 'Activity', 'select', { opts: ACTIVITIES }), F('area', 'Beds / area', 'text', { ph: 'BED-01 to BED-20', list: listOf('beds', 'bed') }),
-      F('temp', 'Temperature (°C)', 'num'), F('moisture', 'Moisture (%)', 'num'), F('qty', 'Quantity (L or kg)', 'num'), F('by', 'Recorded by', 'text'), F('notes', 'Observations', 'textarea', { wide: 1 })],
-    cols: [C('date', 'Date', 'date'), C('activity', 'Activity'), C('area', 'Beds / area'), C('temp', 'Temp °C', 'num'), C('moisture', 'Moisture %', 'num'), C('qty', 'Qty', 'num'), C('by', 'By'), C('notes', 'Observations', 'wrap')] },
   rm: { title: 'Raw material purchase', one: 'purchase', blurb: 'Organic input origin, cost and quality checks for each truck received (EcoCert / MRC traceability).',
     sort: ['date', 'asc'],
     fields: [F('date', 'Purchase date', 'date', { def: () => TODAY }), F('lot', 'RM lot code', 'text', { req: 1, ph: 'RM/20260110/SMC' }), F('supplier', 'Supplier / dairy', 'text', { list: listOf('rm', 'supplier') }),
-      F('material', 'Material type', 'text', { list: () => uniq(['SMC', 'Cow dung', 'Press mud', ...rows('rm').map(r => r.material)]) }), F('vehicle', 'Vehicle no.', 'text'), F('invoice', 'Vehicle / invoice ref.', 'text'),
+      F('material', 'Material type', 'select', { opts: MATERIALS }), F('vehicle', 'Vehicle no.', 'text'), F('invoice', 'Vehicle / invoice ref.', 'text'),
       F('qtyKg', 'Quantity (kg)', 'num'), F('rate', 'Rate (₹ per kg)', 'num'), F('transport', 'Transport cost (₹)', 'num'), F('payment', 'Payment status', 'select', { opts: ['Paid', 'Pending', 'Partial'] }),
       F('moisture', 'Moisture (%)', 'num'), F('temp', 'Temperature (°C)', 'num'), F('odour', 'Odour observed', 'select', { opts: ['No', 'Yes'] }), F('contamination', 'Contamination check done', 'select', { opts: ['Yes', 'No'] }),
       F('sampleDate', 'Sample collected', 'date'), F('labDate', 'Sample sent to lab', 'date'), F('labResult', 'Lab result', 'select', { opts: ['Accepted', 'Awaiting', 'Rejected'] }), F('seal', 'Seal no.', 'text'), F('remarks', 'Quality remarks', 'textarea', { wide: 1 })],
@@ -308,9 +306,9 @@ const REG = {
     cols: [C('date', 'Date', 'date'), C('bed', 'Bed', 'mono'), C('rawKg', 'Raw kg', 'num'), C('netKg', 'Net kg', 'num'), C('rec', 'Recovery', 'pct', r => r.netKg / r.rawKg),
       C('prodBatch', 'Prod. batch', 'mono'), C('fgBatch', 'FG batch', 'mono'), C('packaging', 'Packing'), C('packets', 'Packets', 'num1'), C('moisture', 'Moist. %', 'num')],
     sums: ['rawKg', 'netKg', 'packets'] },
-  qc: { title: 'Quality control', one: 'lab report', blurb: 'Lab analysis for raw material trials (RM), finished goods (FG) and export material (EX). FG and EX rows are checked against the FCO vermicompost reference.',
+  qc: { title: 'Quality control', one: 'lab report', blurb: 'Lab analysis for raw material trials (RM), finished goods (FG), export trials (EXRM) and export finished goods (EXFG). FG and EXFG rows are checked against the FCO vermicompost reference.',
     sort: ['date', 'asc'],
-    fields: [F('date', 'Sampling date', 'date', { def: () => TODAY }), F('product', 'Product', 'select', { opts: ['RM', 'FG', 'EX'] }), F('seal', 'Sample seal no.', 'text'), F('lab', 'Lab name & date sent', 'text'),
+    fields: [F('date', 'Sampling date', 'date', { def: () => TODAY }), F('product', 'Product', 'select', { opts: ['RM', 'FG', 'EXRM', 'EXFG'] }), F('seal', 'Sample seal no.', 'text'), F('lab', 'Lab name & date sent', 'text'),
       F('batchNo', 'Batch number', 'text', { list: listOf('qc', 'batchNo') }), F('reportDate', 'Report date', 'date'), F('reportNo', 'Lab report no.', 'text'), F('status', 'FCO status', 'select', { opts: ['Pass (FCO Compliant)', 'Awaiting report', 'Fail'] }),
       F('ph', 'pH', 'num'), F('ec', 'EC (dS/m)', 'num'), F('moisture', 'Moisture %', 'num'), F('oc', 'Organic carbon %', 'num'), F('om', 'Organic matter %', 'num'), F('cn', 'C:N ratio', 'num'),
       F('n', 'Nitrogen %', 'num'), F('p', 'Phosphorus %', 'num'), F('k', 'Potassium %', 'num'), F('ash', 'Ash %', 'num'), F('ca', 'Calcium', 'num'), F('mn', 'Manganese', 'num'), F('fe', 'Iron', 'num'),
@@ -325,21 +323,20 @@ const REG = {
     cols: [C('invoice', 'Invoice', 'mono'), C('date', 'Date', 'date'), C('customer', 'Customer'), C('fgBatch', 'FG batch', 'mono'), C('qtyKg', 'Qty kg', 'num'), C('price', '₹/kg', 'num2'),
       C('revenue', 'Revenue', 'inr', r => r.qtyKg * r.price), C('payment', 'Payment', 'chip')],
     sums: ['qtyKg', 'revenue'] },
-  stock: { title: 'Stock ledger', one: 'stock entry', blurb: 'Finished vermicompost in and out. Closing stock runs down the ledger in entry order.',
-    sort: ['seq', 'asc'], fixedSort: 1,
-    fields: [F('seq', 'Entry no.', 'num', { def: () => Math.max(0, ...rows('stock').map(r => r.seq).filter(isNum)) + 1 }), F('date', 'Date', 'date', { def: () => TODAY }),
-      F('product', 'Product', 'text', { def: () => 'Premium Organic Vermicompost' }), F('pack', 'Packing', 'select', { opts: ['Bulk / Loose', 'Bags'] }),
-      F('inKg', 'Production in (kg)', 'num'), F('outKg', 'Sales out (kg)', 'num'), F('lossKg', 'Damage / loss (kg)', 'num'),
-      F('audit', 'Physical audit', 'select', { opts: ['Verified (Match)', 'Pending', 'Mismatch'] }), F('note', 'Note', 'text', { wide: 1 })],
-    cols: [C('seq', 'No.', 'num'), C('date', 'Date', 'date'), C('pack', 'Packing'), C('inKg', 'In kg', 'num'), C('outKg', 'Out kg', 'num'), C('lossKg', 'Loss / adj. kg', 'num'),
-      C('closing', 'Closing kg', 'num', r => r._closing), C('audit', 'Audit', 'chip'), C('note', 'Note', 'wrap')],
-    sums: ['inKg', 'outKg', 'lossKg'] },
   expenses: { title: 'Costs & expenses', one: 'expense', blurb: 'Every rupee spent on the batch, by category.',
     sort: ['date', 'asc'],
     fields: [F('date', 'Date', 'date', { def: () => TODAY }), F('category', 'Category', 'select', { opts: EXP_CATS }), F('desc', 'Description / vendor', 'text', { req: 1, wide: 1 }),
       F('mode', 'Payment mode', 'select', { opts: ['Online', 'UPI', 'Cash', 'Cheque'] }), F('amount', 'Amount (₹)', 'num'), F('note', 'Cost / compliance note', 'text')],
     cols: [C('date', 'Date', 'date'), C('category', 'Category'), C('desc', 'Description', 'wrap'), C('mode', 'Mode'), C('amount', 'Amount', 'inr'), C('note', 'Note')],
     sums: ['amount'] },
+  earthworm: { title: 'Earthworm purchases', one: 'earthworm purchase', blurb: 'Earthworms bought for the unit. Kept outside every batch, so these costs never enter a batch’s expenses or margin.', noBatch: 1,
+    sort: ['date', 'asc'],
+    fields: [F('date', 'Purchase date', 'date', { req: 1, def: () => TODAY }), F('invoice', 'Invoice no.', 'text'), F('supplier', 'Supplier', 'text', { list: listOf('earthworm', 'supplier') }),
+      F('species', 'Species', 'text', { list: () => uniq(['Eisenia fetida', 'Eudrilus eugeniae', 'Perionyx excavatus', ...rows('earthworm').map(r => r.species)]) }), F('wormsKg', 'Worms (kg)', 'num'),
+      F('rate', 'Rate (₹ per kg)', 'num'), F('transport', 'Transport cost (₹)', 'num'), F('payment', 'Payment status', 'select', { opts: ['Paid', 'Pending', 'Partial'] }), F('notes', 'Notes', 'textarea', { wide: 1 })],
+    cols: [C('date', 'Date', 'date'), C('invoice', 'Invoice', 'mono'), C('supplier', 'Supplier'), C('species', 'Species'), C('wormsKg', 'Worms kg', 'num'), C('rate', 'Rate ₹/kg', 'num2'),
+      C('amount', 'Amount', 'inr', r => r.wormsKg * r.rate), C('transport', 'Transport', 'inr'), C('payment', 'Payment', 'chip'), C('notes', 'Notes', 'wrap')],
+    sums: ['wormsKg', 'amount', 'transport'] },
   batches: { title: 'Batches', one: 'batch', blurb: 'Each production cycle. Every record above belongs to one batch.', noBatch: 1,
     sort: ['start', 'asc'],
     fields: [F('code', 'Batch code', 'text', { req: 1, ph: 'B5' }), F('name', 'Name', 'text', { ph: 'Batch 5' }), F('site', 'Site', 'text', { def: () => 'Akola' }), F('start', 'Start date', 'date', { def: () => TODAY }),
@@ -347,8 +344,8 @@ const REG = {
     cols: [C('code', 'Code', 'mono'), C('name', 'Name'), C('site', 'Site'), C('start', 'Started', 'date'), C('status', 'Stage', 'chip'), C('nbeds', 'Beds', 'num', r => all('beds').filter(b => b.batch === r.code).length),
       C('net', 'Net yield kg', 'num', r => sum(all('harvest').filter(h => h.batch === r.code), h => h.netKg)), C('notes', 'Notes', 'wrap')] },
 };
-const TABS = [['overview', 'Overview'], ['reports', 'Reports'], ['logs', 'Daily log'], ['rm', 'Raw material'], ['precompost', 'Pre-compost'], ['beds', 'Beds'], ['harvest', 'Harvest'], ['qc', 'Quality'],
-  ['sales', 'Sales'], ['stock', 'Stock'], ['expenses', 'Expenses'], ['trace', 'Traceability'], ['batches', 'Batches']];
+const TABS = [['overview', 'Overview'], ['reports', 'Reports'], ['rm', 'Raw material'], ['precompost', 'Pre-compost'], ['beds', 'Beds'], ['harvest', 'Harvest'], ['qc', 'Quality'],
+  ['sales', 'Sales'], ['expenses', 'Expenses'], ['earthworm', 'Earthworm'], ['trace', 'Traceability'], ['batches', 'Batches']];
 
 const state = { data: {}, loaded: new Set(), db: null, dl: null, conn: 'connecting', canWrite: true, batch: store.get('nv.batch') || 'ALL',
   tab: (location.hash || '').slice(1) || store.get('nv.tab') || 'overview', ui: {}, bedView: 'grid', traceQ: '' };
@@ -362,12 +359,6 @@ const defaultBatch = () => state.batch !== 'ALL' ? state.batch : (batchCodes().s
 let hvIndex = new Map();
 function reindex() {
   hvIndex = new Map(all('harvest').map(h => [h.batch + '|' + h.bed, h]));
-  // running closing stock per batch in entry order
-  const byBatch = {};
-  [...all('stock')].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0)).forEach(r => {
-    byBatch[r.batch] = (byBatch[r.batch] || 0) + (r.inKg || 0) - (r.outKg || 0) - (r.lossKg || 0);
-    r._closing = byBatch[r.batch];
-  });
 }
 const harvestFor = b => hvIndex.get(b.batch + '|' + b.bed);
 function bedState(b) {
@@ -380,7 +371,7 @@ function bedState(b) {
 }
 const chipClass = v => {
   const s = String(v || '').toLowerCase();
-  if (s === 'ex') return 'ex';
+  if (s === 'exrm' || s === 'exfg') return 'ex';
   if (/^(paid|accepted|pass|received|verified|harvested|closed|fg)/.test(s)) return 'good';
   if (/(pending|awaiting|partial|overdue|ready|mismatch)/.test(s)) return 'warn';
   if (/(reject|fail)/.test(s)) return 'bad';
@@ -472,7 +463,7 @@ function tableHTML(key, list) {
     const arrow = ui.sort === c.k ? (ui.dir === 'asc' ? '▲' : '▼') : '';
     return `<th class="${n ? 'n' : ''}">${def.fixedSort ? esc(c.l) : `<button type="button" data-sort="${key}:${c.k}">${esc(c.l)} <span aria-hidden="true">${arrow}</span></button>`}</th>`;
   };
-  const qcOff = (r, c) => key === 'qc' && ['FG', 'EX'].includes(r.product) && FCO[c.k] && isNum(r[c.k]) && outOfRange(c.k, r[c.k]);
+  const qcOff = (r, c) => key === 'qc' && FINISHED.includes(r.product) && FCO[c.k] && isNum(r[c.k]) && outOfRange(c.k, r[c.k]);
   const body = list.map(r => `<tr class="${state.canWrite ? 'click' : ''}" data-edit="${key}:${esc(r._id)}" ${state.canWrite ? 'tabindex="0"' : ''}>${showBatch ? `<td class="mono">${esc(r.batch)}</td>` : ''}${cols.map(c => {
     let h = cell(c, r); if (qcOff(r, c)) h = h.replace('<td class="n">', `<td class="n off" title="Outside FCO reference: ${esc(FCO[c.k][2])}">`); return h;
   }).join('')}</tr>`).join('');
@@ -492,11 +483,9 @@ function registerView(key) {
   const list = sortedRows(key);
   let extra = '';
   if (key === 'qc') extra = `<p class="foot">FCO reference for finished vermicompost: ${Object.values(FCO).map(f => esc(f[2])).join(' · ')}. Values in red fall outside it. Check whether your lab reports P and K as P₂O₅ and K₂O before comparing.</p>`;
-  if (key === 'stock') { const cl = state.batch === 'ALL' ? sum(batchCodes(), c => closingFor(c)) : closingFor(state.batch); extra = `<p class="foot">Closing stock now: <b>${fmt(cl)} kg</b>.</p>`; }
   return head(def.title, def.blurb, `<input class="search" id="q_${key}" type="search" placeholder="Search ${esc(def.title.toLowerCase())}" value="${esc(ui.q)}" aria-label="Search">${addBtn(key)}`)
     + `<div id="tbl_${key}">${tableHTML(key, list)}</div>` + extra;
 }
-const closingFor = code => { const l = all('stock').filter(r => r.batch === code).sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0)); return l.length ? l[l.length - 1]._closing : 0; };
 const outOfRange = (k, v) => { const [lo, hi] = FCO[k]; return (lo != null && v < lo) || (hi != null && v > hi); };
 
 /* ---------- beds ---------- */
@@ -533,55 +522,34 @@ function metrics(code) {
   return { rmKg: sum(rm, r => r.qtyKg), rmAmt: sum(rm, r => r.qtyKg * r.rate), rmLots: uniq(rm.map(r => r.lot)).length, pcMT: sum(pc, r => r.weightMT), pcLots: pc.length,
     beds: beds.length, harvested: states.filter(s => s.key === 'harvested').length, overdue: states.filter(s => s.key === 'overdue').length, dungKg,
     net, raw: sum(hv, r => r.rawKg), sold, invoices: sales.length, revenue, spend,
-    stock: code === 'ALL' ? sum(batchCodes(), c => closingFor(c)) : closingFor(code), hvCount: hv.filter(r => isNum(r.netKg)).length };
-}
-function alerts() {
-  const out = [];
-  const beds = rows('beds'), hv = rows('harvest');
-  const overdue = beds.filter(b => bedState(b).key === 'overdue');
-  if (overdue.length) out.push(['warn', `${overdue.length} bed${overdue.length > 1 ? 's' : ''} past expected harvest`, overdue.slice(0, 8).map(b => b.bed).join(', ') + (overdue.length > 8 ? ' …' : '')]);
-  const noNet = hv.filter(h => !isNum(h.netKg));
-  if (noNet.length) out.push(['warn', `${noNet.length} harvest entr${noNet.length > 1 ? 'ies have' : 'y has'} no net yield`, noNet.slice(0, 10).map(h => h.bed).join(', ') + ' — add the sieved weight in Harvest.']);
-  const unpaid = rows('rm').filter(r => r.payment && r.payment !== 'Paid');
-  if (unpaid.length) out.push(['warn', `${unpaid.length} raw material payment${unpaid.length > 1 ? 's' : ''} not settled`, inr(sum(unpaid, r => r.qtyKg * r.rate)) + ' outstanding']);
-  const lab = rows('rm').filter(r => r.labResult && r.labResult !== 'Accepted');
-  if (lab.length) out.push([lab.some(r => r.labResult === 'Rejected') ? 'bad' : 'warn', `${lab.length} raw material lot${lab.length > 1 ? 's' : ''} without lab acceptance`, uniq(lab.map(r => r.lot)).join(', ')]);
-  const qcOff = rows('qc').filter(r => ['FG', 'EX'].includes(r.product)).map(r => [r, Object.keys(FCO).filter(k => isNum(r[k]) && outOfRange(k, r[k]))]).filter(x => x[1].length);
-  if (qcOff.length) out.push(['warn', `${qcOff.length} finished or export report${qcOff.length > 1 ? 's' : ''} outside FCO reference`, qcOff.map(([r, ks]) => `${r.reportNo || fdate(r.date)}: ${ks.map(k => FCO[k][2].split(' ')[0]).join(', ')}`).join(' · ')]);
-  const cheap = rows('sales').filter(r => isNum(r.qtyKg) && (!isNum(r.price) || r.price < 1));
-  if (cheap.length) out.push(['warn', `${cheap.length} sale${cheap.length > 1 ? 's' : ''} priced under ₹1 per kg`, cheap.map(r => r.invoice).join(', ') + ' — confirm the rate or mark as sample.']);
-  const neg = uniq(rows('stock').filter(r => r._closing < 0).map(r => r.batch));
-  if (neg.length) out.push(['bad', 'Stock ledger goes negative', 'Batch ' + neg.join(', ') + ': more sold than produced at some entry.']);
-  // watering gap for batches with live beds
-  const liveBatches = uniq(beds.filter(b => ['active', 'overdue', 'ready', 'filled'].includes(bedState(b).key)).map(b => b.batch));
-  liveBatches.forEach(code => {
-    const last = all('logs').filter(l => l.batch === code && l.activity === 'Watering' && isISO(l.date)).map(l => l.date).sort().pop();
-    const gap = last ? daysBetween(last, TODAY) : null;
-    if (gap == null || gap > 3) out.push(['warn', `${code}: ${gap == null ? 'no watering logged yet' : 'no watering logged for ' + gap + ' days'}`, 'Beds with live worms need regular watering. Record it in the Daily log.']);
-  });
-  if (!out.length) out.push(['ok', 'Nothing needs attention', 'All beds, payments, lab reports and stock entries are in order.']);
-  return out;
+    stock: net - sold, hvCount: hv.filter(r => isNum(r.netKg)).length };
 }
 function overview() {
   const m = metrics(state.batch);
   const b = all('batches').find(x => x.code === state.batch);
   const title = state.batch === 'ALL' ? 'All batches' : (b?.name || state.batch);
   const sub = b ? `${b.site ? esc(b.site) + ' · ' : ''}started ${fdate(b.start)}${isISO(b.start) ? ' (' + daysBetween(b.start, TODAY) + ' days ago)' : ''} · stage: ${esc(b.status || '—')}` : 'Every batch combined.';
-  const conv = m.dungKg ? m.net / m.dungKg : null;
+  const conv = m.rmKg ? m.net / m.rmKg : null;
   const tiles = [
     ['Raw material in', tons(m.rmKg), 't', `${m.rmLots} lot${m.rmLots === 1 ? '' : 's'} · ${inr(m.rmAmt)}`],
     ['Beds harvested', `${m.harvested}`, `/ ${m.beds}`, m.overdue ? `${m.overdue} overdue` : `${m.beds - m.harvested} still in process`],
-    ['Net yield', tons(m.net), 't', conv != null ? `${fmt(conv * 100, 1)}% of ${tons(m.dungKg)} t filled` : `${m.hvCount} beds weighed`],
+    ['Net yield', tons(m.net), 't', conv != null ? `${fmt(conv * 100, 1)}% of ${tons(m.rmKg)} t raw material` : `${m.hvCount} beds weighed`],
     ['Sold', tons(m.sold), 't', `${m.invoices} invoice${m.invoices === 1 ? '' : 's'}`],
-    ['Stock on hand', fmt(m.stock), 'kg', `per stock ledger · harvested − sold = ${fmt(m.net - m.sold)} kg`],
+    ['Stock on hand', fmt(m.stock), 'kg', 'net yield − sold'],
     ['Revenue', inr(m.revenue), '', m.sold ? `avg ₹${fmt(m.revenue / m.sold, 2)} per kg` : 'no sales yet'],
     ['Expenses', inr(m.spend), '', m.net ? `₹${fmt(m.spend / m.net, 2)} per kg produced` : 'cost per kg after harvest'],
     ['Revenue − expenses', inr(m.revenue - m.spend), '', 'unsold stock not valued'],
   ];
   const flow = [['Raw material', tons(m.rmKg) + ' t', `${m.rmLots} lots received`], ['Pre-compost', fmt(m.pcMT, 1) + ' MT', `${m.pcLots} lots decomposed`],
     ['Beds', tons(m.dungKg) + ' t', `${m.beds} beds filled`], ['Harvest', tons(m.net) + ' t', `net from ${fmt(m.raw / 1000, 1)} t raw`], ['Sold', tons(m.sold) + ' t', inr(m.revenue)]];
-  const al = alerts();
-  const logs = [...rows('logs')].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 6);
+  const ew = all('earthworm'), ewKg = sum(ew, r => r.wormsKg), ewAmt = sum(ew, r => r.wormsKg * r.rate), ewTr = sum(ew, r => r.transport);
+  const ewOpen = ew.filter(r => r.payment && r.payment !== 'Paid').length;
+  const ewTiles = [
+    ['Earthworms purchased', fmt(ewKg), 'kg', `${ew.length} purchase${ew.length === 1 ? '' : 's'}`],
+    ['Purchase amount', inr(ewAmt), '', ewKg ? `avg ₹${fmt(ewAmt / ewKg, 2)} per kg` : 'no purchases yet'],
+    ['Transport', inr(ewTr), '', 'for earthworm deliveries'],
+    ['Total earthworm cost', inr(ewAmt + ewTr), '', ewOpen ? `${ewOpen} payment${ewOpen === 1 ? '' : 's'} not settled` : 'all payments settled'],
+  ];
   const cats = {};
   rows('expenses').forEach(e => { cats[e.category || 'Other'] = (cats[e.category || 'Other'] || 0) + (e.amount || 0); });
   const catList = Object.entries(cats).sort((a, b) => b[1] - a[1]);
@@ -589,17 +557,17 @@ function overview() {
   const codes = batchCodes();
   const compare = state.batch === 'ALL' && codes.length ? `<div class="panel"><h3>Batch comparison</h3><div class="tbl-wrap"><table><thead><tr><th>Batch</th><th>Stage</th><th class="n">Beds</th><th class="n">RM t</th><th class="n">Net yield kg</th><th class="n">Conversion</th><th class="n">Sold kg</th><th class="n">Revenue</th><th class="n">Expenses</th></tr></thead><tbody>${codes.map(c => {
     const x = metrics(c), bb = all('batches').find(q => q.code === c);
-    return `<tr><td class="mono">${esc(c)}</td><td>${bb?.status ? `<span class="chip ${chipClass(bb.status)}">${esc(bb.status)}</span>` : ''}</td><td class="n">${x.harvested}/${x.beds}</td><td class="n">${tons(x.rmKg)}</td><td class="n">${fmt(x.net)}</td><td class="n">${x.dungKg ? fmt(x.net / x.dungKg * 100, 1) + '%' : '—'}</td><td class="n">${fmt(x.sold)}</td><td class="n">${inr(x.revenue)}</td><td class="n">${inr(x.spend)}</td></tr>`;
+    return `<tr><td class="mono">${esc(c)}</td><td>${bb?.status ? `<span class="chip ${chipClass(bb.status)}">${esc(bb.status)}</span>` : ''}</td><td class="n">${x.harvested}/${x.beds}</td><td class="n">${tons(x.rmKg)}</td><td class="n">${fmt(x.net)}</td><td class="n">${x.rmKg ? fmt(x.net / x.rmKg * 100, 1) + '%' : '—'}</td><td class="n">${fmt(x.sold)}</td><td class="n">${inr(x.revenue)}</td><td class="n">${inr(x.spend)}</td></tr>`;
   }).join('')}</tbody></table></div></div>` : '';
-  const empty = !COLLS.some(c => c !== 'batches' && rows(c).length);
-  return `<div class="page-head"><div><h2>${esc(title)}</h2><p>${sub}</p></div><div class="tools">${state.canWrite ? `<button class="btn" type="button" data-add="logs">+ Log activity</button><button class="btn" type="button" data-add="batches">+ New batch</button>` : ''}</div></div>`
-    + (empty ? `<div class="banner"><b>No records for this batch yet.</b> Start with the raw material purchase, then add pre-compost lots, beds (use “Add beds in bulk”), and log daily activity as the batch runs.</div>` : '')
+  const empty = !COLLS.some(c => !REG[c]?.noBatch && rows(c).length);
+  return `<div class="page-head"><div><h2>${esc(title)}</h2><p>${sub}</p></div><div class="tools">${state.canWrite ? `<button class="btn" type="button" data-add="earthworm">+ Earthworm purchase</button><button class="btn" type="button" data-add="batches">+ New batch</button>` : ''}</div></div>`
+    + (empty ? `<div class="banner"><b>No records for this batch yet.</b> Start with the raw material purchase, then add pre-compost lots, beds (use “Add beds in bulk”), harvests, lab reports and sales as the batch runs.</div>` : '')
     + `<div class="kpis">${tiles.map(t => `<div class="kpi"><span class="l">${t[0]}</span><span class="v">${t[1]}${t[2] ? `<small>${t[2]}</small>` : ''}</span><span class="s">${t[3]}</span></div>`).join('')}</div>`
     + `<div class="flow" aria-label="Material flow">${flow.map(f => `<div><div class="st">${f[0]}</div><div class="q">${f[1]}</div><div class="d">${esc(f[2])}</div></div>`).join('')}</div>`
     + `<div class="grid2"><div class="panel"><h3>Produced vs sold</h3><p class="sub">Cumulative net yield from harvest entries against cumulative sales, in kg.</p>${cumChart()}</div>
-       <div class="panel"><h3>Needs attention</h3><ul class="alerts">${al.map(a => `<li class="${a[0]}"><span class="ic" aria-hidden="true">${a[0] === 'ok' ? '✓' : a[0] === 'bad' ? '!!' : '!'}</span><div><b>${esc(a[1])}</b><span>${esc(a[2])}</span></div></li>`).join('')}</ul></div></div>`
-    + `<div class="grid2"><div class="panel"><h3>Recent activity</h3>${logs.length ? `<div class="tbl-wrap"><table><thead><tr><th>Date</th>${state.batch === 'ALL' ? '<th>Batch</th>' : ''}<th>Activity</th><th>Beds / area</th><th class="n">Temp °C</th><th class="n">Moist. %</th><th>Observations</th></tr></thead><tbody>${logs.map(l => `<tr><td>${fdate(l.date)}</td>${state.batch === 'ALL' ? `<td class="mono">${esc(l.batch)}</td>` : ''}<td>${esc(l.activity)}</td><td>${esc(l.area)}</td><td class="n">${fmt(l.temp)}</td><td class="n">${fmt(l.moisture)}</td><td class="wrap">${esc(l.notes)}</td></tr>`).join('')}</tbody></table></div>` : `<div class="empty"><b>No daily log entries yet</b>Log watering, turning and temperature checks so the batch history is complete for audits.</div>`}</div>
        <div class="panel"><h3>Where the money went</h3>${catList.length ? `<div class="bars">${catList.map(([c, v]) => `<div class="row" title="${esc(c)}: ${inr(v)}"><span>${esc(c)}</span><div class="track"><div class="bar" style="width:${(v / catMax * 100).toFixed(1)}%"></div></div><span class="num">${inr(v)}</span></div>`).join('')}</div>` : `<div class="empty">No expenses recorded.</div>`}</div></div>`
+    + `<div class="panel"><h3>Earthworm purchases</h3><p class="ew-note">Not counted in any batch, so these figures stay the same whichever batch is selected.</p>
+       <div class="kpis">${ewTiles.map(t => `<div class="kpi"><span class="l">${t[0]}</span><span class="v">${t[1]}${t[2] ? `<small>${t[2]}</small>` : ''}</span><span class="s">${t[3]}</span></div>`).join('')}</div></div>`
     + compare;
 }
 
@@ -700,7 +668,7 @@ function traceView() {
 }
 
 /* ---------- reports ---------- */
-const PRODUCTS = [['RM', 'RM · raw material / trial', 'var(--c1)'], ['FG', 'FG · finished goods', 'var(--c2)'], ['EX', 'EX · export material', 'var(--c3)']];
+const PRODUCTS = [['RM', 'RM · raw material / trial', 'var(--c1)'], ['FG', 'FG · finished goods', 'var(--c2)'], ['EXRM', 'EXRM · export trial', 'var(--c3)'], ['EXFG', 'EXFG · export finished', 'var(--c4)']];
 const prodColor = p => (PRODUCTS.find(x => x[0] === p) || [0, 0, 'var(--muted)'])[2];
 const batchColor = code => `var(--c${(Math.max(0, batchCodes().indexOf(code)) % 8) + 1})`;
 const QC_PARAMS = [['ph', 'pH', ''], ['ec', 'EC', 'dS/m'], ['moisture', 'Moisture', '%'], ['oc', 'Organic carbon', '%'], ['om', 'Organic matter', '%'], ['cn', 'C:N ratio', ''],
@@ -747,18 +715,13 @@ const REPORTS = {
     groups: { customer: ['Customer', r => r.customer], month: ['Sale month', r => monthOf(r.date), 'month'], fgBatch: ['FG batch', r => r.fgBatch], payment: ['Payment', r => r.payment], drc: ['Dealer DRC', r => r.drc] },
     measures: { qty: ['Quantity sold (kg)', l => sum(l, r => r.qtyKg), 'num'], revenue: ['Revenue (₹)', l => sum(l, r => r.qtyKg * r.price), 'inr'],
       price: ['Avg price (₹/kg)', l => ratio(l, r => r.qtyKg * r.price, r => r.qtyKg), 'num2'], invoices: ['Invoices', cnt, 'num'] } },
-  stock: { title: 'Stock', coll: 'stock', def: ['pack', 'in'], tiles: ['in', 'out', 'loss', 'net'],
-    groups: { pack: ['Packing', r => r.pack], month: ['Entry month', r => monthOf(r.date), 'month'], audit: ['Audit status', r => r.audit] },
-    measures: { in: ['Production in (kg)', l => sum(l, r => r.inKg), 'num'], out: ['Sales out (kg)', l => sum(l, r => r.outKg), 'num'], loss: ['Loss / adjustment (kg)', l => sum(l, r => r.lossKg), 'num'],
-      net: ['Net movement (kg)', l => sum(l, r => (r.inKg || 0) - (r.outKg || 0) - (r.lossKg || 0)), 'num'], entries: ['Entries', cnt, 'num'] } },
   expenses: { title: 'Expenses', coll: 'expenses', def: ['category', 'amount'], tiles: ['amount', 'count', 'avg'],
     groups: { category: ['Category', r => r.category], month: ['Month', r => monthOf(r.date), 'month'], mode: ['Payment mode', r => r.mode] },
     measures: { amount: ['Amount (₹)', l => sum(l, r => r.amount), 'inr'], count: ['Entries', cnt, 'num'], avg: ['Avg per entry (₹)', l => avg(l, r => r.amount), 'inr'] } },
-  logs: { title: 'Daily log', coll: 'logs', def: ['activity', 'entries'], tiles: ['entries', 'temp', 'moisture'],
-    groups: { activity: ['Activity', r => r.activity], month: ['Month', r => monthOf(r.date), 'month'], by: ['Recorded by', r => r.by], area: ['Beds / area', r => r.area] },
-    measures: { entries: ['Entries', cnt, 'num'], temp: ['Avg temperature (°C)', l => avg(l, r => r.temp), 'num1'], moisture: ['Avg moisture (%)', l => avg(l, r => r.moisture), 'num1'], qty: ['Quantity (L / kg)', l => sum(l, r => r.qty), 'num'] } },
 };
-const rep = (() => { let s = {}; try { s = JSON.parse(store.get('nv.rep') || '{}') || {}; } catch {} return { type: 'harvest', group: {}, measure: {}, batches: null, products: ['RM', 'FG', 'EX'], qcBy: 'product', micro: false, ...s }; })();
+const rep = (() => { let s = {}; try { s = JSON.parse(store.get('nv.rep') || '{}') || {}; } catch {} return { type: 'harvest', group: {}, measure: {}, batches: null, products: ['RM', 'FG', 'EXRM', 'EXFG'], qcBy: 'product', micro: false, ...s }; })();
+rep.products = (rep.products || []).filter(p => PRODUCTS.some(x => x[0] === p)); if (!rep.products.length) rep.products = PRODUCTS.map(x => x[0]);
+if (!REPORTS[rep.type]) rep.type = 'harvest';
 const saveRep = () => store.set('nv.rep', JSON.stringify(rep));
 function repBatches() {
   const codes = batchCodes();
@@ -849,7 +812,7 @@ function genReport(R, g, m, sel) {
 /* quality: RM trials vs FG vs EX, one small chart per parameter */
 function qcGroups(sel) {
   const list = all('qc').filter(r => sel.includes(r.batch) && rep.products.includes(r.product)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-  const finished = p => p === 'FG' || p === 'EX';
+  const finished = p => FINISHED.includes(p);
   let groups;
   if (rep.qcBy === 'batch') groups = sel.filter(b => list.some(r => r.batch === b)).map(b => ({ key: b, l1: b, l2: '', color: batchColor(b), rows: list.filter(r => r.batch === b), ref: rep.products.every(finished) }));
   else if (rep.qcBy === 'report') groups = list.map((r, i) => ({ key: r._id, l1: r.product, l2: isISO(r.date) ? r.date.slice(8) + '/' + r.date.slice(5, 7) : '#' + (i + 1), full: `${r.product} · ${fdate(r.date)} · ${r.reportNo || ''}`, color: prodColor(r.product), rows: [r], ref: finished(r.product) }));
@@ -879,11 +842,11 @@ function qcSmall([k, name, unit], groups) {
 }
 function qcReport(sel) {
   const { list, groups } = qcGroups(sel);
-  if (!list.length) return `<div class="tbl-wrap"><div class="empty"><b>No lab reports for the selected batches and products</b>Add lab reports in the Quality tab. Use product RM for raw material trials, FG for finished goods and EX for export material.</div></div>`;
+  if (!list.length) return `<div class="tbl-wrap"><div class="empty"><b>No lab reports for the selected batches and products</b>Add lab reports in the Quality tab. Use RM for raw material trials, FG for finished goods, EXRM for export trials and EXFG for export finished goods.</div></div>`;
   const params = [...QC_PARAMS, ...(rep.micro ? QC_MICRO : [])];
   const byP = p => list.filter(r => r.product === p);
   const tiles = PRODUCTS.filter(p => rep.products.includes(p[0])).map(([p, l]) => {
-    const l2 = byP(p), fin = p !== 'RM', off = fin ? l2.filter(r => Object.keys(FCO).some(k => isNum(r[k]) && outOfRange(k, r[k]))).length : 0;
+    const l2 = byP(p), fin = FINISHED.includes(p), off = fin ? l2.filter(r => Object.keys(FCO).some(k => isNum(r[k]) && outOfRange(k, r[k]))).length : 0;
     return `<div class="kpi"><span class="l">${esc(l)}</span><span class="v">${l2.length}<small>report${l2.length === 1 ? '' : 's'}</small></span><span class="s">${l2.length ? (fin ? `${off} outside FCO reference · ` : '') + 'latest ' + fdate(l2[l2.length - 1].date) : 'none recorded yet'}</span></div>`;
   }).join('');
   const legend = `<div class="legend">${(rep.qcBy === 'batch' ? groups : PRODUCTS.filter(p => rep.products.includes(p[0])).map(p => ({ full: p[1], color: p[2] }))).map(g => `<span><i class="sq" style="background:${g.color}"></i>${esc(g.full)}</span>`).join('')}<span><i style="background:none;border-top:2px dashed var(--muted);height:0"></i>FCO limit</span></div>`;
@@ -893,17 +856,22 @@ function qcReport(sel) {
     const v = avg(g.rows, r => r[k]); const off = FCO[k] && g.ref && isNum(v) && outOfRange(k, v);
     return `<td class="n${off ? ' off' : ''}" ${off ? `title="Outside FCO reference: ${esc(FCO[k][2])}"` : ''}>${isNum(v) ? fmt(v, 2) + (off ? ' ✕' : '') : '—'}</td>`;
   }).join('')}<td class="muted">${FCO[k] ? esc(FCO[k][2]) : ''}</td></tr>`).join('');
-  // RM trial -> FG / EX change, when both are present
-  const deltas = ['FG', 'EX'].filter(p => rep.products.includes('RM') && rep.products.includes(p) && byP('RM').length && byP(p).length).map(p => {
-    const items = QC_PARAMS.map(([k, name]) => { const a = avg(byP('RM'), r => r[k]), b = avg(byP(p), r => r[k]); return isNum(a) && isNum(b) ? `${name} ${b >= a ? '+' : '−'}${fmt(Math.abs(b - a), 2)}` : ''; }).filter(Boolean);
-    return `<li><span class="sw" style="background:${prodColor(p)}"></span><div><b>RM trial → ${p}: average change</b><span>${esc(items.join(' · '))}</span></div></li>`;
-  }).join('');
+  // latest finished result against the latest trial result (RM -> FG, EXRM -> EXFG) in the selected batches
+  const inSel = all('qc').filter(r => sel.includes(r.batch));
+  const latest = p => inSel.filter(r => r.product === p).sort((a, b) => (a.date || '').localeCompare(b.date || '')).pop();
+  const pairs = [['RM', 'FG'], ['EXRM', 'EXFG']].map(([a, b]) => [a, b, latest(a), latest(b)]).filter(x => x[2] && x[3]);
+  const latestHTML = pairs.map(([a, b, ra, rb]) => `<h4 style="margin:4px 0 0;font-size:14px">${b} ${esc(rb.reportNo || '')} (${fdate(rb.date)}) against ${a} ${esc(ra.reportNo || '')} (${fdate(ra.date)})</h4>
+    <div class="tbl-wrap"><table><thead><tr><th>Parameter</th><th class="n">Latest ${a}</th><th class="n">Latest ${b}</th><th class="n">Change</th><th>FCO reference</th><th>${b} check</th></tr></thead><tbody>${QC_PARAMS.map(([k, name, unit]) => {
+      const x = ra[k], y = rb[k], off = FCO[k] && isNum(y) && outOfRange(k, y);
+      const ch = isNum(x) && isNum(y) ? (y >= x ? '+' : '−') + fmt(Math.abs(y - x), 2) : '—';
+      return `<tr><td>${esc(name)}${unit ? ' <span class="muted">' + unit + '</span>' : ''}</td><td class="n">${isNum(x) ? fmt(x, 2) : '—'}</td><td class="n${off ? ' off' : ''}">${isNum(y) ? fmt(y, 2) : '—'}</td><td class="n">${ch}</td><td class="muted">${FCO[k] ? esc(FCO[k][2]) : ''}</td><td>${!FCO[k] || !isNum(y) ? '' : `<span class="chip ${off ? 'bad' : 'good'}">${off ? 'Outside FCO' : 'Within FCO'}</span>`}</td></tr>`;
+    }).join('')}</tbody></table></div>`).join('');
   const reportsList = list.map(r => `<tr><td>${fdate(r.date)}</td><td class="mono">${esc(r.batch)}</td><td><span class="chip ${chipClass(r.product)}">${esc(r.product)}</span></td><td class="mono">${esc(r.reportNo)}</td><td>${esc(r.lab)}</td><td>${r.status ? `<span class="chip ${chipClass(r.status)}">${esc(r.status)}</span>` : ''}</td></tr>`).join('');
   return `<div class="kpis">${tiles}</div>
     <div class="panel"><h3>Lab parameters · ${rep.qcBy === 'product' ? 'average by product type' : rep.qcBy === 'batch' ? 'average by batch' : 'each lab report'}</h3>
-      <p class="sub">Each chart has its own scale. Dashed lines mark the FCO reference, which applies to FG and EX; values outside it are marked “!”.</p>${legend}
+      <p class="sub">Each chart has its own scale. Dashed lines mark the FCO reference, which applies to FG and EXFG; values outside it are marked “!”.</p>${legend}
       <div class="smalls">${params.map(p => qcSmall(p, groups)).join('')}</div></div>
-    ${deltas ? `<div class="panel"><h3>From trial to final material</h3><ul class="finds">${deltas}</ul></div>` : ''}
+    <div class="panel"><h3>Latest FG result vs latest RM result</h3>${latestHTML || `<div class="empty">Needs at least one RM and one FG lab report (or EXRM and EXFG) in the selected batches.</div>`}</div>
     <div class="panel"><h3>Quality comparison report</h3><div class="tbl-wrap"><table><thead><tr><th>Parameter</th>${th}<th>FCO reference</th></tr></thead><tbody>${tr}
       <tr><td class="muted">Reports included</td>${groups.map(g => `<td class="n muted">${g.rows.length}</td>`).join('')}<td></td></tr></tbody></table></div>
       <p class="foot">Check whether your lab reports P and K as P₂O₅ and K₂O before comparing with the FCO reference.</p></div>
@@ -962,7 +930,7 @@ function openForm(key, rec) {
   const batchSel = def.noBatch ? '' : `<div class="fld"><label for="f__batch">Batch *</label><select id="f__batch">${uniq([...batchCodes(), rec?.batch || defaultBatch()]).map(c => `<option ${c === (rec?.batch || defaultBatch()) ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div>`;
   form.innerHTML = `<div class="dlg-h"><h3>${rec ? 'Edit' : 'Add'} ${esc(def.one)}</h3><button type="button" class="btn small x" data-act="close">Close</button></div>
     <div class="dlg-b">${batchSel}${def.fields.map(f => fieldHTML(f, rec ? rec[f.k] : (f.def ? f.def() : ''))).join('')}
-    ${key === 'harvest' ? '<p class="note">Entering a net weight marks the bed as harvested on the Beds board.</p>' : ''}${key === 'qc' ? '<p class="note">Product: RM = raw material or trial before final material, FG = finished goods, EX = export material. Compare them in Reports → Quality.</p>' : ''}</div>
+    ${key === 'harvest' ? '<p class="note">Entering a net weight marks the bed as harvested on the Beds board.</p>' : ''}${key === 'qc' ? '<p class="note">Product: RM = raw material or trial before final material, FG = finished goods, EXRM = export trial, EXFG = export finished goods. Compare them in Reports → Quality.</p>' : ''}</div>
     <div class="dlg-f">${rec ? `<button type="button" class="btn danger" data-act="del">Delete</button>` : ''}<span class="sp"></span><span class="foot" id="dlgMsg"></span><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary" value="save">Save</button></div>`;
   dlg.showModal();
 }
@@ -996,7 +964,7 @@ async function saveForm() {
     if (key === 'batches' && !rec) { state.batch = vals.code; store.set('nv.batch', state.batch); schedule(); }
   } catch (e) { msg(errText(e)); }
 }
-const stripMeta = r => { const o = { ...r }; delete o._id; delete o._closing; return o; };
+const stripMeta = r => { const o = { ...r }; delete o._id; return o; };
 async function deleteRec() {
   const { key, rec } = editing;
   if (!editing.confirmDel) { editing.confirmDel = true; const b = form.querySelector('[data-act="del"]'); b.textContent = 'Confirm delete'; msg('This removes the record for everyone.'); return; }
@@ -1079,14 +1047,14 @@ async function exportXLSX() {
     toast('Preparing workbook…');
     await loadXLSX();
     const wb = XLSX.utils.book_new();
-    const order = ['rm', 'precompost', 'beds', 'harvest', 'qc', 'sales', 'stock', 'expenses', 'logs', 'batches'];
+    const order = ['rm', 'precompost', 'beds', 'harvest', 'qc', 'sales', 'expenses', 'earthworm', 'batches'];
     for (const key of order) {
       const def = REG[key], list = sortedRows(key);
       const flds = def.fields.filter(f => f.t !== 'turns');
       const hdr = [...(def.noBatch ? [] : ['Batch']), ...flds.map(f => f.l)];
-      const extra = key === 'rm' ? ['Amount (₹)'] : key === 'sales' ? ['Revenue (₹)'] : key === 'stock' ? ['Closing (kg)'] : key === 'precompost' ? ['Turnings (date / °C / % / watered)'] : [];
+      const extra = key === 'rm' ? ['Amount (₹)'] : key === 'sales' ? ['Revenue (₹)'] : key === 'earthworm' ? ['Amount (₹)'] : key === 'precompost' ? ['Turnings (date / °C / % / watered)'] : [];
       const data = list.map(r => [...(def.noBatch ? [] : [r.batch]), ...flds.map(f => r[f.k] ?? ''),
-        ...(key === 'rm' ? [r.qtyKg * r.rate || ''] : key === 'sales' ? [r.qtyKg * r.price || ''] : key === 'stock' ? [r._closing] : key === 'precompost' ? [(r.turns || []).map(t => `${t.date} / ${t.temp ?? ''} / ${t.moisture ?? ''} / ${t.watering || ''}`).join('; ')] : [])]);
+        ...(key === 'rm' ? [r.qtyKg * r.rate || ''] : key === 'sales' ? [r.qtyKg * r.price || ''] : key === 'earthworm' ? [r.wormsKg * r.rate || ''] : key === 'precompost' ? [(r.turns || []).map(t => `${t.date} / ${t.temp ?? ''} / ${t.moisture ?? ''} / ${t.watering || ''}`).join('; ')] : [])]);
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[...hdr, ...extra], ...data]), def.title.slice(0, 31));
     }
     const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
