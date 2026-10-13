@@ -54,3 +54,11 @@ Rows added later are linked by the Office Script `RefreshLinks.ts` (uses the sam
    15 minutes of being typed, with nobody pressing anything.
 
 The script unlocks each register with the sheet password, updates the links and locks it again.
+
+## Installable app on LNB Group Microsoft 365 (no Claude needed)
+
+`desktop-app/` packages the same tracker as an app that installs on PCs from Microsoft Edge or Chrome. People sign in with
+their LNB Group work accounts and the records live in the SharePoint lists of the Navjyoti Production site, so everyone
+with access sees the same data. `python3 desktop-app/build_desktop_app.py` builds `Navjyoti_Tracker_App_v<VERSION>.zip`;
+the IT guide (`Navjyoti_Tracker_IT_Setup_Guide.pdf`, built by `desktop-app/docs/build_it_guide.py`) covers set-up,
+hosting, installs and releasing updates. See `desktop-app/README.md`.

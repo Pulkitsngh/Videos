@@ -1,0 +1,29 @@
+# Navjyoti Tracker – automatic deployment to Azure Static Web Apps.
+# Copy this file to .github/workflows/deploy-navjyoti-tracker.yml in the repository, and add the repository secret
+# AZURE_STATIC_WEB_APPS_API_TOKEN (Azure portal → the static web app → Overview → Manage deployment token).
+# Every push to main that changes the tracker builds a new package and publishes it; running PCs then show
+# "Version x.y.z is available – Update now".
+name: Deploy Navjyoti Tracker
+on:
+  push:
+    branches: [main]
+    paths: ['navjyoti-vermicompost/**']
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install openpyxl
+      - name: Build the app package
+        run: python navjyoti-vermicompost/desktop-app/build_desktop_app.py
+      - name: Publish to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: navjyoti-vermicompost/desktop-app/dist
+          skip_app_build: true

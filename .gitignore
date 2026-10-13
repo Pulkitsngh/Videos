@@ -2,3 +2,5 @@ navjyoti-vermicompost/*.xlsx
 __pycache__/
 navjyoti-vermicompost/*.zip
 navjyoti-vermicompost/*.pdf
+navjyoti-vermicompost/desktop-app/dist/
+navjyoti-vermicompost/desktop-app/docs/it_guide.html

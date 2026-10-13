@@ -132,7 +132,7 @@ def registers():
             ("Customer", "customer", "text", "Customer"), ("DealerDRC", "drc", "text", None), ("FGBatch", "fgBatch", "text", None),
             ("QtyKg", "qtyKg", "kg", None), ("PricePerKg", "price", "num", None),
             ("Revenue", None, "calc_inr", "=IF(OR({QtyKg}=\"\",{PricePerKg}=\"\"),\"\",{QtyKg}*{PricePerKg})"),
-            ("Payment", "payment", "text", "SalePayment")]),
+            ("Payment", "payment", "text", "SalePayment"), ("Notes", "notes", "text", None)]),
         "Expenses": ("expenses", [("Batch", "batch", "text", "Batch"), ("ExpenseDate", "date", "date", None), ("Category", "category", "text", "ExpenseCategory"),
             ("Description", "desc", "text", None), ("PaymentMode", "mode", "text", "PaymentMode"), ("Amount", "amount", "inr", None), ("Note", "note", "text", None)]),
         "Earthworm": ("earthworm", [("PurchaseDate", "date", "date", None), ("InvoiceNo", "invoice", "text", None), ("Supplier", "supplier", "text", None),

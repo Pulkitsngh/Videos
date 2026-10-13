@@ -107,13 +107,16 @@ function New-NavList($name) {
 
 function Add-NavField($list, $name, $type, [string[]] $choices) {
   $types[$list][$name] = $type
-  if (Get-PnPField -List $list -Identity $name -ErrorAction SilentlyContinue) { return }
+  if (Get-PnPField -List $list -Identity $name -ErrorAction SilentlyContinue) {
+    if ($type -eq "Choice") { Set-PnPField -List $list -Identity $name -Values @{ FillInChoice = $true } | Out-Null }
+    return
+  }
   if ($type -eq "Choice") {
     Add-PnPField -List $list -DisplayName $name -InternalName $name -Type Choice -Choices $choices -AddToDefaultView | Out-Null
   } else {
     Add-PnPField -List $list -DisplayName $name -InternalName $name -Type $type -AddToDefaultView | Out-Null
   }
-  if ($name -eq "Batch") { Set-PnPField -List $list -Identity $name -Values @{ FillInChoice = $true } | Out-Null }  # new batch codes can be typed
+  if ($type -eq "Choice") { Set-PnPField -List $list -Identity $name -Values @{ FillInChoice = $true } | Out-Null }  # new values (e.g. batch codes) can be typed
   if ($type -eq "DateTime") { Set-PnPField -List $list -Identity $name -Values @{ DisplayFormat = 0 } | Out-Null }  # date only
 }
 
