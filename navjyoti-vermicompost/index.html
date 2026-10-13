@@ -490,7 +490,7 @@ function offlineView() {
 
 function head(title, blurb, tools = '', key = state.tab) {
   const bname = state.batch === 'ALL' ? 'All batches' : (all('batches').find(b => b.code === state.batch)?.name || state.batch);
-  return `<div class="page-head"><div class="ph"><span class="ph-ic" style="--k:${TAB_COLOR[key] || 'var(--accent)'}">${ico(key)}</span><div><h2>${esc(title)}</h2><p>${esc(blurb)} ${REG[key]?.noBatch ? '' : `<span class="muted">Showing ${esc(bname)}.</span>`}</p></div></div><div class="tools">${tools}</div></div>`;
+  return `<div class="page-head"><div class="ph"><span class="ph-ic" style="--k:${TAB_COLOR[key] || 'var(--accent)'}">${ico(key)}</span><div><h2>${esc(title)}</h2><p>${esc(blurb)} ${REG[key]?.noBatch || key === 'reports' ? '' : `<span class="muted">Showing ${esc(bname)}.</span>`}</p></div></div><div class="tools">${tools}</div></div>`;
 }
 const addBtn = key => state.canWrite ? `<button class="btn primary" type="button" data-add="${key}">+ Add ${REG[key].one}</button>` : '';
 
@@ -795,9 +795,10 @@ const REPORTS = {
     measures: { amount: ['Amount (₹)', l => sum(l, r => r.amount), 'inr'], count: ['Entries', cnt, 'num'], avg: ['Avg per entry (₹)', l => avg(l, r => r.amount), 'inr'] } },
 };
 const rep = (() => { let s = {}; try { s = JSON.parse(store.get('nv.rep') || '{}') || {}; } catch {} return { type: 'harvest', group: {}, measure: {}, batches: null, products: ['RM', 'FG', 'EXRM', 'EXFG'], qcBy: 'product', micro: false, ...s }; })();
+rep.batches = null; // follow the top Batch selector until batches are ticked in Reports
 rep.products = (rep.products || []).filter(p => PRODUCTS.some(x => x[0] === p)); if (!rep.products.length) rep.products = PRODUCTS.map(x => x[0]);
 if (!REPORTS[rep.type]) rep.type = 'harvest';
-const saveRep = () => store.set('nv.rep', JSON.stringify(rep));
+const saveRep = () => store.set('nv.rep', JSON.stringify({ ...rep, batches: null }));
 function repBatches() {
   const codes = batchCodes();
   let sel = (rep.batches || (state.batch === 'ALL' ? codes : [state.batch])).filter(c => codes.includes(c));
@@ -1188,7 +1189,7 @@ form.addEventListener('submit', e => {
   if (!state.db) return msg('Not connected. Open the tracker on claude.ai while signed in.');
   if (editing.key === '_bulkadd') runBulkAdd(); else if (editing.key === '_bulkupd') runBulkUpd(); else saveForm();
 });
-$('#batchSel').addEventListener('change', e => { state.batch = e.target.value; store.set('nv.batch', state.batch); render(); });
+$('#batchSel').addEventListener('change', e => { state.batch = e.target.value; store.set('nv.batch', state.batch); rep.batches = null; render(); });
 $('#exportBtn').addEventListener('click', exportXLSX);
 
 /* ---------- connect ---------- */
