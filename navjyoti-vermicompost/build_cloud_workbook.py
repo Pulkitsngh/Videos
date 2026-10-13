@@ -183,6 +183,43 @@ def flag_code_mismatch(wb, regs):
         wb[t].conditional_formatting.add(f"{cc}2:{cc}{cap}", FormulaRule(formula=[f], fill=WARN_FILL, font=F(bold=True, color="9A5B00")))
 
 
+# codes that should not repeat: (sheet, column, columns that must also match, what the pop-up says)
+DUP_CHECKS = [
+    ("RawMaterial", "RMLot", [], "This RM lot code is already used in another row. Several trucks can share one lot: choose Yes to keep it, No to change it."),
+    ("RawMaterial", "InvoiceRef", [], "This invoice reference is already used in another row. One invoice can cover several trucks: choose Yes to keep it, No to change it."),
+    ("PreCompost", "PCLot", [], "This pre-compost lot code is already used in another row."),
+    ("Beds", "BedNo", ["Batch"], "This bed number already exists in this batch."),
+    ("Harvest", "BedNo", ["Batch"], "This bed already has a harvest entry in this batch."),
+    ("QualityControl", "ReportNo", [], "This lab report number is already entered."),
+    ("Sales", "InvoiceNo", [], "This invoice number is already entered."),
+    ("Earthworm", "InvoiceNo", [], "This earthworm invoice number is already entered."),
+    ("Batches", "BatchCode", [], "This batch code already exists."),
+]
+# the same row typed twice (highlighted only; RM lots and invoices are shared by several trucks, so a repeat alone is not flagged)
+DUP_ROWS = [("RawMaterial", "RMLot", ["PurchaseDate", "VehicleNo", "QtyKg"])]
+
+
+def flag_duplicates(wb, regs):
+    """Warn on entry (Excel's Yes / No pop-up) and highlight in amber when a code repeats."""
+    def L(t, h):
+        return get_column_letter([x[0] for x in regs[t][1]].index(h) + 1)
+    for t, col, scope, msg in DUP_CHECKS:
+        ws, cap, c = wb[t], CAPACITY.get(t, PREFILL), L(t, col)
+        crit = "".join(f",${L(t, x)}$2:${L(t, x)}${LAST_ROW},${L(t, x)}2" for x in [col] + scope)
+        dv = DataValidation(type="custom", formula1=f"COUNTIFS({crit[1:]})<=1", allow_blank=True, showErrorMessage=True,
+                            errorStyle="warning", errorTitle="Possible duplicate", error=msg)
+        dv.add(f"{c}2:{c}{cap}")
+        ws.add_data_validation(dv)
+        if col not in ("RMLot", "InvoiceRef"):  # shared by several trucks: pop-up only
+            ws.conditional_formatting.add(f"{c}2:{c}{cap}", FormulaRule(formula=[f'AND(${c}2<>"",COUNTIFS({crit[1:]})>1)'],
+                                                                         fill=WARN_FILL, font=F(bold=True, color="9A5B00")))
+    for t, col, same in DUP_ROWS:
+        ws, cap, c = wb[t], CAPACITY.get(t, PREFILL), L(t, col)
+        crit = "".join(f",${L(t, x)}$2:${L(t, x)}${LAST_ROW},${L(t, x)}2" for x in [col] + same)
+        ws.conditional_formatting.add(f"{c}2:{c}{cap}", FormulaRule(formula=[f'AND(${c}2<>"",COUNTIFS({crit[1:]})>1)'],
+                                                                     fill=WARN_FILL, font=F(bold=True, color="9A5B00")))
+
+
 def link_cells(wb, regs):
     """Turn every reference cell (lot, bed, batch codes) into a link to its related record.
     Returns the cells that have a value but no matching record."""
@@ -628,6 +665,7 @@ def build(src, out, batch):
     to_a1(wb, regs)
     unlinked = link_cells(wb, regs)
     flag_code_mismatch(wb, regs)
+    flag_duplicates(wb, regs)
     print('reference cells without a matching record:', len(unlinked), unlinked[:20])
     wb.calculation.fullCalcOnLoad = True
     wb.active = 1

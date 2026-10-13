@@ -206,6 +206,20 @@ td.off { color: var(--bad); font-weight: 600 }
 dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; background: var(--surface); color: var(--fg); width: min(760px, calc(100vw - 24px)); max-height: calc(100dvh - 40px) }
 dialog::backdrop { background: rgb(0 0 0 / .45) }
 dialog form { display: grid; grid-template-rows: auto 1fr auto; max-height: calc(100dvh - 42px) }
+[hidden] { display: none !important }
+.dlg-review { padding: 16px 18px; overflow: auto; display: grid; gap: 12px; align-content: start }
+.rv-lead { margin: 0; font-weight: 600 }
+.dup { background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line)); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px }
+.dup b { color: var(--warn) }
+.dup ul { margin: 0; padding-left: 18px; font-size: 13px; display: grid; gap: 3px }
+.dup label { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: 13px; cursor: pointer }
+.dup input { accent-color: var(--warn); width: 16px; height: 16px; margin: 0 }
+table.rv { border: 1px solid var(--line); border-radius: 8px }
+table.rv th { position: static; background: none; width: 38%; color: var(--muted); font-weight: 500; font-size: 13px; white-space: normal }
+table.rv td { white-space: normal; overflow-wrap: anywhere }
+table.rv tbody tr td { background: transparent }
+table.rv tr.flag th, table.rv tr.flag td { background: var(--warn-bg) }
+table.rv s { color: var(--muted) }
 .dlg-h { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px }
 .dlg-h h3 { font-size: 18px }
 .dlg-h .x { margin-left: auto }
@@ -1016,6 +1030,77 @@ function readForm(def) {
   }
   return out;
 }
+/* review step: every save shows what will be stored, and flags possible duplicates for a deliberate second confirmation */
+const DUP_KEYS = {  // codes that should normally be unique; the third item limits the check to the same batch
+  rm: [['lot', 'RM lot code', '', 'Several trucks can share one lot; save if this truck belongs to that lot.'], ['invoice', 'Vehicle / invoice ref.', '', 'One invoice can cover several trucks; save if this truck is on that invoice.']], precompost: [['lot', 'Pre-compost lot code']],
+  beds: [['bed', 'Bed number', 'batch']], harvest: [['bed', 'Bed number', 'batch', 'Each bed is normally harvested once per batch.']], qc: [['reportNo', 'Lab report no.']],
+  sales: [['invoice', 'Invoice no.']], earthworm: [['invoice', 'Invoice no.']], batches: [['code', 'Batch code']] };
+const DUP_COMBOS = {  // the same entry typed twice
+  rm: [['date', 'vehicle', 'qtyKg']], sales: [['date', 'customer', 'qtyKg']], expenses: [['date', 'amount', 'desc']],
+  earthworm: [['date', 'supplier', 'wormsKg']], harvest: [['date', 'netKg', 'fgBatch']] };
+const norm = v => v == null ? '' : String(v).trim().toLowerCase().replace(/\s+/g, ' ');
+const showVal = (f, v) => f?.t === 'turns' ? `${(v || []).length} turnings` : v == null || v === '' ? '—' : f?.t === 'date' ? fdate(v) : f?.t === 'num' ? fmt(v, 3) : String(v);
+const REC_DESC = {  // what tells two records apart in a duplicate warning
+  rm: r => [r.batch, fdate(r.date), r.vehicle, isNum(r.qtyKg) ? fmt(r.qtyKg) + ' kg' : ''], precompost: r => [r.batch, r.lot, 'started ' + fdate(r.start)],
+  beds: r => [r.batch, r.bed, r.prodCode], harvest: r => [r.batch, r.bed, fdate(r.date), isNum(r.netKg) ? fmt(r.netKg) + ' kg net' : ''],
+  qc: r => [r.batch, r.product, r.reportNo, fdate(r.date)], sales: r => [r.batch, r.invoice, fdate(r.date), r.customer],
+  expenses: r => [r.batch, fdate(r.date), r.desc, inr(r.amount)], earthworm: r => [fdate(r.date), r.supplier, r.invoice, isNum(r.wormsKg) ? fmt(r.wormsKg) + ' kg' : ''],
+  batches: r => [r.code, r.name] };
+const recLabel = (key, r) => (REC_DESC[key] || (x => [x.batch]))(r).filter(v => v && v !== '—').join(' · ');
+function findDuplicates(key, vals, rec) {
+  const def = REG[key], others = all(key).filter(r => r._id !== rec?._id), out = [], flags = new Set();
+  const list = m => m.slice(0, 3).map(r => recLabel(key, r)).join('; ') + (m.length > 3 ? ` and ${m.length - 3} more` : '');
+  for (const [k, label, scope, hint] of DUP_KEYS[key] || []) {
+    const v = norm(vals[k]); if (!v) continue;
+    const m = others.filter(r => norm(r[k]) === v && (!scope || r[scope] === vals[scope]));
+    if (m.length) { flags.add(k); out.push(`${label} “${vals[k]}” is already used in ${m.length} other ${m.length === 1 ? def.one : def.one + ' records'}${scope ? ' of ' + vals[scope] : ''}: ${list(m)}.${hint ? ' ' + hint : ''}`); }
+  }
+  for (const combo of DUP_COMBOS[key] || []) {
+    if (combo.some(k => norm(vals[k]) === '')) continue;
+    const m = others.filter(r => combo.every(k => norm(r[k]) === norm(vals[k])) && (def.noBatch || r.batch === vals.batch));
+    if (m.length) { combo.forEach(k => flags.add(k)); out.push(`Same ${combo.map(k => def.fields.find(f => f.k === k)?.l.toLowerCase() || k).join(', ')} as an existing ${def.one}: ${list(m)}. This may have been entered twice.`); }
+  }
+  const same = others.find(r => (def.noBatch || r.batch === vals.batch) && def.fields.every(f => JSON.stringify(f.t === 'turns' ? r[f.k] || [] : norm(r[f.k])) === JSON.stringify(f.t === 'turns' ? vals[f.k] || [] : norm(vals[f.k]))));
+  if (same) out.unshift(`Every field matches an existing ${def.one} (${recLabel(key, same)}).`);
+  return { list: out, flags };
+}
+function showReview(lead, inner, okLabel, dups = []) {
+  editing.review = true; editing.dups = dups.length;
+  form.querySelector('.dlg-b').hidden = true;
+  let r = form.querySelector('.dlg-review');
+  if (!r) { r = document.createElement('div'); r.className = 'dlg-review'; form.querySelector('.dlg-b').after(r); }
+  r.hidden = false;
+  r.innerHTML = `<p class="rv-lead">${esc(lead)}</p>${dups.length ? `<div class="dup" role="alert"><b>Possible duplicate: please check</b><ul>${dups.map(d => `<li>${esc(d)}</li>`).join('')}</ul>
+    <label><input type="checkbox" id="dupOk">I have checked: save this entry anyway</label></div>` : ''}${inner}`;
+  const sub = form.querySelector('.dlg-f [type="submit"]'); sub.dataset.label ??= sub.textContent; sub.textContent = okLabel;
+  form.querySelectorAll('.dlg-f [data-act="del"]').forEach(x => x.hidden = true);
+  const c = form.querySelector('.dlg-f [data-act="close"]'); if (c) { c.dataset.act = 'back'; c.textContent = 'Back to edit'; }
+  msg(''); r.scrollTop = 0; sub.focus();
+}
+function hideReview() {
+  editing.review = false;
+  form.querySelector('.dlg-b').hidden = false; form.querySelector('.dlg-review').hidden = true;
+  const sub = form.querySelector('.dlg-f [type="submit"]'); sub.textContent = sub.dataset.label;
+  form.querySelectorAll('.dlg-f [data-act="del"]').forEach(x => x.hidden = false);
+  const c = form.querySelector('.dlg-f [data-act="back"]'); if (c) { c.dataset.act = 'close'; c.textContent = 'Cancel'; }
+  msg('');
+}
+const dupConfirmed = () => !editing.dups || $('#dupOk')?.checked || (msg('Tick “I have checked” to save a possible duplicate, or go back and change it.'), false);
+function reviewForm(key, rec, vals) {
+  const def = REG[key], dups = findDuplicates(key, vals, rec);
+  const fields = [...(def.noBatch ? [] : [{ k: 'batch', l: 'Batch' }]), ...def.fields];
+  let rowsH;
+  if (rec) {
+    const changed = fields.filter(f => JSON.stringify(f.t === 'turns' ? rec[f.k] || [] : norm(rec[f.k])) !== JSON.stringify(f.t === 'turns' ? vals[f.k] || [] : norm(vals[f.k])));
+    if (!changed.length) return msg('Nothing has changed.');
+    rowsH = changed.map(f => `<tr class="${dups.flags.has(f.k) ? 'flag' : ''}"><th>${esc(f.l)}</th><td><s>${esc(showVal(f, rec[f.k]))}</s> → <b>${esc(showVal(f, vals[f.k]))}</b></td></tr>`).join('');
+  } else {
+    rowsH = fields.filter(f => f.t === 'turns' ? (vals[f.k] || []).length : vals[f.k] != null && vals[f.k] !== '')
+      .map(f => `<tr class="${dups.flags.has(f.k) ? 'flag' : ''}"><th>${esc(f.l)}</th><td>${esc(showVal(f, vals[f.k]))}</td></tr>`).join('');
+  }
+  showReview(rec ? `Confirm these changes to the ${def.one}${rec.batch ? ' in ' + rec.batch : ''}.` : `Check the new ${def.one} before saving.`,
+    `<table class="rv"><tbody>${rowsH}</tbody></table>`, dups.list.length ? 'Save anyway' : 'Confirm and save', dups.list);
+}
 async function saveForm() {
   const { key, rec } = editing, def = REG[key];
   const vals = readForm(def);
@@ -1028,6 +1113,8 @@ async function saveForm() {
   if (!id && key === 'batches') id = vals.code.toLowerCase().replace(/[^a-z0-9_-]/g, '');
   if (!id && key === 'beds') id = `${vals.batch}-${vals.bed}`.toLowerCase().replace(/[^a-z0-9_-]/g, '');
   if (!rec && id && all(key).some(r => r._id === id)) return msg(`${vals.code || vals.bed} already exists. Open it from the list to edit it.`);
+  if (!editing.review) return reviewForm(key, rec, vals);
+  if (!dupConfirmed()) return;
   try {
     msg('Saving…');
     const ref = id ? state.db.collection(key).doc(id) : state.db.collection(key).doc();
@@ -1069,6 +1156,17 @@ async function runBulkAdd() {
   if (!(from >= 1 && to >= from && to - from < 400)) return msg('Check the bed range.');
   const exist = new Set(all('beds').filter(b => b.batch === batch).map(b => b.bed));
   const fill = g('fillDate'), days = parseInt(g('days')) || 60;
+  if (!editing.review) {
+    const nums = []; for (let n = from; n <= to; n++) nums.push('BED-' + String(n).padStart(2, '0'));
+    const skip = nums.filter(b => exist.has(b)), make = nums.length - skip.length;
+    if (!make) return msg(`All of ${nums[0]} to ${nums[nums.length - 1]} already exist in ${batch}.`);
+    return showReview(`Create ${make} bed${make === 1 ? '' : 's'} in ${batch}?`, `<table class="rv"><tbody>
+      <tr><th>Beds</th><td>${esc(nums[0])} to ${esc(nums[nums.length - 1])}</td></tr><tr><th>Filling date</th><td>${esc(fdate(fill))}</td></tr>
+      <tr><th>Dung per bed</th><td>${esc(g('dungT') || '—')} t</td></tr><tr><th>Pre-compost lot</th><td>${esc(g('pcLot') || '—')}</td></tr>
+      <tr><th>Production batch code</th><td>${esc(g('prodCode') || '—')}</td></tr><tr><th>Expected harvest</th><td>${isISO(fill) ? esc(fdate(addDays(fill, days))) : '—'}</td></tr></tbody></table>`,
+      `Create ${make} beds`, skip.length ? [`${skip.length} of these beds already exist in ${batch} and will be skipped: ${skip.slice(0, 8).join(', ')}${skip.length > 8 ? ' …' : ''}.`] : []);
+  }
+  if (!dupConfirmed()) return;
   let made = 0;
   try {
     for (let n = from; n <= to; n++) {
@@ -1102,6 +1200,15 @@ async function runBulkUpd() {
   const val = el.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value;
   const targets = all('beds').filter(b => b.batch === batch).filter(b => { const n = parseInt(String(b.bed).replace(/\D/g, '')); return n >= from && n <= to; });
   if (!targets.length) return msg('No beds in that range.');
+  if (!editing.review) {
+    const fl = BULK_FIELDS.find(x => x[0] === field), shown = v => v == null || v === '' ? '—' : fl[2] === 'date' ? fdate(v) : String(v);
+    const replace = targets.filter(b => b[field] != null && b[field] !== '' && norm(b[field]) !== norm(val));
+    return showReview(`Update ${targets.length} bed${targets.length === 1 ? '' : 's'} in ${batch}?`, `<table class="rv"><tbody>
+      <tr><th>Beds</th><td>${esc(targets.map(b => b.bed).sort()[0])} to ${esc(targets.map(b => b.bed).sort().pop())} (${targets.length})</td></tr>
+      <tr><th>${esc(fl[1])}</th><td><b>${esc(shown(val))}</b></td></tr></tbody></table>`, `Update ${targets.length} beds`,
+      replace.length ? [`${replace.length} of these beds already have a different ${fl[1].toLowerCase()}, which will be replaced: ${replace.slice(0, 6).map(b => `${b.bed} (${shown(b[field])})`).join(', ')}${replace.length > 6 ? ' …' : ''}.`] : []);
+  }
+  if (!dupConfirmed()) return;
   let done = 0;
   try {
     for (const b of targets) { msg(`Updating ${b.bed}…`); await state.db.collection('beds').doc(b._id).update({ [field]: val, updatedAt: new Date().toISOString() }); done++; }
@@ -1148,6 +1255,7 @@ document.addEventListener('click', e => {
   else if (t.dataset.bedview) { state.bedView = t.dataset.bedview; render(); }
   else if (t.dataset.act === 'close') dlg.close();
   else if (t.dataset.act === 'del') deleteRec();
+  else if (t.dataset.act === 'back') hideReview();
   else if (t.dataset.act === 'addturn') $('#f_turns').insertAdjacentHTML('beforeend', turnRow());
   else if (t.dataset.act === 'rmturn') t.closest('.turn-row').remove();
   else if (t.dataset.act === 'bulkadd') openBulkAdd();
