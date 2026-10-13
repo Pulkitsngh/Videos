@@ -63,6 +63,9 @@ header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; 
 .top-row { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; padding: 10px 24px }
 .crumb { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center }
 .crumb b { color: var(--fg); font-weight: 600 }
+.batch-chip { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: 13px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)) }
+.batch-chip b { font-weight: 600 } .batch-chip span { color: var(--muted); font-size: 12px }
+.batch-chip:hover { border-color: var(--accent) } .batch-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 .top-tools { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
 .sync { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--surface-2) }
 .sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted) }
@@ -118,8 +121,8 @@ input.search { min-width: 0; width: 220px }
 .kpi .l { grid-column: 1; grid-row: 1; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; color: color-mix(in srgb, var(--k) 70%, var(--fg)) }
 .kpi .ic { grid-column: 2; grid-row: 1; align-self: start; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: color-mix(in srgb, var(--k) 15%, var(--surface)); color: var(--k) }
 .kpi .ic svg { width: 20px; height: 20px }
-.kpi .v { grid-column: 1 / -1; grid-row: 2; white-space: nowrap; font-family: var(--f-display); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2 }
-.kpi .v small { font-size: 15px; font-weight: 600; color: var(--muted); margin-left: 3px }
+.kpi .v { grid-column: 1 / -1; grid-row: 2; white-space: nowrap; overflow: hidden; min-width: 0; font-family: var(--f-display); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2 }
+.kpi .v small { font-size: .55em; font-weight: 600; color: var(--muted); margin-left: 3px }
 .kpi .s { grid-column: 1 / -1; grid-row: 3; font-size: 12.5px; color: var(--muted) }
 
 /* Process flow */
@@ -128,7 +131,7 @@ input.search { min-width: 0; width: 220px }
 .flow > div:not(:last-child)::after { content: "›"; position: absolute; right: -11px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); font-weight: 700; line-height: 1; z-index: 1 }
 .flow > div:last-child { border-right: 0 }
 .flow .st { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--k, var(--accent)) 70%, var(--fg)); font-weight: 600 }
-.flow .q { font-family: var(--f-display); font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums }
+.flow .q { white-space: nowrap; overflow: hidden; font-family: var(--f-display); font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums }
 .flow .d { font-size: 12px; color: var(--muted) }
 @media (max-width: 760px) { .flow { grid-template-columns: 1fr 1fr } .flow > div { border-bottom: 1px solid var(--line) } .flow > div::after { display: none } }
 
@@ -284,6 +287,7 @@ table.rv s { color: var(--muted) }
   <div class="top-row">
     <div class="crumb" id="crumb"></div>
     <div class="top-tools">
+      <button type="button" class="batch-chip" id="batchChip" data-tab="overview" hidden></button>
       <button class="btn small" id="exportBtn" hidden>Export Excel</button>
       <div class="sync" id="sync"><i></i><span>Connecting…</span></div>
     </div>
@@ -440,9 +444,8 @@ const state = { data: {}, loaded: new Set(), db: null, dl: null, conn: 'connecti
 if (!TABS.some(t => t[0] === state.tab)) state.tab = 'overview';
 
 const all = c => state.data[c] || [];
-const rows = c => all(c);
-// the Batch selector lives on the Overview and filters only the Overview
-const ovRows = c => REG[c]?.noBatch || state.batch === 'ALL' ? all(c) : all(c).filter(r => r.batch === state.batch);
+// the batch chosen on the Overview filters every tab (earthworm purchases and the batch list are shared, so they stay whole)
+const rows = c => REG[c]?.noBatch || state.batch === 'ALL' ? all(c) : all(c).filter(r => r.batch === state.batch);
 const batchCodes = () => uniq([...all('batches').sort((a, b) => (a.start || '9999').localeCompare(b.start || '9999')).map(b => b.code), ...COLLS.flatMap(c => all(c).map(r => r.batch))]);
 const defaultBatch = () => state.batch !== 'ALL' ? state.batch : (batchCodes().slice(-1)[0] || 'B5');
 
@@ -472,6 +475,15 @@ const chipClass = v => {
 /* ---------- rendering ---------- */
 let raf = 0;
 const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
+// shrink a figure's font until it fits its box (long rupee or kg values)
+function fitFigures() {
+  document.querySelectorAll('.kpi .v, .flow .q').forEach(el => {
+    el.style.fontSize = '';
+    let fs = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth + 1 && fs > 11) { fs -= 1; el.style.fontSize = fs + 'px'; }
+  });
+}
+let fitT; window.addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(fitFigures, 120); });
 function render() {
   reindex();
   renderChrome();
@@ -482,6 +494,7 @@ function render() {
   const t = state.tab;
   main.innerHTML = t === 'overview' ? overview() : t === 'reports' ? reportsView() : t === 'trace' ? traceView() : t === 'beds' ? bedsView() : registerView(t);
   if (t === 'overview') wireChart();
+  fitFigures();
   if (activeId) { const el = document.getElementById(activeId); if (el && el !== active && 'focus' in el) { el.focus(); try { if (caret != null) el.setSelectionRange(caret, caret); } catch {} } }
 }
 function renderChrome() {
@@ -490,6 +503,10 @@ function renderChrome() {
   $('#tabs').innerHTML = GROUPS.map(([g, keys]) => `<div class="nav-group"><span>${esc(g)}</span>${keys.map(k => `<button type="button" data-tab="${k}" ${k === state.tab ? 'aria-current="page"' : ''}>${ico(k)}<span>${esc(TAB_LABEL[k])}</span></button>`).join('')}</div>`).join('');
   const grp = GROUPS.find(g => g[1].includes(state.tab));
   $('#crumb').innerHTML = `${esc(grp ? grp[0] : '')}<span aria-hidden="true">/</span><b>${esc(TAB_LABEL[state.tab] || '')}</b>`;
+  const chip = $('#batchChip'), bn = state.batch === 'ALL' ? 'All batches' : (all('batches').find(b => b.code === state.batch)?.name || state.batch);
+  chip.hidden = state.tab === 'overview' || !!REG[state.tab]?.noBatch;
+  chip.innerHTML = `Batch: <b>${esc(bn)}</b><span>change on Overview</span>`;
+  chip.title = 'The batch is chosen on the Overview. Click to go there.';
   const s = $('#sync');
   s.className = 'sync ' + (state.conn === 'live' ? 'live' : state.conn === 'off' ? 'off' : '');
   s.querySelector('span').textContent = state.conn === 'live' ? (state.canWrite ? 'Live · saved to cloud' : 'Live · view only') : state.conn === 'off' ? 'Not connected' : 'Connecting…';
@@ -540,7 +557,7 @@ function sortedRows(key) {
 }
 function tableHTML(key, list) {
   const def = REG[key], ui = state.ui[key];
-  const showBatch = !def.noBatch;
+  const showBatch = state.batch === 'ALL' && !def.noBatch;
   const cols = def.cols;
   if (!list.length) return `<div class="tbl-wrap"><div class="empty"><b>No ${esc(def.one)} records ${ui.q ? 'match “' + esc(ui.q) + '”' : 'yet'}</b>${state.canWrite && !ui.q ? 'Use “+ Add ' + esc(def.one) + '” to record the first one.' : ''}</div></div>`;
   const th = c => {
@@ -593,9 +610,9 @@ function bedsView() {
     + (state.canWrite ? `<button class="btn" type="button" data-act="bulkupd">Update many beds</button><button class="btn" type="button" data-act="bulkadd">Add beds in bulk</button>${addBtn('beds')}` : '');
   let body;
   if (state.bedView === 'table') body = `<input class="search" id="q_beds" type="search" placeholder="Search beds" value="${esc(state.ui.beds.q)}" aria-label="Search beds"><div id="tbl_beds">${tableHTML('beds', list)}</div>`;
-  else if (!list.length) body = `<div class="tbl-wrap"><div class="empty"><b>No beds yet</b>Use “Add beds in bulk” to create BED-01 to BED-80 in one step.</div></div>`;
+  else if (!list.length) body = `<div class="tbl-wrap"><div class="empty"><b>No beds in this batch yet</b>Use “Add beds in bulk” to create BED-01 to BED-80 in one step.</div></div>`;
   else {
-    const groups = [...batchCodes()].reverse().map(c => [c, list.filter(b => b.batch === c)]).filter(g => g[1].length);
+    const groups = state.batch === 'ALL' ? [...batchCodes()].reverse().map(c => [c, list.filter(b => b.batch === c)]).filter(g => g[1].length) : [[state.batch, list]];
     body = groups.map(([code, bl]) => `<h3 style="font-size:15px">${esc(all('batches').find(x => x.code === code)?.name || code)}</h3><div class="beds">${bl.map(b => {
       const s = bedState(b), h = harvestFor(b);
       const age = isISO(b.fillDate) ? daysBetween(b.fillDate, h && isISO(h.date) ? h.date : TODAY) : null;
@@ -638,7 +655,7 @@ function overview() {
   const flow = [['Raw material', tons(m.rmKg) + ' t', `${m.rmLots} lots received`], ['Pre-compost', fmt(m.pcMT, 1) + ' MT', `${m.pcLots} lots decomposed`],
     ['Beds', tons(m.dungKg) + ' t', `${m.beds} beds filled`], ['Harvest', tons(m.net) + ' t', `net from ${fmt(m.raw / 1000, 1)} t raw`], ['Sold', tons(m.sold) + ' t', inr(m.revenue)]];
   const cats = {};
-  ovRows('expenses').forEach(e => { cats[e.category || 'Other'] = (cats[e.category || 'Other'] || 0) + (e.amount || 0); });
+  rows('expenses').forEach(e => { cats[e.category || 'Other'] = (cats[e.category || 'Other'] || 0) + (e.amount || 0); });
   const catList = Object.entries(cats).sort((a, b) => b[1] - a[1]);
   const catMax = Math.max(1, ...catList.map(c => c[1]));
   const codes = batchCodes();
@@ -646,7 +663,7 @@ function overview() {
     const x = metrics(c), bb = all('batches').find(q => q.code === c);
     return `<tr><td class="mono">${esc(c)}</td><td>${bb?.status ? `<span class="chip ${chipClass(bb.status)}">${esc(bb.status)}</span>` : ''}</td><td class="n">${x.harvested}/${x.beds}</td><td class="n">${tons(x.rmKg)}</td><td class="n">${fmt(x.net)}</td><td class="n">${x.rmKg ? fmt(x.net / x.rmKg * 100, 1) + '%' : '—'}</td><td class="n">${fmt(x.sold)}</td><td class="n">${inr(x.revenue)}</td><td class="n">${inr(x.spend)}</td></tr>`;
   }).join('')}</tbody></table></div></div>` : '';
-  const empty = !COLLS.some(c => !REG[c]?.noBatch && ovRows(c).length);
+  const empty = !COLLS.some(c => !REG[c]?.noBatch && rows(c).length);
   return `<section class="hero"><div><span class="eyebrow">Production dashboard</span><h2>${esc(title)}</h2><p>${sub}</p></div><div class="tools"><label class="hero-pick" for="batchSel">Batch<select id="batchSel">${[['ALL', 'All batches'], ...batchCodes().map(c => { const bb = all('batches').find(x => x.code === c); return [c, (bb?.name || c) + (bb?.status ? ' · ' + bb.status : '')]; })].map(([v, l]) => `<option value="${esc(v)}" ${v === state.batch ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>${state.canWrite ? `<button class="btn primary" type="button" data-add="batches">+ New batch</button>` : ''}</div></section>`
     + (empty ? `<div class="banner"><b>No records for this batch yet.</b> Start with the raw material purchase, then add pre-compost lots, beds (use “Add beds in bulk”), harvests, lab reports and sales as the batch runs.</div>` : '')
     + `<div class="kpis">${tiles.map(kpiHTML).join('')}</div>`
@@ -659,7 +676,7 @@ function overview() {
 /* cumulative produced vs sold step chart */
 let chartData = null;
 function cumChart() {
-  const hv = ovRows('harvest').filter(r => isISO(r.date) && isNum(r.netKg)), sl = ovRows('sales').filter(r => isISO(r.date) && isNum(r.qtyKg));
+  const hv = rows('harvest').filter(r => isISO(r.date) && isNum(r.netKg)), sl = rows('sales').filter(r => isISO(r.date) && isNum(r.qtyKg));
   if (!hv.length && !sl.length) { chartData = null; return `<div class="empty">The chart fills in once harvest and sales entries have dates.</div>`; }
   const cum = list => { const m = {}; list.forEach(([d, v]) => m[d] = (m[d] || 0) + v); let t = 0; return Object.keys(m).sort().map(d => [d, t += m[d]]); };
   const P = cum(hv.map(r => [r.date, r.netKg])), S = cum(sl.map(r => [r.date, r.qtyKg]));
@@ -872,7 +889,7 @@ function genReport(R, g, m, sel) {
   const { list, G, M, cats, label, series, cell } = repData(R, g, m, sel);
   if (!list.length) return `<div class="tbl-wrap"><div class="empty"><b>No ${esc(R.title.toLowerCase())} records in the selected batches</b>Tick another batch, or add records in the ${esc(R.title)} tab.</div></div>`;
   const measures = Object.entries(R.measures);
-  const tiles = R.tiles.map((k, i) => { const [l, f, t] = R.measures[k]; return `<div class="kpi" style="--k:var(--c${(i % 8) + 1})"><span class="l">${esc(l)}</span><span class="v">${fmtBy(t, f(list))}</span><span class="s">${series.length} batch${series.length === 1 ? '' : 'es'} · ${list.length} records</span></div>`; }).join('');
+  const tiles = R.tiles.map((k, i) => { const [l, f, t] = R.measures[k]; return `<div class="kpi" style="--k:var(--c${(i % 8) + 1})"><span class="l">${esc(l)}</span><span class="v">${fmtBy(t, f(list))}</span><span class="s">${series.length} batch${series.length === 1 ? '' : 'es'} · ${list.length} record${list.length === 1 ? '' : 's'}</span></div>`; }).join('');
   // findings: per batch, total of the chart measure, highest and lowest group
   const finds = series.map(b => {
     const bl = list.filter(r => r.batch === b);
@@ -1237,7 +1254,7 @@ async function exportXLSX() {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[...hdr, ...extra], ...data]), def.title.slice(0, 31));
     }
     const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-    await state.dl.save({ filename: `Navjyoti_register_all_batches_${TODAY}.xlsx`, data: buf });
+    await state.dl.save({ filename: `Navjyoti_${state.batch === 'ALL' ? 'all_batches' : state.batch}_register_${TODAY}.xlsx`, data: buf });
     toast('Workbook ready');
   } catch (e) { toast(e?.code === 'declined' ? 'Export cancelled' : 'Export failed: ' + (e?.message || 'could not build the workbook')); }
 }
