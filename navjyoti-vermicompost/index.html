@@ -95,6 +95,9 @@ main { max-width: 1400px; padding-inline: 24px; padding-block: 22px 60px; displa
 .hero .btn { background: var(--brand-hi); border-color: var(--brand-line); color: var(--brand-fg) }
 .hero .btn:hover { border-color: var(--brand-muted) }
 .hero .btn.primary { background: var(--brand-on); border-color: var(--brand-on); color: var(--brand) }
+.hero-pick { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--brand-muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600 }
+.hero-pick select { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 500; background: var(--brand-hi); color: var(--brand-fg); border: 1px solid var(--brand-line); border-radius: var(--r); padding: 7px 10px; max-width: 100% }
+.hero-pick select option { background: var(--surface); color: var(--fg) }
 
 .btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 12px; border-radius: var(--r); cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap }
 .btn:hover { border-color: var(--muted) }
@@ -267,8 +270,6 @@ dialog form { display: grid; grid-template-rows: auto 1fr auto; max-height: calc
   <div class="top-row">
     <div class="crumb" id="crumb"></div>
     <div class="top-tools">
-      <label class="muted" for="batchSel" style="font-size:12px">Batch</label>
-      <select id="batchSel" class="sel"></select>
       <button class="btn small" id="exportBtn" hidden>Export Excel</button>
       <div class="sync" id="sync"><i></i><span>Connecting…</span></div>
     </div>
@@ -425,8 +426,10 @@ const state = { data: {}, loaded: new Set(), db: null, dl: null, conn: 'connecti
 if (!TABS.some(t => t[0] === state.tab)) state.tab = 'overview';
 
 const all = c => state.data[c] || [];
-const rows = c => REG[c]?.noBatch || state.batch === 'ALL' ? all(c) : all(c).filter(r => r.batch === state.batch);
-const batchCodes = () => uniq([...all('batches').sort((a, b) => (a.start || '').localeCompare(b.start || '')).map(b => b.code), ...COLLS.flatMap(c => all(c).map(r => r.batch))]);
+const rows = c => all(c);
+// the Batch selector lives on the Overview and filters only the Overview
+const ovRows = c => REG[c]?.noBatch || state.batch === 'ALL' ? all(c) : all(c).filter(r => r.batch === state.batch);
+const batchCodes = () => uniq([...all('batches').sort((a, b) => (a.start || '9999').localeCompare(b.start || '9999')).map(b => b.code), ...COLLS.flatMap(c => all(c).map(r => r.batch))]);
 const defaultBatch = () => state.batch !== 'ALL' ? state.batch : (batchCodes().slice(-1)[0] || 'B5');
 
 let hvIndex = new Map();
@@ -470,12 +473,6 @@ function render() {
 function renderChrome() {
   const codes = batchCodes();
   if (state.batch !== 'ALL' && state.loaded.size === COLLS.length && !codes.includes(state.batch)) state.batch = 'ALL';
-  const sel = $('#batchSel');
-  sel.innerHTML = `<option value="ALL">All batches</option>` + codes.map(c => {
-    const b = all('batches').find(x => x.code === c);
-    return `<option value="${esc(c)}">${esc(b?.name || c)}${b?.status ? ' · ' + esc(b.status) : ''}</option>`;
-  }).join('');
-  sel.value = state.batch;
   $('#tabs').innerHTML = GROUPS.map(([g, keys]) => `<div class="nav-group"><span>${esc(g)}</span>${keys.map(k => `<button type="button" data-tab="${k}" ${k === state.tab ? 'aria-current="page"' : ''}>${ico(k)}<span>${esc(TAB_LABEL[k])}</span></button>`).join('')}</div>`).join('');
   const grp = GROUPS.find(g => g[1].includes(state.tab));
   $('#crumb').innerHTML = `${esc(grp ? grp[0] : '')}<span aria-hidden="true">/</span><b>${esc(TAB_LABEL[state.tab] || '')}</b>`;
@@ -489,8 +486,7 @@ function offlineView() {
 }
 
 function head(title, blurb, tools = '', key = state.tab) {
-  const bname = state.batch === 'ALL' ? 'All batches' : (all('batches').find(b => b.code === state.batch)?.name || state.batch);
-  return `<div class="page-head"><div class="ph"><span class="ph-ic" style="--k:${TAB_COLOR[key] || 'var(--accent)'}">${ico(key)}</span><div><h2>${esc(title)}</h2><p>${esc(blurb)} ${REG[key]?.noBatch || key === 'reports' ? '' : `<span class="muted">Showing ${esc(bname)}.</span>`}</p></div></div><div class="tools">${tools}</div></div>`;
+  return `<div class="page-head"><div class="ph"><span class="ph-ic" style="--k:${TAB_COLOR[key] || 'var(--accent)'}">${ico(key)}</span><div><h2>${esc(title)}</h2><p>${esc(blurb)}</p></div></div><div class="tools">${tools}</div></div>`;
 }
 const addBtn = key => state.canWrite ? `<button class="btn primary" type="button" data-add="${key}">+ Add ${REG[key].one}</button>` : '';
 
@@ -530,7 +526,7 @@ function sortedRows(key) {
 }
 function tableHTML(key, list) {
   const def = REG[key], ui = state.ui[key];
-  const showBatch = state.batch === 'ALL' && !def.noBatch;
+  const showBatch = !def.noBatch;
   const cols = def.cols;
   if (!list.length) return `<div class="tbl-wrap"><div class="empty"><b>No ${esc(def.one)} records ${ui.q ? 'match “' + esc(ui.q) + '”' : 'yet'}</b>${state.canWrite && !ui.q ? 'Use “+ Add ' + esc(def.one) + '” to record the first one.' : ''}</div></div>`;
   const th = c => {
@@ -550,7 +546,7 @@ function tableHTML(key, list) {
       return `<td class="n">${c.t === 'inr' ? inr(s) : fmt(s, c.t === 'num1' ? 1 : 0)}</td>`;
     }).join('')}</tr></tfoot>`;
   }
-  return `<div class="tbl-wrap"><table><thead><tr>${showBatch ? '<th>Batch</th>' : ''}${cols.map(th).join('')}</tr></thead><tbody>${body}</tbody>${foot}</table></div>`;
+  return `<div class="tbl-wrap"><table><thead><tr>${showBatch ? th({ k: 'batch', l: 'Batch', t: 'mono' }) : ''}${cols.map(th).join('')}</tr></thead><tbody>${body}</tbody>${foot}</table></div>`;
 }
 function earthwormTiles() {
   const ew = rows('earthworm'), kg = sum(ew, r => r.wormsKg), amt = sum(ew, r => r.wormsKg * r.rate), tr = sum(ew, r => r.transport);
@@ -583,10 +579,10 @@ function bedsView() {
     + (state.canWrite ? `<button class="btn" type="button" data-act="bulkupd">Update many beds</button><button class="btn" type="button" data-act="bulkadd">Add beds in bulk</button>${addBtn('beds')}` : '');
   let body;
   if (state.bedView === 'table') body = `<input class="search" id="q_beds" type="search" placeholder="Search beds" value="${esc(state.ui.beds.q)}" aria-label="Search beds"><div id="tbl_beds">${tableHTML('beds', list)}</div>`;
-  else if (!list.length) body = `<div class="tbl-wrap"><div class="empty"><b>No beds in this batch yet</b>Use “Add beds in bulk” to create BED-01 to BED-80 in one step.</div></div>`;
+  else if (!list.length) body = `<div class="tbl-wrap"><div class="empty"><b>No beds yet</b>Use “Add beds in bulk” to create BED-01 to BED-80 in one step.</div></div>`;
   else {
-    const groups = state.batch === 'ALL' ? batchCodes().map(c => [c, list.filter(b => b.batch === c)]).filter(g => g[1].length) : [[state.batch, list]];
-    body = groups.map(([code, bl]) => `${groups.length > 1 ? `<h3 style="font-size:15px">${esc(code)}</h3>` : ''}<div class="beds">${bl.map(b => {
+    const groups = [...batchCodes()].reverse().map(c => [c, list.filter(b => b.batch === c)]).filter(g => g[1].length);
+    body = groups.map(([code, bl]) => `<h3 style="font-size:15px">${esc(all('batches').find(x => x.code === code)?.name || code)}</h3><div class="beds">${bl.map(b => {
       const s = bedState(b), h = harvestFor(b);
       const age = isISO(b.fillDate) ? daysBetween(b.fillDate, h && isISO(h.date) ? h.date : TODAY) : null;
       return `<button type="button" class="bed s-${s.key}" data-edit="beds:${esc(b._id)}" title="${esc(b.bed)} · ${esc(s.label)}"><span class="id">${esc(b.bed)}</span><span class="st">${esc(s.label)}${age != null && s.key !== 'overdue' ? ' · ' + age + 'd' : ''}</span><span class="kg">${h && isNum(h.netKg) ? fmt(h.netKg) + ' kg' : '&nbsp;'}</span></button>`;
@@ -628,7 +624,7 @@ function overview() {
   const flow = [['Raw material', tons(m.rmKg) + ' t', `${m.rmLots} lots received`], ['Pre-compost', fmt(m.pcMT, 1) + ' MT', `${m.pcLots} lots decomposed`],
     ['Beds', tons(m.dungKg) + ' t', `${m.beds} beds filled`], ['Harvest', tons(m.net) + ' t', `net from ${fmt(m.raw / 1000, 1)} t raw`], ['Sold', tons(m.sold) + ' t', inr(m.revenue)]];
   const cats = {};
-  rows('expenses').forEach(e => { cats[e.category || 'Other'] = (cats[e.category || 'Other'] || 0) + (e.amount || 0); });
+  ovRows('expenses').forEach(e => { cats[e.category || 'Other'] = (cats[e.category || 'Other'] || 0) + (e.amount || 0); });
   const catList = Object.entries(cats).sort((a, b) => b[1] - a[1]);
   const catMax = Math.max(1, ...catList.map(c => c[1]));
   const codes = batchCodes();
@@ -636,8 +632,8 @@ function overview() {
     const x = metrics(c), bb = all('batches').find(q => q.code === c);
     return `<tr><td class="mono">${esc(c)}</td><td>${bb?.status ? `<span class="chip ${chipClass(bb.status)}">${esc(bb.status)}</span>` : ''}</td><td class="n">${x.harvested}/${x.beds}</td><td class="n">${tons(x.rmKg)}</td><td class="n">${fmt(x.net)}</td><td class="n">${x.rmKg ? fmt(x.net / x.rmKg * 100, 1) + '%' : '—'}</td><td class="n">${fmt(x.sold)}</td><td class="n">${inr(x.revenue)}</td><td class="n">${inr(x.spend)}</td></tr>`;
   }).join('')}</tbody></table></div></div>` : '';
-  const empty = !COLLS.some(c => !REG[c]?.noBatch && rows(c).length);
-  return `<section class="hero"><div><span class="eyebrow">Production dashboard</span><h2>${esc(title)}</h2><p>${sub}</p></div><div class="tools">${state.canWrite ? `<button class="btn primary" type="button" data-add="batches">+ New batch</button>` : ''}</div></section>`
+  const empty = !COLLS.some(c => !REG[c]?.noBatch && ovRows(c).length);
+  return `<section class="hero"><div><span class="eyebrow">Production dashboard</span><h2>${esc(title)}</h2><p>${sub}</p></div><div class="tools"><label class="hero-pick" for="batchSel">Batch<select id="batchSel">${[['ALL', 'All batches'], ...batchCodes().map(c => { const bb = all('batches').find(x => x.code === c); return [c, (bb?.name || c) + (bb?.status ? ' · ' + bb.status : '')]; })].map(([v, l]) => `<option value="${esc(v)}" ${v === state.batch ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>${state.canWrite ? `<button class="btn primary" type="button" data-add="batches">+ New batch</button>` : ''}</div></section>`
     + (empty ? `<div class="banner"><b>No records for this batch yet.</b> Start with the raw material purchase, then add pre-compost lots, beds (use “Add beds in bulk”), harvests, lab reports and sales as the batch runs.</div>` : '')
     + `<div class="kpis">${tiles.map(kpiHTML).join('')}</div>`
     + `<div class="flow" aria-label="Material flow">${flow.map((f, i) => `<div style="--k:${['var(--c1)', 'var(--soil)', 'var(--c7)', 'var(--s1)', 'var(--c2)'][i]}"><div class="st">${f[0]}</div><div class="q">${f[1]}</div><div class="d">${esc(f[2])}</div></div>`).join('')}</div>`
@@ -649,7 +645,7 @@ function overview() {
 /* cumulative produced vs sold step chart */
 let chartData = null;
 function cumChart() {
-  const hv = rows('harvest').filter(r => isISO(r.date) && isNum(r.netKg)), sl = rows('sales').filter(r => isISO(r.date) && isNum(r.qtyKg));
+  const hv = ovRows('harvest').filter(r => isISO(r.date) && isNum(r.netKg)), sl = ovRows('sales').filter(r => isISO(r.date) && isNum(r.qtyKg));
   if (!hv.length && !sl.length) { chartData = null; return `<div class="empty">The chart fills in once harvest and sales entries have dates.</div>`; }
   const cum = list => { const m = {}; list.forEach(([d, v]) => m[d] = (m[d] || 0) + v); let t = 0; return Object.keys(m).sort().map(d => [d, t += m[d]]); };
   const P = cum(hv.map(r => [r.date, r.netKg])), S = cum(sl.map(r => [r.date, r.qtyKg]));
@@ -1134,7 +1130,7 @@ async function exportXLSX() {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[...hdr, ...extra], ...data]), def.title.slice(0, 31));
     }
     const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-    await state.dl.save({ filename: `Navjyoti_${state.batch === 'ALL' ? 'all_batches' : state.batch}_register_${TODAY}.xlsx`, data: buf });
+    await state.dl.save({ filename: `Navjyoti_register_all_batches_${TODAY}.xlsx`, data: buf });
     toast('Workbook ready');
   } catch (e) { toast(e?.code === 'declined' ? 'Export cancelled' : 'Export failed: ' + (e?.message || 'could not build the workbook')); }
 }
@@ -1162,6 +1158,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
+  if (el.id === 'batchSel') { state.batch = el.value; store.set('nv.batch', state.batch); rep.batches = null; render(); return; }
   if (el.classList.contains('rep-batch')) { rep.batches = [...document.querySelectorAll('.rep-batch:checked')].map(i => i.value); if (!rep.batches.length) { rep.batches = [el.value]; } }
   else if (el.classList.contains('rep-prod')) { rep.products = [...document.querySelectorAll('.rep-prod:checked')].map(i => i.value); if (!rep.products.length) rep.products = [el.value]; }
   else if (el.id === 'rep_micro') rep.micro = el.checked;
@@ -1189,7 +1186,6 @@ form.addEventListener('submit', e => {
   if (!state.db) return msg('Not connected. Open the tracker on claude.ai while signed in.');
   if (editing.key === '_bulkadd') runBulkAdd(); else if (editing.key === '_bulkupd') runBulkUpd(); else saveForm();
 });
-$('#batchSel').addEventListener('change', e => { state.batch = e.target.value; store.set('nv.batch', state.batch); rep.batches = null; render(); });
 $('#exportBtn').addEventListener('click', exportXLSX);
 
 /* ---------- connect ---------- */
